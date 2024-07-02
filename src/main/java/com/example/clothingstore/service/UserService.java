@@ -21,4 +21,12 @@ public class UserService {
     }
     return null;
   }
+
+  public void updateUserWithRefreshToken(User user, String refreshToken) {
+    if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+      User userToUpdate = userRepository.findByEmail(user.getEmail()).get();
+      userToUpdate.setRefreshToken(refreshToken);
+      userRepository.save(userToUpdate);
+    }
+  }
 }

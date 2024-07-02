@@ -1,6 +1,7 @@
 package com.example.clothingstore.domain;
 
 import com.example.clothingstore.utils.SecurityUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,6 +39,7 @@ public class Address {
   private String updatedBy;
 
   @OneToOne(mappedBy = "address")
+  @JsonIgnore
   private Customer customer;
 
   @PrePersist

@@ -38,9 +38,6 @@ public class Permission {
   @NotBlank(message = "Method cannot be blank")
   private String method;
 
-  @NotBlank(message = "Module cannot be blank")
-  private String module;
-
   private Instant createdAt;
 
   private Instant updatedAt;
@@ -49,11 +46,10 @@ public class Permission {
 
   private String updatedBy;
 
-  public Permission(String name, String apiPath, String method, String module) {
+  public Permission(String name, String apiPath, String method) {
     this.name = name;
     this.apiPath = apiPath;
     this.method = method;
-    this.module = module;
   }
 
   @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
