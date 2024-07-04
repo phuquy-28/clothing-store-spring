@@ -16,44 +16,57 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalException {
-    @ExceptionHandler(value = {
-            UsernameNotFoundException.class,
-            BadCredentialsException.class,
-            IdInvalidException.class,
-            MissingRequestCookieException.class,
-//            Exception.class
-    })
-    public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setError(idException.getMessage());
-        res.setMessage("Exception occurs...");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
 
-    //NoResourceFoundException
-    @ExceptionHandler(value = NoResourceFoundException.class)
-    public ResponseEntity<RestResponse<Object>> handleNoResourceFoundException(NoResourceFoundException e) {
-        RestResponse<Object> responseEntity = new RestResponse<Object>();
-        responseEntity.setStatusCode(HttpStatus.NOT_FOUND.value());
-        responseEntity.setError(e.getMessage());
-        responseEntity.setMessage("Resource not found");
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseEntity);
-    }
+  @ExceptionHandler(value = Exception.class)
+  public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
+    RestResponse<Object> res = new RestResponse<Object>();
+    res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    res.setMessage(ex.getMessage());
+    res.setError("Internal Server Error");
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+  }
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException e) {
-        BindingResult bindingResult = e.getBindingResult();
-        final List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+  @ExceptionHandler(value = {
+      UsernameNotFoundException.class,
+      BadCredentialsException.class,
+      IdInvalidException.class,
+      EmailInvalidException.class,
+      TokenInvalidException.class,
+      MissingRequestCookieException.class,
+  })
+  public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
+    RestResponse<Object> res = new RestResponse<Object>();
+    res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+    res.setError("Exception occurs...");
+    res.setMessage(idException.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+  }
 
-        RestResponse<Object> responseEntity = new RestResponse<Object>();
-        responseEntity.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        responseEntity.setError(e.getBody().getDetail());
+  //NoResourceFoundException
+  @ExceptionHandler(value = NoResourceFoundException.class)
+  public ResponseEntity<RestResponse<Object>> handleNoResourceFoundException(
+      NoResourceFoundException e) {
+    RestResponse<Object> responseEntity = new RestResponse<Object>();
+    responseEntity.setStatusCode(HttpStatus.NOT_FOUND.value());
+    responseEntity.setError("Resource not found");
+    responseEntity.setMessage(e.getMessage());
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseEntity);
+  }
 
-        List<String> errors = fieldErrors.stream().map(fieldError -> fieldError.getDefaultMessage()).toList();
-        responseEntity.setMessage(errors.size() > 1 ? errors : errors.get(0));
+  @ExceptionHandler(value = MethodArgumentNotValidException.class)
+  public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException e) {
+    BindingResult bindingResult = e.getBindingResult();
+    final List<FieldError> fieldErrors = bindingResult.getFieldErrors();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseEntity);
-    }
+    RestResponse<Object> responseEntity = new RestResponse<Object>();
+    responseEntity.setStatusCode(HttpStatus.BAD_REQUEST.value());
+    responseEntity.setError(e.getBody().getDetail());
+
+    List<String> errors = fieldErrors.stream().map(fieldError -> fieldError.getDefaultMessage())
+        .toList();
+    responseEntity.setMessage(errors.size() > 1 ? errors : errors.get(0));
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseEntity);
+  }
 
 }

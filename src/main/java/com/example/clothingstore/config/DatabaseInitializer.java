@@ -70,6 +70,7 @@ public class DatabaseInitializer implements CommandLineRunner {
       User adminUser = new User();
       adminUser.setEmail("admin@gmail.com");
       adminUser.setPassword(this.passwordEncoder.encode("123456"));
+      adminUser.setActivated(true);
 
       // role
       Role adminRole = this.roleRepository.findByName("ADMIN").orElse(null);

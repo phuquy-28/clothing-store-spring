@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -25,6 +26,8 @@ public class ResLoginDTO {
     private Long id;
 
     private String email;
+
+    private boolean activated;
 
     private RoleUser role;
   }

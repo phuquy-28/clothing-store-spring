@@ -19,14 +19,18 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
+@ToString
 public class User {
 
   @Id
@@ -49,6 +53,23 @@ public class User {
 
   @Column(columnDefinition = "MEDIUMTEXT")
   private String refreshToken;
+
+  @NotNull
+  @Column(nullable = false)
+  private boolean activated = false;
+
+  @Size(max = 50)
+  @Column(name = "activation_key", length = 50)
+  @JsonIgnore
+  private String activationKey;
+
+  @Size(max = 50)
+  @Column(name = "reset_key", length = 50)
+  @JsonIgnore
+  private String resetKey;
+
+  @Column(name = "reset_date")
+  private Instant resetDate = null;
 
   private Instant createdAt;
 

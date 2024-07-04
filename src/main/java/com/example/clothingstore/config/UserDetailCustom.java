@@ -1,6 +1,6 @@
 package com.example.clothingstore.config;
 
-import com.example.clothingstore.service.UserService;
+import com.example.clothingstore.service.impl.UserService;
 import java.util.Collections;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -25,6 +25,7 @@ public class UserDetailCustom implements UserDetailsService {
     if (user == null) {
       throw new UsernameNotFoundException("Username/password không hợp lệ");
     }
+
     return new User(user.getEmail(), user.getPassword(), Collections.singletonList(
         new SimpleGrantedAuthority(
             user.getRole() != null ? user.getRole().getName() : "ROLE_USER")));

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -24,5 +25,4 @@ public class ResCreateUser {
   private Instant createdAt;
 
   private String createdBy;
-
 }

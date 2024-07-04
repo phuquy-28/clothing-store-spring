@@ -15,11 +15,13 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "customers")
+@ToString(exclude = {"user"})
 public class Customer {
 
   @Id

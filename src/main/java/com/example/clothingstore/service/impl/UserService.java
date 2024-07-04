@@ -1,4 +1,4 @@
-package com.example.clothingstore.service;
+package com.example.clothingstore.service.impl;
 
 import com.example.clothingstore.domain.User;
 import com.example.clothingstore.repository.UserRepository;

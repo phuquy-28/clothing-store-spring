@@ -19,11 +19,13 @@ import java.time.Instant;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Setter
 @Getter
 @Table(name = "roles")
 @Entity
+@ToString(exclude = {"permissions", "users"})
 public class Role {
 
   @Id
