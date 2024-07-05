@@ -10,15 +10,15 @@ import lombok.ToString;
 @ToString
 public class ReqRegisterDTO {
 
-  @NotBlank(message = "Email cannot be blank")
+  @NotBlank(message = "Email không được để trống")
   private String email;
 
-  @NotBlank(message = "Password cannot be blank")
+  @NotBlank(message = "Mật khẩu không được để trống")
   private String password;
 
-  @NotBlank(message = "First name cannot be blank")
+  @NotBlank(message = "First name không được để trống")
   private String firstName;
 
-  @NotBlank(message = "Last name cannot be blank")
+  @NotBlank(message = "Last name không được để trống")
   private String lastName;
 }

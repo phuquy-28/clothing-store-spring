@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
 
@@ -53,16 +54,14 @@ public class SecurityUtil {
     Instant now = Instant.now();
     Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
-//    List<String> authorities = new ArrayList<>();
-//    authorities.add("ROLE_USER_CREATE");
-//    authorities.add("ROLE_USER_UPDATE");
+    List<String> authorities = new ArrayList<>();
 
     JwtClaimsSet claims = JwtClaimsSet.builder()
         .issuedAt(now)
         .expiresAt(validity)
         .subject(email)
         .claim("user", userInsideToken)
-//        .claim("permissions", authorities)
+        .claim("permissions", authorities)
         .build();
     JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
     return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader,
@@ -97,7 +96,12 @@ public class SecurityUtil {
     NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
         getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
     try {
-      return jwtDecoder.decode(token);
+      Jwt jwt = jwtDecoder.decode(token);
+      // Kiểm tra thời gian hết hạn
+      if (jwt.getExpiresAt().isBefore(Instant.now())) {
+        throw new JwtException("Token has expired");
+      }
+      return jwt;
     } catch (Exception e) {
       System.out.println(">>> JWT error: " + e.getMessage());
       throw e;

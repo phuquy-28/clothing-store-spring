@@ -15,6 +15,9 @@ public class ResLoginDTO {
   @JsonProperty("access_token")
   private String accessToken;
 
+  @JsonProperty("refresh_token")
+  private String refreshToken;
+
   private ResUser user;
 
   @Getter
@@ -26,6 +29,10 @@ public class ResLoginDTO {
     private Long id;
 
     private String email;
+
+    private String firstName;
+
+    private String lastName;
 
     private boolean activated;
 

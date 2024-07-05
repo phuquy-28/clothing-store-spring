@@ -1,28 +1,25 @@
 package com.example.clothingstore.domain.dto.response.user;
 
 import com.example.clothingstore.domain.Customer;
-import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ResCreateUser {
+public class ResRegisterDTO {
 
   private Long id;
 
   private String email;
 
-  private Customer customer;
+  private String firstName;
 
-  private Instant createdAt;
-
-  private String createdBy;
+  private String lastName;
 }

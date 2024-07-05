@@ -21,8 +21,7 @@ public class EmailService {
   private final JavaMailSender javaMailSender;
   private final SpringTemplateEngine templateEngine;
 
-  public EmailService(JavaMailSender javaMailSender,
-      SpringTemplateEngine templateEngine) {
+  public EmailService(JavaMailSender javaMailSender, SpringTemplateEngine templateEngine) {
     this.javaMailSender = javaMailSender;
     this.templateEngine = templateEngine;
   }
@@ -43,12 +42,8 @@ public class EmailService {
     }
   }
 
-  public void sendEmailFromTemplateSync(
-      String to,
-      String subject,
-      String templateName,
-      String username,
-      String key) {
+  public void sendEmailFromTemplateSync(String to, String subject, String templateName,
+      String username, String key) {
 
     Context context = new Context();
     context.setVariable("name", username);
@@ -61,7 +56,8 @@ public class EmailService {
   @Async
   public void sendActivationEmail(User user) {
     log.debug("Sending activation email to '{}'", user.getEmail());
-    this.sendEmailFromTemplateSync(user.getEmail(),"[MINIMOG]Activate your account" , "mail/activationEmail", user.getEmail(), user.getActivationKey());
+    this.sendEmailFromTemplateSync(user.getEmail(), "[MINIMOG] Activate your account",
+        "mail/activationEmail", user.getEmail(), user.getActivationKey());
   }
 
 }
