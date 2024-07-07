@@ -47,7 +47,7 @@ public class EmailService {
 
     Context context = new Context();
     context.setVariable("name", username);
-    context.setVariable("activationKey", key);
+    context.setVariable("key", key);
 
     String content = templateEngine.process(templateName, context);
     this.sendEmailSync(to, subject, content, false, true);
@@ -60,4 +60,10 @@ public class EmailService {
         "mail/activationEmail", user.getEmail(), user.getActivationKey());
   }
 
+  @Async
+  public void sendRecoverPasswordEmail(User user) {
+    log.debug("Sending recover password email to '{}'", user.getEmail());
+    this.sendEmailFromTemplateSync(user.getEmail(), "[MINIMOG] Recover your password",
+        "mail/recoverPasswordEmail", user.getEmail(), user.getResetKey());
+  }
 }

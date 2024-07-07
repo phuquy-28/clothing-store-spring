@@ -15,6 +15,7 @@ import com.example.clothingstore.utils.SecurityUtil;
 import com.example.clothingstore.utils.error.EmailInvalidException;
 import com.example.clothingstore.utils.error.TokenInvalidException;
 import com.example.clothingstore.utils.validate.EmailValidator;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -210,6 +211,48 @@ public class AuthServiceImpl implements AuthService {
     userService.updateUserWithRefreshToken(loginUser, newRefreshToken);
 
     return resLoginDTO;
+  }
+
+  @Override
+  public void recoverPassword(String email) throws EmailInvalidException {
+    // check exist user with email
+    User user = userRepository.findByEmailAndActivatedTrue(email)
+        .orElseThrow(() -> new EmailInvalidException("Email is invalid"));
+
+    // generate reset key and reset date
+    user.setResetKey(RandomUtil.generateResetKey());
+    user.setResetDate(Instant.now());
+
+    log.debug("Reset password Information for User: {}", user);
+    userRepository.save(user);
+
+    emailService.sendRecoverPasswordEmail(user);
+  }
+
+  @Override
+  public void resetPassword(String key, String newPassword, String confirmPassword)
+      throws TokenInvalidException {
+    // check exist user with reset key
+    User user = userRepository.findByResetKey(key)
+        .orElseThrow(() -> new TokenInvalidException("Token không hợp lệ"));
+
+    // check reset key is expired
+    if (user.getResetDate().isBefore(Instant.now().minusSeconds(60 * 30))) {
+      throw new TokenInvalidException("Token đã hết hạn, hãy taọ lại yêu cầu khôi phục mật khẩu");
+    }
+
+    // check new password and confirm password
+    if (!newPassword.equals(confirmPassword)) {
+      throw new TokenInvalidException("Mật khẩu không khớp");
+    }
+
+    // set new password
+    user.setPassword(passwordEncoder.encode(newPassword));
+    user.setResetKey(null);
+    user.setResetDate(null);
+
+    log.debug("Reset password Information for User: {}", user);
+    userRepository.save(user);
   }
 
   private ResLoginDTO convertUserToResLoginDTO(User loginUser) {

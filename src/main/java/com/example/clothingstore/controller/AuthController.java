@@ -1,7 +1,9 @@
 package com.example.clothingstore.controller;
 
+import com.example.clothingstore.domain.dto.request.auth.ReqEmailRecover;
 import com.example.clothingstore.domain.dto.request.auth.ReqLoginDTO;
 import com.example.clothingstore.domain.dto.request.auth.ReqRegisterDTO;
+import com.example.clothingstore.domain.dto.request.auth.ReqResetPassword;
 import com.example.clothingstore.domain.dto.response.auth.ResLoginDTO;
 import com.example.clothingstore.domain.dto.response.user.ResRegisterDTO;
 import com.example.clothingstore.service.AuthService;
@@ -117,7 +119,7 @@ public class AuthController {
 
   @GetMapping("auth/send-activation-email")
   @ApiMessage("Send activation email successfully")
-  public ResponseEntity<Void> sendActivationEmail(@RequestParam String email)
+  public ResponseEntity<Void> sendActivationEmail(@RequestParam("email") String email)
       throws EmailInvalidException {
     log.debug("REST request to send activation email: {}", email);
     authService.sendActivationEmail(email);
@@ -126,10 +128,29 @@ public class AuthController {
 
   @GetMapping("auth/activate")
   @ApiMessage("Activate account successfully")
-  public ResponseEntity<ResLoginDTO> activateAccount(@RequestParam String key)
+  public ResponseEntity<ResLoginDTO> activateAccount(@RequestParam("key") String key)
       throws TokenInvalidException {
     log.debug("REST request to activate account: {}", key);
     ResLoginDTO res = authService.activateAccount(key);
     return ResponseEntity.ok().body(res);
+  }
+
+  @PostMapping("auth/recover-password")
+  @ApiMessage("Sent recover password email successfully")
+  public ResponseEntity<Void> recoverPassword(@RequestBody @Valid ReqEmailRecover reqEmailRecover)
+      throws EmailInvalidException {
+    log.debug("REST request to recover password: {}", reqEmailRecover);
+    authService.recoverPassword(reqEmailRecover.getEmail());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("auth/reset-password")
+  @ApiMessage("Reset password successfully")
+  public ResponseEntity<Void> resetPassword(@RequestParam("key") String key,
+      @RequestBody @Valid ReqResetPassword reqResetPassword)
+      throws TokenInvalidException {
+    log.debug("REST request to reset password with key: {}", key);
+    authService.resetPassword(key, reqResetPassword.getNewPassword(), reqResetPassword.getConfirmPassword());
+    return ResponseEntity.ok().build();
   }
 }

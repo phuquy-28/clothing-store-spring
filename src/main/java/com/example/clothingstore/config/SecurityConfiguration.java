@@ -52,7 +52,8 @@ public class SecurityConfiguration {
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
     String[] whiteList = {"/", "/api/v1/auth/login", "/api/v1/auth/refresh",
         "/api/v1/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-        "/api/v1/auth/activate/**", "/api/v1/auth/send-activation-email/**"};
+        "/api/v1/auth/activate/**", "/api/v1/auth/send-activation-email/**",
+        "/api/v1/auth/recover-password", "/api/v1/auth/reset-password/**"};
 
     http.csrf(c -> c.disable()).cors(Customizer.withDefaults()).authorizeHttpRequests(
             authz -> authz.requestMatchers(whiteList).permitAll()

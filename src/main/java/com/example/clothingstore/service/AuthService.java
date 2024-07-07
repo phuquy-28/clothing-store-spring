@@ -20,4 +20,9 @@ public interface AuthService {
   void sendActivationEmail(String email) throws EmailInvalidException;
 
   ResLoginDTO refreshToken(String refreshToken) throws TokenInvalidException;
+
+  void recoverPassword(String email) throws EmailInvalidException;
+
+  void resetPassword(String key, String newPassword, String confirmPassword)
+      throws TokenInvalidException;
 }

@@ -7,7 +7,7 @@
 <h1>Welcome, <span th:text="${name}">User</span>!</h1>
 <p>Thank you for registering. Please click the link below to activate your account:</p>
 <p>
-  <a th:href="@{'http://localhost:8080/api/v1/auth/activate?key=' + ${activationKey}}">
+  <a th:href="@{'http://localhost:3000/auth/confirm-user?key=' + ${key}}">
     Activate your account
   </a>
 </p>
