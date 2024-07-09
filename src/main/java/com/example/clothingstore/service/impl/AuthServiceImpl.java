@@ -237,7 +237,7 @@ public class AuthServiceImpl implements AuthService {
         .orElseThrow(() -> new TokenInvalidException("Token không hợp lệ"));
 
     // check reset key is expired
-    if (user.getResetDate().isBefore(Instant.now().minusSeconds(60 * 30))) {
+    if (user.getResetDate().isBefore(Instant.now().minusSeconds(60 * 1))) {
       throw new TokenInvalidException("Token đã hết hạn, hãy taọ lại yêu cầu khôi phục mật khẩu");
     }
 

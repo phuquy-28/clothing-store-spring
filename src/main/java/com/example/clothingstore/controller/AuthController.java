@@ -135,7 +135,7 @@ public class AuthController {
     return ResponseEntity.ok().body(res);
   }
 
-  @PostMapping("auth/recover-password")
+  @PostMapping("auth/recovery-password")
   @ApiMessage("Sent recover password email successfully")
   public ResponseEntity<Void> recoverPassword(@RequestBody @Valid ReqEmailRecover reqEmailRecover)
       throws EmailInvalidException {
