@@ -1,25 +1,25 @@
 package com.example.clothingstore.service;
 
-import com.example.clothingstore.domain.dto.request.auth.ReqLoginDTO;
-import com.example.clothingstore.domain.dto.request.auth.ReqRegisterDTO;
-import com.example.clothingstore.domain.dto.response.auth.ResLoginDTO;
-import com.example.clothingstore.domain.dto.response.user.ResRegisterDTO;
-import com.example.clothingstore.utils.error.EmailInvalidException;
-import com.example.clothingstore.utils.error.TokenInvalidException;
+import com.example.clothingstore.dto.request.RegisterReqDTO;
+import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.response.LoginResDTO;
+import com.example.clothingstore.dto.response.RegisterResDTO;
+import com.example.clothingstore.exception.EmailInvalidException;
+import com.example.clothingstore.exception.TokenInvalidException;
 
 public interface AuthService {
 
-  ResRegisterDTO register(ReqRegisterDTO user) throws EmailInvalidException;
+  RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException;
 
-  ResLoginDTO login(ReqLoginDTO reqLoginDto);
+  LoginResDTO login(LoginReqDTO loginReqDto);
 
   void logout();
 
-  ResLoginDTO activateAccount(String key) throws TokenInvalidException;
+  LoginResDTO activateAccount(String key) throws TokenInvalidException;
 
   void sendActivationEmail(String email) throws EmailInvalidException;
 
-  ResLoginDTO refreshToken(String refreshToken) throws TokenInvalidException;
+  LoginResDTO refreshToken(String refreshToken) throws TokenInvalidException;
 
   void recoverPassword(String email) throws EmailInvalidException;
 

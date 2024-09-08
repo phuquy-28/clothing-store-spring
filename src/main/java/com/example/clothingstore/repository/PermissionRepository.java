@@ -1,6 +1,6 @@
 package com.example.clothingstore.repository;
 
-import com.example.clothingstore.domain.Permission;
+import com.example.clothingstore.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

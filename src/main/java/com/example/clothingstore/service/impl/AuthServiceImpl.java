@@ -1,33 +1,37 @@
 package com.example.clothingstore.service.impl;
 
-import com.example.clothingstore.domain.Customer;
-import com.example.clothingstore.domain.User;
-import com.example.clothingstore.domain.dto.request.auth.ReqLoginDTO;
-import com.example.clothingstore.domain.dto.request.auth.ReqRegisterDTO;
-import com.example.clothingstore.domain.dto.response.auth.ResLoginDTO;
-import com.example.clothingstore.domain.dto.response.user.ResRegisterDTO;
+import com.example.clothingstore.constant.AppConstant;
+import com.example.clothingstore.constant.ErrorMessage;
+import com.example.clothingstore.dto.request.RegisterReqDTO;
+import com.example.clothingstore.entity.Customer;
+import com.example.clothingstore.entity.User;
+import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.response.LoginResDTO;
+import com.example.clothingstore.dto.response.RegisterResDTO;
+import com.example.clothingstore.mapper.UserMapper;
 import com.example.clothingstore.repository.RoleRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.AuthService;
 import com.example.clothingstore.service.EmailService;
-import com.example.clothingstore.utils.RandomUtil;
-import com.example.clothingstore.utils.SecurityUtil;
-import com.example.clothingstore.utils.error.EmailInvalidException;
-import com.example.clothingstore.utils.error.TokenInvalidException;
-import com.example.clothingstore.utils.validate.EmailValidator;
+import com.example.clothingstore.service.UserService;
+import com.example.clothingstore.util.RandomUtil;
+import com.example.clothingstore.util.SecurityUtil;
+import com.example.clothingstore.exception.EmailInvalidException;
+import com.example.clothingstore.exception.TokenInvalidException;
 import java.time.Instant;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class AuthServiceImpl implements AuthService {
 
@@ -47,28 +51,13 @@ public class AuthServiceImpl implements AuthService {
 
   private final EmailService emailService;
 
-  public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
-      RoleRepository roleRepository, AuthenticationManagerBuilder authenticationManagerBuilder,
-      UserService userService, SecurityUtil securityUtil, EmailService emailService) {
-    this.userRepository = userRepository;
-    this.passwordEncoder = passwordEncoder;
-    this.roleRepository = roleRepository;
-    this.authenticationManagerBuilder = authenticationManagerBuilder;
-    this.userService = userService;
-    this.securityUtil = securityUtil;
-    this.emailService = emailService;
-  }
+  private final UserMapper userMapper;
 
   @Override
-  public ResRegisterDTO register(ReqRegisterDTO user) throws EmailInvalidException {
+  public RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException {
     // check email is already in use
     if (userRepository.findByEmail(user.getEmail()).isPresent()) {
       throw new EmailInvalidException("Email này đã được sử dụng");
-    }
-
-    // validate email
-    if (!EmailValidator.isValidEmail(user.getEmail())) {
-      throw new EmailInvalidException("Email không hợp lệ");
     }
 
     User newUser = new User();
@@ -77,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
     newUser.setPassword(passwordEncoder.encode(user.getPassword()));
 
     // set default role for new user
-    newUser.setRole(roleRepository.findByName("USER").orElse(null));
+    newUser.setRole(roleRepository.findByName(AppConstant.ROLE_USER).orElse(null));
 
     // generate activation key
     newUser.setActivationKey(RandomUtil.generateActivationKey());
@@ -97,43 +86,41 @@ public class AuthServiceImpl implements AuthService {
 
     log.debug("Created Information for User: {}", savedUser);
 
-    return ResRegisterDTO.builder().id(savedUser.getId()).email(savedUser.getEmail())
-        .firstName(savedUser.getCustomer().getFirstName())
-        .lastName(savedUser.getCustomer().getLastName()).build();
+    return userMapper.toRegisterResDTO(savedUser);
   }
 
   @Override
-  public ResLoginDTO login(ReqLoginDTO reqLoginDto) {
-    // Nạp input gồm username/password vào Security
+  public LoginResDTO login(LoginReqDTO loginReqDto) {
+    // Load input username/password into Security
     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-        reqLoginDto.getEmail(), reqLoginDto.getPassword());
+        loginReqDto.getEmail(), loginReqDto.getPassword());
 
-    // Thực hiện xác thực
+    // Authenticate
     Authentication authentication = authenticationManagerBuilder.getObject()
         .authenticate(authenticationToken);
-    SecurityContextHolder.getContext().setAuthentication(authentication);
+//    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    // Lấy thông tin user
-    User loginUser = userService.handleGetUserByUsername(reqLoginDto.getEmail());
+    // Get user information
+    User loginUser = userService.handleGetUserByUsername(loginReqDto.getEmail());
 
-    // Tạo response
-    ResLoginDTO resLoginDTO = convertUserToResLoginDTO(loginUser);
+    // Create response
+    LoginResDTO loginResDTO = convertUserToResLoginDTO(loginUser);
 
     if (loginUser.isActivated()) {
       // Tạo access token
-      String accessToken = securityUtil.createAccessToken(authentication.getName(), resLoginDTO);
-      resLoginDTO.setAccessToken(accessToken);
+      String accessToken = securityUtil.createAccessToken(loginUser, loginResDTO);
+      loginResDTO.setAccessToken(accessToken);
 
       // Tạo refresh token
-      String refreshToken = securityUtil.createRefreshToken(reqLoginDto.getEmail(), resLoginDTO);
-      resLoginDTO.setRefreshToken(refreshToken);
+      String refreshToken = securityUtil.createRefreshToken(loginReqDto.getEmail(), loginResDTO);
+      loginResDTO.setRefreshToken(refreshToken);
 
       userService.updateUserWithRefreshToken(loginUser, refreshToken);
     }
 
     log.debug("Login Information for User: {}", loginUser);
 
-    return resLoginDTO;
+    return loginResDTO;
   }
 
 
@@ -151,31 +138,31 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public ResLoginDTO activateAccount(String key) throws TokenInvalidException {
+  public LoginResDTO activateAccount(String key) throws TokenInvalidException {
     if (userRepository.findByActivationKey(key).isPresent()) {
       User user = userRepository.findByActivationKey(key).get();
       user.setActivated(true);
       user.setActivationKey(null);
       User savedUser = userRepository.save(user);
 
-      ResLoginDTO resLoginDTO = convertUserToResLoginDTO(savedUser);
+      LoginResDTO loginResDTO = convertUserToResLoginDTO(savedUser);
 
       if (savedUser.isActivated()) {
         // Tạo access token
-        String accessToken = securityUtil.createAccessToken(savedUser.getEmail(), resLoginDTO);
-        resLoginDTO.setAccessToken(accessToken);
+        String accessToken = securityUtil.createAccessToken(savedUser, loginResDTO);
+        loginResDTO.setAccessToken(accessToken);
 
         // Tạo refresh token
-        String refreshToken = securityUtil.createRefreshToken(savedUser.getEmail(), resLoginDTO);
-        resLoginDTO.setRefreshToken(refreshToken);
+        String refreshToken = securityUtil.createRefreshToken(savedUser.getEmail(), loginResDTO);
+        loginResDTO.setRefreshToken(refreshToken);
 
         userService.updateUserWithRefreshToken(savedUser, refreshToken);
       }
 
       log.debug("Activated Information for User: {}", savedUser);
-      return resLoginDTO;
+      return loginResDTO;
     } else {
-      throw new TokenInvalidException("Activation key is invalid");
+      throw new TokenInvalidException(ErrorMessage.ACTIVATION_TOKEN_INVALID);
     }
   }
 
@@ -185,39 +172,39 @@ public class AuthServiceImpl implements AuthService {
       User user = userRepository.findByEmail(email).get();
       emailService.sendActivationEmail(user);
     } else {
-      throw new EmailInvalidException("Email is invalid");
+      throw new EmailInvalidException(ErrorMessage.EMAIL_INVALID);
     }
   }
 
   @Override
-  public ResLoginDTO refreshToken(String refreshToken) throws TokenInvalidException {
+  public LoginResDTO refreshToken(String refreshToken) throws TokenInvalidException {
     Jwt jwt = securityUtil.jwtDecoder(refreshToken);
 
     String email = jwt.getSubject();
 
     // check exist user with email and refresh token
     User loginUser = userRepository.findByEmailAndRefreshToken(email, refreshToken)
-        .orElseThrow(() -> new TokenInvalidException("Invalid refresh token"));
+        .orElseThrow(() -> new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID));
 
     // Tạo response
-    ResLoginDTO resLoginDTO = convertUserToResLoginDTO(loginUser);
+    LoginResDTO loginResDTO = convertUserToResLoginDTO(loginUser);
 
     // Tạo access token
-    String accessToken = securityUtil.createAccessToken(email, resLoginDTO);
-    resLoginDTO.setAccessToken(accessToken);
+    String accessToken = securityUtil.createAccessToken(loginUser, loginResDTO);
+    loginResDTO.setAccessToken(accessToken);
 
     // Tạo refresh token
-    String newRefreshToken = securityUtil.createRefreshToken(email, resLoginDTO);
+    String newRefreshToken = securityUtil.createRefreshToken(email, loginResDTO);
     userService.updateUserWithRefreshToken(loginUser, newRefreshToken);
 
-    return resLoginDTO;
+    return loginResDTO;
   }
 
   @Override
   public void recoverPassword(String email) throws EmailInvalidException {
     // check exist user with email
     User user = userRepository.findByEmailAndActivatedTrue(email)
-        .orElseThrow(() -> new EmailInvalidException("Email is invalid"));
+        .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
 
     // generate reset key and reset date
     user.setResetKey(RandomUtil.generateResetKey());
@@ -234,16 +221,16 @@ public class AuthServiceImpl implements AuthService {
       throws TokenInvalidException {
     // check exist user with reset key
     User user = userRepository.findByResetKey(key)
-        .orElseThrow(() -> new TokenInvalidException("Token không hợp lệ"));
+        .orElseThrow(() -> new TokenInvalidException(ErrorMessage.RESET_TOKEN_INVALID));
 
     // check reset key is expired
-    if (user.getResetDate().isBefore(Instant.now().minusSeconds(60 * 1))) {
-      throw new TokenInvalidException("Token đã hết hạn, hãy taọ lại yêu cầu khôi phục mật khẩu");
+    if (user.getResetDate().isBefore(Instant.now().minusSeconds(60 * 15))) {
+      throw new TokenInvalidException(ErrorMessage.RESET_TOKEN_INVALID);
     }
 
     // check new password and confirm password
     if (!newPassword.equals(confirmPassword)) {
-      throw new TokenInvalidException("Mật khẩu không khớp");
+      throw new TokenInvalidException(ErrorMessage.PASSWORD_NOT_MATCH);
     }
 
     // set new password
@@ -255,8 +242,8 @@ public class AuthServiceImpl implements AuthService {
     userRepository.save(user);
   }
 
-  private ResLoginDTO convertUserToResLoginDTO(User loginUser) {
-    ResLoginDTO.ResUser resUser = new ResLoginDTO.ResUser();
+  private LoginResDTO convertUserToResLoginDTO(User loginUser) {
+    LoginResDTO.ResUser resUser = new LoginResDTO.ResUser();
     resUser.setId(loginUser.getId());
     resUser.setEmail(loginUser.getEmail());
     if (loginUser.getCustomer() != null) {
@@ -265,16 +252,16 @@ public class AuthServiceImpl implements AuthService {
     }
     resUser.setActivated(loginUser.isActivated());
     // role is optional
-    ResLoginDTO.RoleUser roleUser = new ResLoginDTO.RoleUser();
+    LoginResDTO.RoleUser roleUser = new LoginResDTO.RoleUser();
     if (loginUser.getRole() != null) {
       roleUser.setId(loginUser.getRole().getId());
       roleUser.setName(loginUser.getRole().getName());
       resUser.setRole(roleUser);
     }
 
-    // Tạo response
-    ResLoginDTO resLoginDTO = new ResLoginDTO();
-    resLoginDTO.setUser(resUser);
-    return resLoginDTO;
+    // create response
+    LoginResDTO loginResDTO = new LoginResDTO();
+    loginResDTO.setUser(resUser);
+    return loginResDTO;
   }
 }
