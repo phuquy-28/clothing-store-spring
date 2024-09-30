@@ -1,5 +1,6 @@
 package com.example.clothingstore.exception;
 
+import com.example.clothingstore.config.Translator;
 import com.example.clothingstore.dto.response.RestResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class GlobalException {
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
     res.setError("Exception occurs...");
-    res.setMessage(idException.getMessage());
+    res.setMessage(Translator.toLocale(idException.getMessage()));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
   }
 

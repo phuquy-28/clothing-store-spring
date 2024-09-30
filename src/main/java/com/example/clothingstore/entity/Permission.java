@@ -20,13 +20,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Permission extends AbstractEntity {
 
-  @NotBlank(message = "Permission name cannot be blank")
   private String name;
 
-  @NotBlank(message = "API path cannot be blank")
   private String apiPath;
 
-  @NotBlank(message = "Method cannot be blank")
   private String method;
 
   public Permission(String name, String apiPath, String method) {

@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,6 +27,9 @@ public class EmailServiceImpl implements EmailService {
   private final JavaMailSender javaMailSender;
 
   private final SpringTemplateEngine templateEngine;
+
+  @Value("${cors.allowed-origins}")
+  private String baseUrl;
 
   public void sendEmailSync(String to, String subject, String content, boolean isMultipart,
       boolean isHtml) {
@@ -49,6 +53,7 @@ public class EmailServiceImpl implements EmailService {
     Context context = new Context();
     context.setVariable("name", username);
     context.setVariable("key", key);
+    context.setVariable("baseUrl", baseUrl);
 
     String content = templateEngine.process(templateName, context);
     this.sendEmailSync(to, subject, content, false, true);

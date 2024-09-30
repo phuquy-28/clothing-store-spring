@@ -3,7 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
-import com.example.clothingstore.entity.Customer;
+import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
   public RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException {
     // check email is already in use
     if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-      throw new EmailInvalidException("Email này đã được sử dụng");
+      throw new EmailInvalidException(ErrorMessage.EMAIL_EXISTED);
     }
 
     User newUser = new User();
@@ -72,15 +72,15 @@ public class AuthServiceImpl implements AuthService {
     newUser.setActivationKey(RandomUtil.generateActivationKey());
 
     // firstName and lastName are optional
-    Customer customer = new Customer();
+    Profile profile = new Profile();
     if (user.getFirstName() != null) {
-      customer.setFirstName(user.getFirstName());
+      profile.setFirstName(user.getFirstName());
     }
     if (user.getLastName() != null) {
-      customer.setLastName(user.getLastName());
+      profile.setLastName(user.getLastName());
     }
 
-    newUser.setCustomer(customer);
+    newUser.setProfile(profile);
 
     User savedUser = userRepository.save(newUser);
 
@@ -98,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
     // Authenticate
     Authentication authentication = authenticationManagerBuilder.getObject()
         .authenticate(authenticationToken);
-//    SecurityContextHolder.getContext().setAuthentication(authentication);
+    // SecurityContextHolder.getContext().setAuthentication(authentication);
 
     // Get user information
     User loginUser = userService.handleGetUserByUsername(loginReqDto.getEmail());
@@ -123,13 +123,11 @@ public class AuthServiceImpl implements AuthService {
     return loginResDTO;
   }
 
-
   @Override
   public void logout() {
     // get email
-    String email =
-        SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get()
-            : null;
+    String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get()
+        : null;
     // get user
     User currentUserDB = userService.handleGetUserByUsername(email);
     // update user with refresh token
@@ -196,6 +194,7 @@ public class AuthServiceImpl implements AuthService {
     // Tạo refresh token
     String newRefreshToken = securityUtil.createRefreshToken(email, loginResDTO);
     userService.updateUserWithRefreshToken(loginUser, newRefreshToken);
+    loginResDTO.setRefreshToken(newRefreshToken);
 
     return loginResDTO;
   }
@@ -205,6 +204,12 @@ public class AuthServiceImpl implements AuthService {
     // check exist user with email
     User user = userRepository.findByEmailAndActivatedTrue(email)
         .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
+
+    // check if the last password recovery request has expired (10 minutes)
+    if (user.getResetDate() != null && 
+        user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 10))) {
+      throw new EmailInvalidException(ErrorMessage.PASSWORD_RECOVERY_TOO_FREQUENT);
+    }
 
     // generate reset key and reset date
     user.setResetKey(RandomUtil.generateResetKey());
@@ -246,9 +251,9 @@ public class AuthServiceImpl implements AuthService {
     LoginResDTO.ResUser resUser = new LoginResDTO.ResUser();
     resUser.setId(loginUser.getId());
     resUser.setEmail(loginUser.getEmail());
-    if (loginUser.getCustomer() != null) {
-      resUser.setFirstName(loginUser.getCustomer().getFirstName());
-      resUser.setLastName(loginUser.getCustomer().getLastName());
+    if (loginUser.getProfile() != null) {
+      resUser.setFirstName(loginUser.getProfile().getFirstName());
+      resUser.setLastName(loginUser.getProfile().getLastName());
     }
     resUser.setActivated(loginUser.isActivated());
     // role is optional

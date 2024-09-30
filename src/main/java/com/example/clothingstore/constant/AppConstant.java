@@ -1,17 +1,20 @@
 package com.example.clothingstore.constant;
 
-public interface AppConstant {
+public final class AppConstant {
 
-  String ROLE_USER = "USER";
-  String ROLE_ADMIN = "ADMIN";
+  public static final String ROLE_USER = "USER";
+  public static final String ROLE_ADMIN = "ADMIN";
 
   // JWT
-  Long REFRESH_TOKEN_COOKIE_EXPIRE = 30L * 24 * 60 * 60;
-  Long COOKIE_INVALID_EXPIRE = 0L;
+  public static final Long REFRESH_TOKEN_COOKIE_EXPIRE = 30L * 24 * 60 * 60;
+  public static final Long COOKIE_INVALID_EXPIRE = 0L;
 
-  String REFRESH_TOKEN_COOKIE_NAME = "refresh-token";
-  String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
-  String RECOVER_PASSWORD_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
-  String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
-  String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh-token";
+  public static final String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
+  public static final String RECOVER_PASSWORD_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
+  public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
+  public static final String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
+
+  private AppConstant() {
+  }
 }

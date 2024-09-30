@@ -11,31 +11,30 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "customers")
-@ToString(exclude = {"user"})
+@Table(name = "profiles")
+@ToString(exclude = { "user" })
 @AllArgsConstructor
 @NoArgsConstructor
-public class Customer extends AbstractEntity {
+public class Profile extends AbstractEntity {
 
   private String firstName;
 
   private String lastName;
 
+  private Instant birthDate;
+
   private String phoneNumber;
 
-  @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "address_id")
-  private Address address;
-
-  @OneToOne(mappedBy = "customer")
+  @OneToOne(mappedBy = "profile")
   @JsonIgnore
   private User user;
 
-  public Customer(String firstName, String lastName) {
+  public Profile(String firstName, String lastName) {
     this.firstName = firstName;
     this.lastName = lastName;
   }

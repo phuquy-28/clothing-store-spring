@@ -10,6 +10,6 @@ public interface UrlConfig {
   String REFRESH = "/refresh";
   String SEND_ACTIVATION_EMAIL = "/send-activation-email";
   String ACTIVATE = "/activate";
-  String RECOVERY_PASSWORD = "/recovery-password";
+  String RECOVER_PASSWORD = "/recover-password";
   String RESET_PASSWORD = "/reset-password";
 }

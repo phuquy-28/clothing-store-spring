@@ -1,7 +1,6 @@
 package com.example.clothingstore.config;
 
-import com.example.clothingstore.entity.Address;
-import com.example.clothingstore.entity.Customer;
+import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.Permission;
 import com.example.clothingstore.entity.Role;
 import com.example.clothingstore.entity.User;
@@ -65,13 +64,9 @@ public class DatabaseInitializer implements CommandLineRunner {
         adminUser.setRole(adminRole);
       }
 
-      // create customer
-      Customer customer = new Customer("Admin", "Admin");
-      adminUser.setCustomer(customer);
-
-      // create address
-      Address address = new Address("76/3 Linh Trung, Thu Duc", "Ho Chi Minh", "South", customer);
-      customer.setAddress(address);
+      // create profile
+      Profile profile = new Profile("Admin", "Admin");
+      adminUser.setProfile(profile);
 
       this.userRepository.save(adminUser);
     }

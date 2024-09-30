@@ -1,0 +1,67 @@
+@startuml
+!define FONTSIZE 30
+!define LINEWRAP 60
+
+skinparam defaultFontSize $FONTSIZE
+skinparam wrapWidth $LINEWRAP
+
+actor "Client" as client
+participant "AuthController" as controller
+participant "AuthService" as service
+participant "UserRepository" as repo
+participant "User" as user
+participant "Customer" as customer
+database "Database" as db
+
+client -> controller: POST /register (RegisterReqDTO)
+activate controller
+
+controller -> service: register(RegisterReqDTO)
+activate service
+
+service -> repo: findByEmail(email)
+activate repo
+repo -> db: SELECT
+activate db
+db --> repo: result
+deactivate db
+repo --> service: Optional<User>
+deactivate repo
+
+alt email already exists
+    service --> controller: throw EmailInvalidException
+    controller --> client: 400 Bad Request
+else email not in use
+    service -> user: new User()
+    activate user
+    user --> service: User
+    deactivate user
+
+    service -> customer: new Customer()
+    activate customer
+    customer --> service: Customer
+    deactivate customer
+
+    service -> user: setCustomer(Customer)
+    service -> user: setPassword(encodedPassword)
+    service -> user: setRole(ROLE_USER)
+    service -> user: setActivationKey(\nRandomUtil.generateActivationKey())
+
+    service -> repo: save(User)
+    activate repo
+    repo -> db: INSERT
+    activate db
+    db --> repo: saved User
+    deactivate db
+    repo --> service: saved User
+    deactivate repo
+
+    service -> service: convertToRegisterResDTO(User)
+    service --> controller: RegisterResDTO
+end
+
+controller --> client: 201 Created (RegisterResDTO)
+deactivate service
+deactivate controller
+
+@enduml

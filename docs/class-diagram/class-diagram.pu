@@ -1,0 +1,169 @@
+@startuml
+
+' Cấu hình chung
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+' Định nghĩa kiểu cho đối tượng
+skinparam object {
+  BorderColor Black
+  BackgroundColor LightBlue
+  ArrowColor Black
+  FontName Arial
+  FontSize 14
+  FontStyle bold
+}
+
+' Sử dụng layout smetana
+!pragma layout smetana
+
+' Nhóm các đối tượng liên quan
+together {
+  object User
+  object Profile
+  User -- Profile
+}
+
+together {
+  object Product
+  object ProductVariant
+  Product -- ProductVariant
+}
+
+' Các đối tượng và mối quan hệ khác
+User -- Product
+
+' Định nghĩa các đối tượng
+object "<b>Permission</b>" as Permission {
+  -Id: long
+  -name: string  
+  -uri: string
+  -path: string
+}
+
+object "<b>Role</b>" as Role {
+  -Id: long
+  -permissions: List<Permission>
+  -name: string
+}
+
+object "<b>Profile</b>" as Profile {
+  -Id: long
+  -firstName: string
+  -lastName: string
+  -birthday: Date
+  -phoneNumber: string
+}
+
+object "<b>ShippingProfile</b>" as ShippingProfile {
+  -Id: long
+  -firstName: string
+  -lastName: string
+  -city: string
+  -country: string
+  -phoneNumber: string
+}
+
+object "<b>User</b>" as User {
+  -Id: long
+  -profile: Profile
+  -role: Role
+  -password: string
+  -email: string
+  -shippingProfiles: List<ShippingProfile>
+}
+
+object "<b>Review</b>" as Review {
+  -Id: Long
+  -content: String
+  -product: Product
+  -user: User
+}
+
+object "<b>Cart</b>" as Cart {
+  -Id: long
+  -lines: List<LineItem>
+  +getTotal(): double
+}
+
+object "<b>Invoice</b>" as Invoice {
+  -Id: long
+  -orderDate: datetime
+  -user: User
+  -shippingInfor: ShippingProfile
+  -note: string
+  -lines: List<LineItem>
+  -total: double
+  -shippingFee: double
+  -discountInvoice: double
+  -status: String
+  -payDate: datetime
+}
+
+object "<b>LineItem</b>" as LineItem {
+  -Id: Long
+  -product: ProductVariant
+  -quantity: int
+  -priceAtPurchase: double
+  -discountAtPurchase: double
+  -amountAtPurchase: double
+  +getCurrentAmount(): double
+}
+
+object "<b>ProductVariant</b>" as ProductVariant {
+  -Id: long
+  -product: Product
+  -size: String
+  -color: String
+}
+
+object "<b>Product</b>" as Product {
+  -Id: long
+  -categories: List<Category>
+  -name: string
+  -description: string
+  -price: double
+  -imageUrl: List<String>
+}
+
+object "<b>Category</b>" as Category {
+  -Id: long
+  -name: string
+}
+
+object "<b>Inventory</b>" as Inventory {
+  -Id: long
+  -quantityInStock: long
+  -product: ProductVariant
+}
+
+object "<b>Promotion</b>" as Promotion {
+  -Id: long
+  -name: string
+  -discountRate: double
+  -endDate: Date
+  -startDate: Date
+}
+
+Role "1" *-- "1..*" Permission
+User "1" *-- "1" Profile
+User "1" *-- "1" Role
+User "1" *-- "0..*" ShippingProfile
+User "1" -- "0..*" Review
+User "1" -- "1" Cart
+Cart "1" *-- "0..*" LineItem
+Invoice "1" *-- "1..*" LineItem
+Invoice "1" -- "1" User
+Invoice "1" -- "1" ShippingProfile
+LineItem "0..*" -- "1" ProductVariant
+ProductVariant "1..*" -- "1" Product
+Product "1..*" -- "1..*" Category
+Inventory "1" -- "1" ProductVariant
+Product "1..*" -- "1..*" Promotion
+Review "0..*" -- "1" Product
+
+@enduml

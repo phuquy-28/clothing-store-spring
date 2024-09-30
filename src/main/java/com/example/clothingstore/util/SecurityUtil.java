@@ -1,6 +1,7 @@
 package com.example.clothingstore.util;
 
 
+import com.example.clothingstore.constant.AuthoritiesConstant;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.LoginResDTO.UserInsideToken;
 import com.example.clothingstore.entity.User;
@@ -8,13 +9,14 @@ import com.nimbusds.jose.util.Base64;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,7 +27,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -123,16 +124,37 @@ public class SecurityUtil {
     return null;
   }
 
-  /**
-   * Get the JWT of the current user.
-   *
-   * @return the JWT of the current user.
-   */
   public static Optional<String> getCurrentUserJWT() {
     SecurityContext securityContext = SecurityContextHolder.getContext();
     return Optional.ofNullable(securityContext.getAuthentication())
         .filter(authentication -> authentication.getCredentials() instanceof String)
         .map(authentication -> (String) authentication.getCredentials());
+  }
+
+  public static boolean isAuthenticated() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null && getAuthorities(authentication).noneMatch(
+        AuthoritiesConstant.ANONYMOUS::equals);
+  }
+
+  public static boolean hasCurrentUserAnyOfAuthorities(String... authorities) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return (
+        authentication != null && getAuthorities(authentication).anyMatch(
+            authority -> Arrays.asList(authorities).contains(authority))
+    );
+  }
+
+  public static boolean hasCurrentUserNoneOfAuthorities(String... authorities) {
+    return !hasCurrentUserAnyOfAuthorities(authorities);
+  }
+
+  public static boolean hasCurrentUserThisAuthority(String authority) {
+    return hasCurrentUserAnyOfAuthorities(authority);
+  }
+
+  private static Stream<String> getAuthorities(Authentication authentication) {
+    return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority);
   }
 
   private String buildScope(User user) {

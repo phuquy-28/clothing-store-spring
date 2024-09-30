@@ -27,10 +27,8 @@ import lombok.ToString;
 @NoArgsConstructor
 public class User extends AbstractEntity {
 
-  @NotBlank(message = "Email cannot be blank")
   private String email;
 
-  @NotBlank(message = "Password cannot be blank")
   private String password;
 
   @ManyToOne
@@ -38,8 +36,8 @@ public class User extends AbstractEntity {
   private Role role;
 
   @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "customer_id")
-  private Customer customer;
+  @JoinColumn(name = "profile_id")
+  private Profile profile;
 
   @Column(columnDefinition = "MEDIUMTEXT")
   private String refreshToken;

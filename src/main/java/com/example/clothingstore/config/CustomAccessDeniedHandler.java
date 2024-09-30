@@ -27,7 +27,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     RestResponse<Object> restResponse = new RestResponse<>();
     restResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
     restResponse.setError("Access Denied");
-    restResponse.setMessage(ErrorMessage.ACCESS_DENIED);
+    restResponse.setMessage(Translator.toLocale(ErrorMessage.ACCESS_DENIED));
 
     response.setStatus(HttpStatus.FORBIDDEN.value());
     response.setContentType("application/json;charset=UTF-8");

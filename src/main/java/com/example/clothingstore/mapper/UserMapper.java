@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-  @Mapping(source = "customer.firstName", target = "firstName")
-  @Mapping(source = "customer.lastName", target = "lastName")
+  @Mapping(source = "profile.firstName", target = "firstName")
+  @Mapping(source = "profile.lastName", target = "lastName")
   RegisterResDTO toRegisterResDTO(User user);
 }

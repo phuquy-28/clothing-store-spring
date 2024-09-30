@@ -1,14 +1,27 @@
+### Project-specific ###
 HELP.md
+/src/main/resources/config/
+/logs/
+
+### Build and Dependency Management ###
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-/src/main/resources/application.properties
-/src/main/resources/application.yml
 
+### Compiled output ###
+bin/
+out/
+target/
+dist/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
-### STS ###
+### IDE-specific files ###
+# Eclipse / STS
 .apt_generated
 .classpath
 .factorypath
@@ -16,25 +29,25 @@ build/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
+
+### Generated sources ###
+.apt_generated/
+.apt_generated_test/
+
+### Miscellaneous ###
+*.log

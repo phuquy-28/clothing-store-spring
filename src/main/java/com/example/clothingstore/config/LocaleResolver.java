@@ -15,6 +15,11 @@ public class LocaleResolver extends AcceptHeaderLocaleResolver implements WebMvc
 
   @Override
   public Locale resolveLocale(HttpServletRequest request) {
+    String langParam = request.getParameter("lang");
+    if (langParam != null && !langParam.isEmpty()) {
+      return new Locale(langParam);
+    }
+
     String language = request.getHeader("Accept-Language");
     return language == null || language.isEmpty() ? new Locale("vi")
         : Locale.lookup(Locale.LanguageRange.parse(language),

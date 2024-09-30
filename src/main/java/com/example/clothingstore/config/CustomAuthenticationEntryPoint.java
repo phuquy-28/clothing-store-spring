@@ -39,7 +39,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         .orElse(authException.getMessage());
     res.setError(errorMessage);
 
-    res.setMessage(ErrorMessage.ACCESS_TOKEN_INVALID);
+    res.setMessage(Translator.toLocale(ErrorMessage.ACCESS_TOKEN_INVALID));
 
     mapper.writeValue(response.getWriter(), res);
   }

@@ -117,7 +117,7 @@ public class AuthController {
     return ResponseEntity.ok().body(res);
   }
 
-  @PostMapping(UrlConfig.AUTH + UrlConfig.RECOVERY_PASSWORD)
+  @PostMapping(UrlConfig.AUTH + UrlConfig.RECOVER_PASSWORD)
   public ResponseEntity<Void> recoverPassword(@RequestBody @Valid ReqEmailRecover reqEmailRecover)
       throws EmailInvalidException {
     log.debug("REST request to recover password: {}", reqEmailRecover);
