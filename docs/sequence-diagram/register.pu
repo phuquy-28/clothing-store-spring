@@ -1,67 +1,126 @@
 @startuml
-!define FONTSIZE 30
-!define LINEWRAP 60
 
-skinparam defaultFontSize $FONTSIZE
-skinparam wrapWidth $LINEWRAP
+' General configuration
+skinparam defaultFontSize 30
+skinparam maxMessageSize 10
 
-actor "Client" as client
-participant "AuthController" as controller
-participant "AuthService" as service
-participant "UserRepository" as repo
-participant "User" as user
-participant "Customer" as customer
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "HomePage" as homePage
+boundary "SignupPage" as signupPage
+control "AuthController" as controller
+control "AuthService" as service
+entity "User" as user
+control "EmailService" as emailService
+control "UserRepository" as repo
 database "Database" as db
 
-client -> controller: POST /register (RegisterReqDTO)
+' Start processing flow
+activate actor
+actor -> signupPage: input(firstName, lastName, email, password)
+activate signupPage
+
+signupPage -> controller: register(dto)
 activate controller
 
-controller -> service: register(RegisterReqDTO)
+controller -> service: register(dto)
 activate service
 
 service -> repo: findByEmail(email)
 activate repo
-repo -> db: SELECT
+repo -> db: findByEmail(email)
 activate db
-db --> repo: result
+db --> repo: return(user)
 deactivate db
-repo --> service: Optional<User>
+repo --> service: return(user)
 deactivate repo
 
-alt email already exists
-    service --> controller: throw EmailInvalidException
-    controller --> client: 400 Bad Request
-else email not in use
-    service -> user: new User()
+alt email not found
+    service -> user: new User(dto)
     activate user
-    user --> service: User
+    user --> service: user
     deactivate user
-
-    service -> customer: new Customer()
-    activate customer
-    customer --> service: Customer
-    deactivate customer
-
-    service -> user: setCustomer(Customer)
-    service -> user: setPassword(encodedPassword)
-    service -> user: setRole(ROLE_USER)
-    service -> user: setActivationKey(\nRandomUtil.generateActivationKey())
-
-    service -> repo: save(User)
+    
+    service -> repo: save(user)
     activate repo
-    repo -> db: INSERT
+    repo -> db: save(user)
     activate db
-    db --> repo: saved User
+    db --> repo: return(user)
     deactivate db
-    repo --> service: saved User
+    repo --> service: return(user)
     deactivate repo
-
-    service -> service: convertToRegisterResDTO(User)
-    service --> controller: RegisterResDTO
+    
+    service -> emailService: sendActivation(user)
+    activate emailService
+    emailService -> emailService: sendEmail()
+    emailService --> service: return()
+    deactivate emailService
+    
+    service --> controller: return(dto)
+    controller --> signupPage: return(dto)
+    signupPage --> actor: message("Email sent")
+    
+    actor -> actor: checkEmail()
+    actor -> signupPage: activate(key)
+    signupPage -> controller: activate(key)
+    controller -> service: activate(key)
+    service -> repo: findByKey(key)
+    activate repo
+    repo -> db: findByKey(key)
+    activate db
+    db --> repo: return(user)
+    deactivate db
+    repo --> service: return(user)
+    deactivate repo
+    service -> service: setActive(user)
+    service -> repo: save(user)
+    activate repo
+    repo -> db: save(user)
+    activate db
+    db --> repo: return(user)
+    deactivate db
+    repo --> service: return(user)
+    deactivate repo
+    service --> controller: return(dto)
+    controller --> signupPage: return(dto)
+    signupPage --> homePage: navigate()
+    activate homePage
+    homePage --> actor: message("Register success")
+    deactivate homePage
+else email found
+    service --> controller: throwException()
+    deactivate service
+    controller --> signupPage: return(dto)
+    deactivate controller
+    signupPage --> actor: message("Email already exists")
+    deactivate signupPage
+    deactivate actor
 end
 
-controller --> client: 201 Created (RegisterResDTO)
-deactivate service
-deactivate controller
 
-@enduml
+hide footbox
+@enduml 

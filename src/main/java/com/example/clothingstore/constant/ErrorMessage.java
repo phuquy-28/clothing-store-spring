@@ -12,6 +12,10 @@ public final class ErrorMessage {
   public static final String USERNAME_OR_PASSWORD_INVALID = "error.username_or_password.invalid";
   public static final String EMAIL_EXISTED = "error.email.existed";
   public static final String PASSWORD_RECOVERY_TOO_FREQUENT = "error.password_recovery.too_frequent";
+  public static final String CATEGORY_ALREADY_EXISTS = "error.category.already_exists";
+  public static final String CATEGORY_NOT_FOUND = "error.category.not_found";
+  public static final String ID_CANNOT_BE_NULL = "error.id.cannot_be_null";
+  public static final String USER_NOT_FOUND = "error.user.not_found";
 
   private ErrorMessage() {
   }

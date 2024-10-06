@@ -1,0 +1,99 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "LoginPage" as loginPage
+boundary "HomePage" as homePage
+control "AuthController" as controller
+control "AuthService" as service
+control "UserService" as userService
+control "SecurityUtil" as securityUtil
+database "Database" as db
+
+' Start processing flow
+activate actor
+actor -> loginPage: input(email, password)
+activate loginPage
+
+loginPage -> controller: login(dto)
+activate controller
+
+controller -> service: login(dto)
+activate service
+
+service -> userService: getUser(email)
+activate userService
+userService -> db: findByEmail(email)
+activate db
+db --> userService: return(user)
+deactivate db
+userService --> service: return(user)
+deactivate userService
+
+alt user found and credentials valid
+    service -> securityUtil: createAccessToken(user)
+    activate securityUtil
+    securityUtil --> service: return(accessToken)
+    deactivate securityUtil
+    
+    service -> securityUtil: createRefreshToken(user)
+    activate securityUtil
+    securityUtil --> service: return(refreshToken)
+    deactivate securityUtil
+    
+    service -> userService: updateRefreshToken(user, refreshToken)
+    activate userService
+    userService -> db: save(user)
+    activate db
+    db --> userService: return(user)
+    deactivate db
+    userService --> service: return(user)
+    deactivate userService
+    
+    service --> controller: return(dto)
+    controller --> loginPage: return(dto)
+    loginPage --> homePage: navigate()
+    activate homePage
+    homePage --> actor: display(homePage)
+    deactivate homePage
+else user not found or invalid credentials
+    service --> controller: throwException()
+    deactivate service
+    controller --> loginPage: return(error)
+    deactivate controller
+    loginPage --> actor: display("Invalid credentials")
+    deactivate loginPage
+    deactivate actor
+end
+
+hide footbox
+@enduml

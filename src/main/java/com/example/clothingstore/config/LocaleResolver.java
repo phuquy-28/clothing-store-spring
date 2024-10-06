@@ -19,11 +19,12 @@ public class LocaleResolver extends AcceptHeaderLocaleResolver implements WebMvc
     if (langParam != null && !langParam.isEmpty()) {
       return new Locale(langParam);
     }
+    return new Locale("vi");
 
-    String language = request.getHeader("Accept-Language");
-    return language == null || language.isEmpty() ? new Locale("vi")
-        : Locale.lookup(Locale.LanguageRange.parse(language),
-            List.of(new Locale("en"), new Locale("vi")));
+    // String language = request.getHeader("Accept-Language");
+    // return language == null || language.isEmpty() ? new Locale("vi")
+    // : Locale.lookup(Locale.LanguageRange.parse(language),
+    // List.of(new Locale("en"), new Locale("vi")));
   }
 
   @Bean

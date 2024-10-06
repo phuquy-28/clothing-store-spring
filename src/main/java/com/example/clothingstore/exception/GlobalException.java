@@ -22,7 +22,8 @@ public class GlobalException {
   @ExceptionHandler(value = Exception.class)
   public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
     if (ex instanceof AccessDeniedException) {
-      throw (AccessDeniedException) ex; // Re-throw AccessDeniedException to be handled by CustomAccessDeniedHandler
+      throw (AccessDeniedException) ex; // Re-throw AccessDeniedException to be handled by
+                                        // CustomAccessDeniedHandler
     }
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -31,14 +32,10 @@ public class GlobalException {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
   }
 
-  @ExceptionHandler(value = {
-      UsernameNotFoundException.class,
-      BadCredentialsException.class,
-      IdInvalidException.class,
-      EmailInvalidException.class,
-      TokenInvalidException.class,
-      MissingRequestCookieException.class,
-  })
+  @ExceptionHandler(value = {UsernameNotFoundException.class, BadCredentialsException.class,
+      IdInvalidException.class, EmailInvalidException.class, TokenInvalidException.class,
+      MissingRequestCookieException.class, ResourceNotFoundException.class,
+      ResourceAlreadyExistException.class})
   public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -47,7 +44,7 @@ public class GlobalException {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
   }
 
-  //NoResourceFoundException
+  // NoResourceFoundException
   @ExceptionHandler(value = NoResourceFoundException.class)
   public ResponseEntity<RestResponse<Object>> handleNoResourceFoundException(
       NoResourceFoundException e) {
@@ -67,8 +64,8 @@ public class GlobalException {
     responseEntity.setStatusCode(HttpStatus.BAD_REQUEST.value());
     responseEntity.setError(e.getBody().getDetail());
 
-    List<String> errors = fieldErrors.stream().map(fieldError -> fieldError.getDefaultMessage())
-        .toList();
+    List<String> errors =
+        fieldErrors.stream().map(fieldError -> fieldError.getDefaultMessage()).toList();
     responseEntity.setMessage(errors.size() > 1 ? errors : errors.get(0));
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseEntity);

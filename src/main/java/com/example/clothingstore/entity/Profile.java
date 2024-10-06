@@ -1,9 +1,10 @@
 package com.example.clothingstore.entity;
 
+import com.example.clothingstore.enumeration.Gender;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -11,7 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.time.Instant;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -26,9 +28,12 @@ public class Profile extends AbstractEntity {
 
   private String lastName;
 
-  private Instant birthDate;
+  private LocalDate birthDate;
 
   private String phoneNumber;
+
+  @Enumerated(EnumType.STRING)
+  private Gender gender;
 
   @OneToOne(mappedBy = "profile")
   @JsonIgnore

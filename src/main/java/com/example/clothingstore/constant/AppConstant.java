@@ -15,6 +15,8 @@ public final class AppConstant {
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
   public static final String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
 
+  public static final String SIMPLE_DATE_FORMAT = "dd/MM/yyyy";
+
   private AppConstant() {
   }
 }
