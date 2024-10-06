@@ -6,7 +6,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: ${SHOW_SQL:false}
-    database-platform: org.hibernate.dialect.MySQL8Dialect
 
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:clothingstore}
@@ -16,8 +15,9 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      enabled: true
+      max-file-size: 3MB
+      max-request-size: 15MB
 
   data:
     web:
@@ -63,3 +63,11 @@ jwt:
 
 api:
   version: api/v1
+
+google:
+  cloud:
+    credentials:
+      path: config/protean-garage-432716-r3-9c6d3c671f28.json
+    storage:
+      project-id: protean-garage-432716-r3
+      bucket: bucket-quickstart_protean-garage-432716-r3/ecommerce-fashion/products

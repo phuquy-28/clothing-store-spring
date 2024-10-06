@@ -70,7 +70,7 @@ public class CategoryServiceImpl implements CategoryService {
     Category category = categoryRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND));
     category.getProducts().forEach(product -> {
-      product.getCategories().remove(category);
+      product.setCategory(null);
     });
     productRepository.saveAll(category.getProducts());
     categoryRepository.delete(category);

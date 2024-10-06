@@ -17,6 +17,7 @@ public interface UrlConfig {
 
   // Product controller
   String PRODUCT = "/products";
+  String UPLOAD_IMAGES = "/upload-images";
   String PRODUCT_SLUG = "/{slug}";
 
   // Category controller
