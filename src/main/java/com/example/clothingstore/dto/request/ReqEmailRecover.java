@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class ReqEmailRecover {
-    @NotBlank(message = "{email.not.blank}")
+    @NotBlank(message = "email.not.blank")
     private String email;
 }

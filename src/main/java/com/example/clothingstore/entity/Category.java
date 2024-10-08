@@ -17,9 +17,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category extends AbstractEntity {
-    
-    private String name;
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
+  private String name;
+
+  @OneToMany(mappedBy = "category")
+  private List<Product> products;
 }

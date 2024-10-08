@@ -8,6 +8,6 @@ public class CategoryReqDTO {
 
     private Long id;
 
-    @NotBlank(message = "{category.name.not.blank}")
+    @NotBlank(message = "category.name.not.blank")
     private String name;
 }

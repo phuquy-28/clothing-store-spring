@@ -5,6 +5,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RegisterResDTO;
@@ -16,15 +17,18 @@ import com.example.clothingstore.service.EmailService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.RandomUtil;
 import com.example.clothingstore.util.SecurityUtil;
+import com.example.clothingstore.exception.BadCredentialsException;
 import com.example.clothingstore.exception.EmailInvalidException;
 import com.example.clothingstore.exception.TokenInvalidException;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -53,6 +57,8 @@ public class AuthServiceImpl implements AuthService {
 
   private final UserMapper userMapper;
 
+  private final AuthenticationManager authenticationManager;
+
   @Override
   public RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException {
     // check email is already in use
@@ -79,6 +85,15 @@ public class AuthServiceImpl implements AuthService {
     if (user.getLastName() != null) {
       profile.setLastName(user.getLastName());
     }
+    if (user.getBirthDate() != null) {
+      profile.setBirthDate(user.getBirthDate());
+    }
+    if (user.getPhone() != null) {
+      profile.setPhoneNumber(user.getPhone());
+    }
+    if (user.getGender() != null) {
+      profile.setGender(Gender.valueOf(user.getGender().toUpperCase()));
+    }
 
     newUser.setProfile(profile);
 
@@ -91,14 +106,24 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public LoginResDTO login(LoginReqDTO loginReqDto) {
-    // Load input username/password into Security
-    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-        loginReqDto.getEmail(), loginReqDto.getPassword());
+    // // Load input username/password into Security
+    // UsernamePasswordAuthenticationToken authenticationToken = new
+    // UsernamePasswordAuthenticationToken(
+    // loginReqDto.getEmail(), loginReqDto.getPassword());
 
-    // Authenticate
-    Authentication authentication = authenticationManagerBuilder.getObject()
-        .authenticate(authenticationToken);
-    // SecurityContextHolder.getContext().setAuthentication(authentication);
+    // // Authenticate
+    // Authentication authentication = authenticationManagerBuilder.getObject()
+    // .authenticate(authenticationToken);
+    // // SecurityContextHolder.getContext().setAuthentication(authentication);
+    try {
+      Authentication authentication =
+          authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+              loginReqDto.getEmail(), loginReqDto.getPassword()));
+
+    } catch (AuthenticationException e) {
+      log.error("Authentication failed: {}", e.getMessage());
+      throw new BadCredentialsException(ErrorMessage.USERNAME_OR_PASSWORD_INVALID);
+    }
 
     // Get user information
     User loginUser = userService.handleGetUserByUsername(loginReqDto.getEmail());
@@ -126,8 +151,9 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public void logout() {
     // get email
-    String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get()
-        : null;
+    String email =
+        SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get()
+            : null;
     // get user
     User currentUserDB = userService.handleGetUserByUsername(email);
     // update user with refresh token
@@ -206,8 +232,8 @@ public class AuthServiceImpl implements AuthService {
         .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
 
     // check if the last password recovery request has expired (10 minutes)
-    if (user.getResetDate() != null && 
-        user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 10))) {
+    if (user.getResetDate() != null
+        && user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 10))) {
       throw new EmailInvalidException(ErrorMessage.PASSWORD_RECOVERY_TOO_FREQUENT);
     }
 

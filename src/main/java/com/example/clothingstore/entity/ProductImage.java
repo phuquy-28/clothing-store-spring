@@ -2,7 +2,7 @@ package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,18 +23,21 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductImage extends AbstractEntity {
-    
-    private String publicUrl;
 
-    private String gcsUrl;
+  private String publicUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", referencedColumnName = "id")
-    private Product product;
+  private String gcsUrl;
 
-    private boolean isDeleted = false;
+  @Column(name = "image_order")
+  private Integer imageOrder;
 
-    private Instant deletedAt;
+  @ManyToOne
+  @JoinColumn(name = "product_id", referencedColumnName = "id")
+  private Product product;
 
-    private String deletedBy;
+  private boolean isDeleted = false;
+
+  private Instant deletedAt;
+
+  private String deletedBy;
 }

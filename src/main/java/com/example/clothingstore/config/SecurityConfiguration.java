@@ -1,7 +1,7 @@
 package com.example.clothingstore.config;
 
 import static com.example.clothingstore.util.SecurityUtil.JWT_ALGORITHM;
-
+import static com.example.clothingstore.constant.UrlConfig.*;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 import java.time.Duration;
@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -57,31 +59,32 @@ public class SecurityConfiguration {
   public SecurityFilterChain filterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
       CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
-    String[] whiteList = { "/", "/api/v1/auth/login", "/api/v1/auth/refresh",
-        "/api/v1/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-        "/api/v1/auth/activate/**", "/api/v1/auth/send-activation-email/**",
-        "/api/v1/auth/recover-password", "/api/v1/auth/reset-password/**" };
-
     http.csrf(c -> c.disable())
         .cors(Customizer.withDefaults())
-        .authorizeHttpRequests(
-            authz -> authz.requestMatchers(whiteList).permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
-                .anyRequest().authenticated())
-        .oauth2ResourceServer(
-            (oauth2) -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-                .accessDeniedHandler(customAccessDeniedHandler))
+        .authorizeHttpRequests(authz -> authz
+            .requestMatchers(PUBLIC_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll()
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .jwt(jwt -> jwt.decoder(jwtDecoder()))
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .accessDeniedHandler(customAccessDeniedHandler)
+        )
         .formLogin(f -> f.disable())
-        .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
 
     return http.build();
   }
 
   @Bean
   public JwtAuthenticationConverter jwtAuthenticationConverter() {
-    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
+        new JwtGrantedAuthoritiesConverter();
     grantedAuthoritiesConverter.setAuthorityPrefix("");
     JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
     jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
@@ -90,12 +93,11 @@ public class SecurityConfiguration {
 
   @Bean
   public JwtDecoder jwtDecoder() {
-    NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
-        .macAlgorithm(JWT_ALGORITHM).build();
+    NimbusJwtDecoder jwtDecoder =
+        NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
     // Set a clock skew to handle token expiration window
-    jwtDecoder.setJwtValidator(
-        new DelegatingOAuth2TokenValidator<Jwt>(JwtValidators.createDefault(),
-            new JwtTimestampValidator(Duration.ofSeconds(0))));
+    jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
+        JwtValidators.createDefault(), new JwtTimestampValidator(Duration.ofSeconds(0))));
     return token -> {
       try {
         return jwtDecoder.decode(token);
@@ -104,5 +106,11 @@ public class SecurityConfiguration {
         throw e;
       }
     };
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager(
+      AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    return authenticationConfiguration.getAuthenticationManager();
   }
 }

@@ -4,9 +4,11 @@ import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.Permission;
 import com.example.clothingstore.entity.Role;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.repository.PermissionRepository;
 import com.example.clothingstore.repository.RoleRepository;
 import com.example.clothingstore.repository.UserRepository;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +67,7 @@ public class DatabaseInitializer implements CommandLineRunner {
       }
 
       // create profile
-      Profile profile = new Profile("Admin", "Admin");
+      Profile profile = new Profile("Admin", "Admin", LocalDate.now(), "0909090909", Gender.MALE, adminUser);
       adminUser.setProfile(profile);
 
       this.userRepository.save(adminUser);

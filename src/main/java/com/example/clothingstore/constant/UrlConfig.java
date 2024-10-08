@@ -1,31 +1,91 @@
 package com.example.clothingstore.constant;
 
-public interface UrlConfig {
-  // Common
-  String ID = "/{id}";
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-  // Auth controller
-  String AUTH = "/auth";
-  String REGISTER = "/register";
-  String LOGIN = "/login";
-  String LOGOUT = "/logout";
-  String REFRESH = "/refresh";
-  String SEND_ACTIVATION_EMAIL = "/send-activation-email";
-  String ACTIVATE = "/activate";
-  String RECOVER_PASSWORD = "/recover-password";
-  String RESET_PASSWORD = "/reset-password";
+@Component
+public class UrlConfig {
 
-  // Product controller
-  String PRODUCT = "/products";
-  String UPLOAD_IMAGES = "/upload-images";
-  String PRODUCT_SLUG = "/{slug}";
+	public static String API_VERSION;
 
-  // Category controller
-  String CATEGORY = "/categories";
+	@Value("${api.version}")
+	public void setApiVersion(String apiVersion) {
+		API_VERSION = "/" + apiVersion;
+	}
 
-  // User controller
-  String USER = "/users";
-  String USER_ID = "/{id}";
-  String PROFILE = "/profile";
-  String EDIT_PROFILE = "/edit-profile";
+	// Common
+	public static final String ID = "/{id}";
+
+	// Public endpoints
+	public static final String ROOT = "/";
+	public static final String API_DOCS = "/v3/api-docs/**";
+	public static final String SWAGGER_UI = "/swagger-ui/**";
+	public static final String SWAGGER_UI_HTML = "/swagger-ui.html";
+
+	// Auth controller
+	public static final String AUTH = "/auth";
+	public static final String REGISTER = "/register";
+	public static final String LOGIN = "/login";
+	public static final String LOGOUT = "/logout";
+	public static final String REFRESH = "/refresh";
+	public static final String SEND_ACTIVATION_EMAIL = "/send-activation-email";
+	public static final String ACTIVATE = "/activate";
+	public static final String RECOVER_PASSWORD = "/recover-password";
+	public static final String RESET_PASSWORD = "/reset-password";
+
+	// Product controller
+	public static final String PRODUCT = "/products";
+	public static final String PRODUCT_ID = "/ids";
+	public static final String UPLOAD_IMAGES = "/upload-images";
+	public static final String PRODUCT_SLUG = "/{slug}";
+
+	// Category controller
+	public static final String CATEGORY = "/categories";
+
+	// User controller
+	public static final String USER = "/users";
+	public static final String PROFILE = "/profile";
+	public static final String EDIT_PROFILE = "/edit-profile";
+	public static final String CHANGE_PASSWORD = "/change-password";
+
+	// Full paths for public endpoints
+	public static String[] PUBLIC_ENDPOINTS() {
+		return new String[]{
+			ROOT,
+			API_DOCS,
+			SWAGGER_UI,
+			SWAGGER_UI_HTML
+		};
+	}
+
+	// Full paths for public GET endpoints
+	public static String[] PUBLIC_GET_ENDPOINTS() {
+		return new String[]{
+			API_VERSION + AUTH + ACTIVATE + "/**",
+			API_VERSION + AUTH + SEND_ACTIVATION_EMAIL + "/**",
+			API_VERSION + AUTH + RESET_PASSWORD + "/**",
+			API_VERSION + PRODUCT,
+			API_VERSION + PRODUCT + PRODUCT_SLUG,
+			API_VERSION + PRODUCT + PRODUCT_ID + ID,
+			API_VERSION + CATEGORY,
+			API_VERSION + USER
+		};
+	}
+
+	// Full paths for public POST endpoints
+	public static String[] PUBLIC_POST_ENDPOINTS() {
+		return new String[]{
+			API_VERSION + AUTH + LOGIN,
+			API_VERSION + AUTH + REGISTER,
+			API_VERSION + AUTH + REFRESH,
+			API_VERSION + AUTH + RECOVER_PASSWORD
+		};
+	}
+
+	// Full paths for public PUT endpoints
+	public static String[] PUBLIC_PUT_ENDPOINTS() {
+		return new String[]{
+			// Add any public PUT endpoints here if needed
+		};
+	}
 }

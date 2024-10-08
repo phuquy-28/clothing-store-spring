@@ -15,16 +15,15 @@ public class LocaleResolver extends AcceptHeaderLocaleResolver implements WebMvc
 
   @Override
   public Locale resolveLocale(HttpServletRequest request) {
-    String langParam = request.getParameter("lang");
-    if (langParam != null && !langParam.isEmpty()) {
-      return new Locale(langParam);
+    String language = request.getHeader("Accept-Language");
+    if (language == null || language.isEmpty()) {
+      return new Locale("vi"); // Default to Vietnamese if no language is specified
     }
-    return new Locale("vi");
 
-    // String language = request.getHeader("Accept-Language");
-    // return language == null || language.isEmpty() ? new Locale("vi")
-    // : Locale.lookup(Locale.LanguageRange.parse(language),
-    // List.of(new Locale("en"), new Locale("vi")));
+    List<Locale> supportedLocales = List.of(new Locale("en"), new Locale("vi"));
+    Locale resolvedLocale = Locale.lookup(Locale.LanguageRange.parse(language), supportedLocales);
+
+    return resolvedLocale != null ? resolvedLocale : new Locale("vi");
   }
 
   @Bean

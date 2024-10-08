@@ -33,7 +33,8 @@ public class Role extends AbstractEntity {
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JsonIgnoreProperties(value = {"roles"})
-  @JoinTable(name = "permission_role", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+  @JoinTable(name = "permission_role", joinColumns = @JoinColumn(name = "role_id"),
+      inverseJoinColumns = @JoinColumn(name = "permission_id"))
   private List<Permission> permissions;
 
   @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)

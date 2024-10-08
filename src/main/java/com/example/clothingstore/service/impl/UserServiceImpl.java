@@ -1,16 +1,19 @@
 package com.example.clothingstore.service.impl;
 
 import com.example.clothingstore.constant.ErrorMessage;
+import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.Gender;
+import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
+
+  private final PasswordEncoder passwordEncoder;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -51,5 +56,22 @@ public class UserServiceImpl implements UserService {
         .lastName(profile.getLastName()).birthDate(profile.getBirthDate().toString())
         .phoneNumber(profile.getPhoneNumber()).gender(profile.getGender()).email(user.getEmail())
         .build();
+  }
+
+  @Override
+  public void changePassword(ChangePasswordReqDTO changePasswordReqDTO) {
+    User user = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    if (!passwordEncoder.matches(changePasswordReqDTO.getOldPassword(), user.getPassword())) {
+      throw new BadRequestException(ErrorMessage.OLD_PASSWORD_NOT_MATCH);
+    }
+
+    if (!changePasswordReqDTO.getNewPassword().equals(changePasswordReqDTO.getConfirmPassword())) {
+      throw new BadRequestException(ErrorMessage.NEW_PASSWORD_NOT_MATCH);
+    }
+
+    user.setPassword(passwordEncoder.encode(changePasswordReqDTO.getNewPassword()));
+    userRepository.save(user);
   }
 }

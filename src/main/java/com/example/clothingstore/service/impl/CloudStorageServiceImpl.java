@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.UploadImageReqDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.service.CloudStorageService;
@@ -17,9 +18,12 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.HttpMethod;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
+import com.example.clothingstore.exception.InvalidFileTypeException;
 
 @Service
 @RequiredArgsConstructor
@@ -38,16 +42,16 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
   private Storage storage;
 
+  private static final List<String> ALLOWED_EXTENSIONS =
+      Arrays.asList("png", "jpg", "jpeg", "webp");
+
   @PostConstruct
   public void initialize() throws IOException {
     try {
-      GoogleCredentials credentials = GoogleCredentials.fromStream(
-          new ClassPathResource(credentialsPath).getInputStream());
-      this.storage = StorageOptions.newBuilder()
-          .setCredentials(credentials)
-          .setProjectId(projectId)
-          .build()
-          .getService();
+      GoogleCredentials credentials =
+          GoogleCredentials.fromStream(new ClassPathResource(credentialsPath).getInputStream());
+      this.storage = StorageOptions.newBuilder().setCredentials(credentials).setProjectId(projectId)
+          .build().getService();
     } catch (IOException e) {
       logger.error("Failed to initialize Google Cloud Storage: {}", e.getMessage());
       throw e;
@@ -56,22 +60,23 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
+    String fileName = uploadImageReqDTO.getFileName();
+    String fileExtension = getFileExtension(fileName);
+
+    if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+      throw new InvalidFileTypeException(ErrorMessage.INVALID_FILE_TYPE);
+    }
+
     UploadImageResDTO response = new UploadImageResDTO();
-
-    if (uploadImageReqDTO.getFileName1() != null) {
-      response.setSignedUrl1(generateSignedUrl(uploadImageReqDTO.getFileName1()));
-    }
-    if (uploadImageReqDTO.getFileName2() != null) {
-      response.setSignedUrl2(generateSignedUrl(uploadImageReqDTO.getFileName2()));
-    }
-    if (uploadImageReqDTO.getFileName3() != null) {
-      response.setSignedUrl3(generateSignedUrl(uploadImageReqDTO.getFileName3()));
-    }
-    if (uploadImageReqDTO.getFileName4() != null) {
-      response.setSignedUrl4(generateSignedUrl(uploadImageReqDTO.getFileName4()));
-    }
-
+    response.setSignedUrl(generateSignedUrl(fileName));
     return response;
+  }
+
+  private String getFileExtension(String fileName) {
+    if (fileName == null || fileName.lastIndexOf(".") == -1) {
+      return "";
+    }
+    return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
   }
 
   private String generateSignedUrl(String fileName) {

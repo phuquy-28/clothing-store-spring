@@ -34,8 +34,7 @@ public class User extends AbstractEntity {
   @JoinColumn(name = "role_id")
   private Role role;
 
-  @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "profile_id")
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
   private Profile profile;
 
   @Column(columnDefinition = "MEDIUMTEXT")

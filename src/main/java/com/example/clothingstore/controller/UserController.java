@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.service.UserService;
@@ -29,5 +30,13 @@ public class UserController {
       @RequestBody @Valid EditProfileReqDTO editProfileReqDTO) {
     log.debug("REST request to edit profile: {}", editProfileReqDTO);
     return ResponseEntity.status(HttpStatus.OK).body(userService.editProfile(editProfileReqDTO));
+  }
+
+  @PutMapping(UrlConfig.USER + UrlConfig.CHANGE_PASSWORD)
+  public ResponseEntity<Void> changePassword(
+      @RequestBody @Valid ChangePasswordReqDTO changePasswordReqDTO) {
+    log.debug("REST request to change password: {}", changePasswordReqDTO);
+    userService.changePassword(changePasswordReqDTO);
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 }

@@ -11,17 +11,17 @@ import com.example.clothingstore.enumeration.Gender;
 @Data
 public class EditProfileReqDTO {
 
-  @NotBlank(message = "{first.name.not.blank}")
+  @NotBlank(message = "first.name.not.blank")
   private String firstName;
 
-  @NotBlank(message = "{last.name.not.blank}")
+  @NotBlank(message = "last.name.not.blank")
   private String lastName;
 
   private LocalDate birthDate;
 
-  @Pattern(regexp = "^(\\+84|0)\\d{9,10}$", message = "{phone.number.invalid}")
+  @Pattern(regexp = "^(\\+84|0)\\d{9,10}$", message = "phone.number.invalid")
   private String phoneNumber;
 
-  @EnumValue(enumClass = Gender.class, message = "{gender.invalid}")
+  @EnumValue(enumClass = Gender.class, message = "gender.invalid")
   private String gender;
 }

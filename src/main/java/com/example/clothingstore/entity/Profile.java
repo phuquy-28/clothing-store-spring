@@ -1,10 +1,10 @@
 package com.example.clothingstore.entity;
 
 import com.example.clothingstore.enumeration.Gender;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ import java.time.LocalDate;
 @Setter
 @Entity
 @Table(name = "profiles")
-@ToString(exclude = { "user" })
+@ToString(exclude = {"user"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Profile extends AbstractEntity {
@@ -35,12 +35,7 @@ public class Profile extends AbstractEntity {
   @Enumerated(EnumType.STRING)
   private Gender gender;
 
-  @OneToOne(mappedBy = "profile")
-  @JsonIgnore
+  @OneToOne
+  @JoinColumn(name = "user_id")
   private User user;
-
-  public Profile(String firstName, String lastName) {
-    this.firstName = firstName;
-    this.lastName = lastName;
-  }
 }

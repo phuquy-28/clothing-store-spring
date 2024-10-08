@@ -15,7 +15,8 @@ public class Translator {
   }
 
   public static String toLocale(String msgCode) {
-    Locale locale = LocaleContextHolder.getLocale();
+    // Locale locale = LocaleContextHolder.getLocale();
+    Locale locale = new Locale("vi");
     return messageSource.getMessage(msgCode, null, locale);
   }
 

@@ -10,7 +10,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,23 +27,22 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariant extends AbstractEntity {
-    
-    @ManyToOne
-    @JoinColumn(name = "product_id", referencedColumnName = "id")
-    private Product product;
 
-    @Enumerated(EnumType.STRING)
-    private Color color;
-    
-    @Enumerated(EnumType.STRING)
-    private Size size;
+  @ManyToOne
+  @JoinColumn(name = "product_id", referencedColumnName = "id")
+  private Product product;
 
-    @OneToOne(mappedBy = "productVariant")
-    private Inventory inventory;
+  @Enumerated(EnumType.STRING)
+  private Color color;
 
-    private boolean isDeleted = false;
+  @Enumerated(EnumType.STRING)
+  private Size size;
 
-    private Instant deletedAt;
+  private Integer quantity;
 
-    private String deletedBy;
+  private boolean isDeleted = false;
+
+  private Instant deletedAt;
+
+  private String deletedBy;
 }

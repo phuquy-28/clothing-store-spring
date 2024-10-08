@@ -16,6 +16,10 @@ public final class ErrorMessage {
   public static final String CATEGORY_NOT_FOUND = "error.category.not_found";
   public static final String ID_CANNOT_BE_NULL = "error.id.cannot_be_null";
   public static final String USER_NOT_FOUND = "error.user.not_found";
+  public static final String INVALID_FILE_TYPE = "error.file.invalid_type";
+  public static final String PRODUCT_NOT_FOUND = "error.product.not_found";
+  public static final String OLD_PASSWORD_NOT_MATCH = "error.old_password.not_match";
+  public static final String NEW_PASSWORD_NOT_MATCH = "error.new_password.not_match";
 
   private ErrorMessage() {
   }
