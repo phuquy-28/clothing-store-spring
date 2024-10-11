@@ -1,6 +1,5 @@
 package com.example.clothingstore.service.impl;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ProductReqDTO;
 import com.example.clothingstore.dto.request.UploadImageReqDTO;
@@ -28,6 +28,7 @@ import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -57,20 +58,33 @@ public class ProductServiceImpl implements ProductService {
 
     final Product finalProduct = product;
     product.setImages(IntStream.range(0, productReqDTO.getImages().size()).mapToObj(index -> {
-      ProductImage productImage = new ProductImage();
-      productImage.setPublicUrl(productReqDTO.getImages().get(index).getUrl());
-      productImage.setImageOrder(index);
-      productImage.setProduct(finalProduct);
-      return productImage;
+        ProductImage productImage = new ProductImage();
+        productImage.setPublicUrl(productReqDTO.getImages().get(index));
+        productImage.setImageOrder(index);
+        productImage.setProduct(finalProduct);
+        return productImage;
     }).collect(Collectors.toList()));
 
     product.setVariants(productReqDTO.getVariants().stream().map(variant -> {
-      ProductVariant productVariant = new ProductVariant();
-      productVariant.setColor(Color.valueOf(variant.getColor().toUpperCase()));
-      productVariant.setSize(Size.valueOf(variant.getSize().toUpperCase()));
-      productVariant.setQuantity(variant.getQuantity());
-      productVariant.setProduct(finalProduct);
-      return productVariant;
+        ProductVariant productVariant = new ProductVariant();
+        productVariant.setColor(Color.valueOf(variant.getColor().toUpperCase()));
+        productVariant.setSize(Size.valueOf(variant.getSize().toUpperCase()));
+        productVariant.setQuantity(variant.getQuantity());
+        productVariant.setDifferencePrice(variant.getDifferencePrice());
+        productVariant.setProduct(finalProduct);
+
+        // Handle variant images
+        List<ProductImage> variantImages = IntStream.range(0, variant.getImages().size())
+            .mapToObj(index -> {
+                ProductImage productImage = new ProductImage();
+                productImage.setPublicUrl(variant.getImages().get(index));
+                productImage.setImageOrder(index);
+                productImage.setProductVariant(productVariant);
+                return productImage;
+            }).collect(Collectors.toList());
+        productVariant.setImages(variantImages);
+
+        return productVariant;
     }).collect(Collectors.toList()));
 
     product = productRepository.save(product);
@@ -104,6 +118,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
+  @Transactional
   public ProductResDTO updateProduct(ProductReqDTO productReqDTO) {
     Product product = productRepository.findById(productReqDTO.getId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND));
@@ -114,24 +129,28 @@ public class ProductServiceImpl implements ProductService {
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
 
-    // Update images
-    List<ProductImage> currentImages = new ArrayList<>(product.getImages());
+    // Update product images
+    updateProductImages(product, productReqDTO.getImages());
+
+    // Update product variants
+    updateProductVariants(product, productReqDTO.getVariants());
+
+    product = productRepository.save(product);
+    return convertToProductResDTO(product);
+  }
+
+  private void updateProductImages(Product product, List<String> newImageUrls) {
+    List<ProductImage> currentImages = product.getImages();
     List<ProductImage> updatedImages = new ArrayList<>();
     
-    for (int i = 0; i < productReqDTO.getImages().size(); i++) {
-        ProductReqDTO.ProductImageReqDTO imageDTO = productReqDTO.getImages().get(i);
-        ProductImage productImage;
-        
-        if (imageDTO.getId() != null) {
-            productImage = currentImages.stream()
-                .filter(img -> img.getId().equals(imageDTO.getId()))
-                .findFirst()
-                .orElseGet(ProductImage::new);
-        } else {
-            productImage = new ProductImage();
-        }
-        
-        productImage.setPublicUrl(imageDTO.getUrl());
+    for (int i = 0; i < newImageUrls.size(); i++) {
+        String imageUrl = newImageUrls.get(i);
+        ProductImage productImage = currentImages.stream()
+            .filter(img -> img.getPublicUrl().equals(imageUrl))
+            .findFirst()
+            .orElseGet(ProductImage::new);
+
+        productImage.setPublicUrl(imageUrl);
         productImage.setImageOrder(i);
         productImage.setProduct(product);
         updatedImages.add(productImage);
@@ -139,40 +158,70 @@ public class ProductServiceImpl implements ProductService {
     
     product.getImages().clear();
     product.getImages().addAll(updatedImages);
+  }
 
-    // Update variants
+  private void updateProductVariants(Product product, List<ProductReqDTO.ProductVariantReqDTO> variantReqDTOs) {
     List<ProductVariant> currentVariants = new ArrayList<>(product.getVariants());
     List<ProductVariant> updatedVariants = new ArrayList<>();
     
-    for (ProductReqDTO.ProductVariantReqDTO variantDTO : productReqDTO.getVariants()) {
+    for (ProductReqDTO.ProductVariantReqDTO variantDTO : variantReqDTOs) {
         ProductVariant productVariant;
-        
         if (variantDTO.getId() != null) {
+            // Existing variant
             productVariant = currentVariants.stream()
                 .filter(v -> v.getId().equals(variantDTO.getId()))
                 .findFirst()
-                .orElseGet(ProductVariant::new);
+                .orElseThrow(() -> new ResourceNotFoundException("Variant not found with id: " + variantDTO.getId()));
+            
+            // Remove the found variant from currentVariants to avoid duplication
+            currentVariants.removeIf(v -> v.getId().equals(variantDTO.getId()));
         } else {
+            // New variant
             productVariant = new ProductVariant();
+            productVariant.setProduct(product);
         }
-        
+
         productVariant.setColor(Color.valueOf(variantDTO.getColor().toUpperCase()));
         productVariant.setSize(Size.valueOf(variantDTO.getSize().toUpperCase()));
         productVariant.setQuantity(variantDTO.getQuantity());
-        productVariant.setProduct(product);
+        productVariant.setDifferencePrice(variantDTO.getDifferencePrice());
+
+        // Update variant images
+        updateVariantImages(productVariant, variantDTO.getImages());
+
         updatedVariants.add(productVariant);
     }
     
+    // Clear all existing variants and add the updated ones
     product.getVariants().clear();
     product.getVariants().addAll(updatedVariants);
+  }
 
-    String slug = createSlug(product.getName()) + "-" + product.getId();
-    product.setSlug(slug);
-    log.debug("Slug updated: {}", slug);
+  private void updateVariantImages(ProductVariant variant, List<String> imageUrls) {
+    if (variant.getImages() == null) {
+        variant.setImages(new ArrayList<>());
+    }
+    List<ProductImage> variantImages = variant.getImages();
+    List<ProductImage> updatedImages = new ArrayList<>();
+    
+    for (int i = 0; i < imageUrls.size(); i++) {
+        String imageUrl = imageUrls.get(i);
+        ProductImage productImage = variantImages.stream()
+            .filter(img -> img.getPublicUrl().equals(imageUrl))
+            .findFirst()
+            .orElseGet(() -> {
+                ProductImage newImage = new ProductImage();
+                newImage.setProductVariant(variant);
+                return newImage;
+            });
 
-    product = productRepository.save(product);
-
-    return convertToProductResDTO(product);
+        productImage.setPublicUrl(imageUrl);
+        productImage.setImageOrder(i);
+        updatedImages.add(productImage);
+    }
+    
+    variantImages.clear();
+    variantImages.addAll(updatedImages);
   }
 
   @Override
@@ -236,17 +285,26 @@ public class ProductServiceImpl implements ProductService {
   }
 
   public ProductResDTO convertToProductResDTO(Product product) {
-    return ProductResDTO.builder().id(product.getId()).name(product.getName())
-        .description(product.getDescription()).price(product.getPrice()).slug(product.getSlug())
-        .discountRate(null).categoryId(product.getCategory().getId())
+    return ProductResDTO.builder()
+        .id(product.getId())
+        .name(product.getName())
+        .description(product.getDescription())
+        .price(product.getPrice())
+        .categoryId(product.getCategory().getId())
         .images(product.getImages().stream()
-            .map(image -> ProductResDTO.ProductImageResDTO.builder().id(image.getId())
-                .url(image.getPublicUrl()).build())
+            .map(ProductImage::getPublicUrl)
             .collect(Collectors.toList()))
         .variants(product.getVariants().stream()
-            .map(variant -> ProductResDTO.ProductVariantResDTO.builder().id(variant.getId())
-                .color(variant.getColor().name()).size(variant.getSize().name())
-                .quantity(variant.getQuantity()).build())
+            .map(variant -> ProductResDTO.ProductVariantResDTO.builder()
+                .id(variant.getId())
+                .color(variant.getColor().name())
+                .size(variant.getSize().name())
+                .quantity(variant.getQuantity())
+                .differencePrice(variant.getDifferencePrice())
+                .images(variant.getImages().stream()
+                    .map(ProductImage::getPublicUrl)
+                    .collect(Collectors.toList()))
+                .build())
             .collect(Collectors.toList()))
         .build();
   }

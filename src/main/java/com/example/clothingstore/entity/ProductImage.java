@@ -35,6 +35,10 @@ public class ProductImage extends AbstractEntity {
   @JoinColumn(name = "product_id", referencedColumnName = "id")
   private Product product;
 
+  @ManyToOne
+  @JoinColumn(name = "product_variant_id", referencedColumnName = "id")
+  private ProductVariant productVariant;
+
   private boolean isDeleted = false;
 
   private Instant deletedAt;

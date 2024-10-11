@@ -11,13 +11,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-
+import java.util.List;
 @Entity
 @Table(name = "product_variants")
 @SQLDelete(sql = "UPDATE product_variants SET is_deleted = true WHERE id = ?")
@@ -39,6 +41,11 @@ public class ProductVariant extends AbstractEntity {
   private Size size;
 
   private Integer quantity;
+
+  private Double differencePrice;
+
+  @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ProductImage> images;
 
   private boolean isDeleted = false;
 

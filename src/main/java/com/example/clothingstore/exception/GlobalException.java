@@ -81,4 +81,14 @@ public class GlobalException {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
   }
 
+  @ExceptionHandler(com.example.clothingstore.exception.AccessDeniedException.class)
+  public ResponseEntity<RestResponse<Object>> handleAccessDeniedException(
+      com.example.clothingstore.exception.AccessDeniedException e) {
+    RestResponse<Object> res = new RestResponse<>();
+    res.setStatusCode(HttpStatus.FORBIDDEN.value());
+    res.setError("Access denied");
+    res.setMessage(Translator.toLocale(e.getMessage()));
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+  }
+
 }

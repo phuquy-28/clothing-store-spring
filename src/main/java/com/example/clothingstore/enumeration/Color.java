@@ -7,5 +7,7 @@ public enum Color {
   OLIVE_GREEN,
   PINK,
   RED,
-  YELLOW
+  YELLOW,
+  WHITE,
+  BLACK
 }

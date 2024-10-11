@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,6 +58,13 @@ public class User extends AbstractEntity {
 
   @Column(name = "reset_date")
   private Instant resetDate = null;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ShippingProfile> shippingProfiles;
+
+  @OneToOne
+  @JoinColumn(name = "default_shipping_profile_id")
+  private ShippingProfile defaultShippingProfile;
 
   public User(String email, String password, boolean activated) {
     this.email = email;

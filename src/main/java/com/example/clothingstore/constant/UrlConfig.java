@@ -48,6 +48,10 @@ public class UrlConfig {
 	public static final String EDIT_PROFILE = "/edit-profile";
 	public static final String CHANGE_PASSWORD = "/change-password";
 
+	// Shipping profile controller
+	public static final String SHIPPING_PROFILE = "/shipping-profiles";
+	public static final String DEFAULT = "/default";
+
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {
 		return new String[]{

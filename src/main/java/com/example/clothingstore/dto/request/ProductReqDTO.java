@@ -30,19 +30,10 @@ public class ProductReqDTO {
   private Long categoryId;
 
   @NotEmpty(message = "product.images.not.empty")
-  @Valid
-  private List<ProductImageReqDTO> images;
+  private List<String> images;
 
   @Valid
   private List<ProductVariantReqDTO> variants;
-
-  @Data
-  public static class ProductImageReqDTO {
-
-    private Long id;
-
-    private String url;
-  }
 
   @Data
   public static class ProductVariantReqDTO {
@@ -56,5 +47,10 @@ public class ProductReqDTO {
     private String size;
 
     private Integer quantity;
+
+    private Double differencePrice;
+
+    @NotEmpty(message = "variant.images.not.empty")
+    private List<String> images;
   }
 }
