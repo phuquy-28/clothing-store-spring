@@ -57,8 +57,8 @@ public class ShippingProfileController {
     return ResponseEntity.ok().build();
   }
 
-  @PostMapping(UrlConfig.SHIPPING_PROFILE + UrlConfig.DEFAULT + UrlConfig.ID)
-  public ResponseEntity<Void> setDefaultShippingProfile(@PathVariable Long id) {
+  @PostMapping(UrlConfig.SHIPPING_PROFILE + UrlConfig.DEFAULT)
+  public ResponseEntity<Void> setDefaultShippingProfile(@RequestBody Long id) {
     shippingProfileService.setDefaultShippingProfile(id);
     return ResponseEntity.ok().build();
   }

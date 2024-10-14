@@ -2,6 +2,7 @@
 HELP.md
 /src/main/resources/config/
 /logs/
+.env
 
 ### Build and Dependency Management ###
 .gradle

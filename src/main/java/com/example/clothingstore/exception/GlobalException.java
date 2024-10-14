@@ -35,7 +35,7 @@ public class GlobalException {
   @ExceptionHandler(value = {UsernameNotFoundException.class, IdInvalidException.class,
       EmailInvalidException.class, TokenInvalidException.class, MissingRequestCookieException.class,
       ResourceNotFoundException.class, ResourceAlreadyExistException.class,
-      InvalidFileTypeException.class, BadRequestException.class})
+      InvalidFileTypeException.class, BadRequestException.class, BadCredentialsException.class})
   public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -69,16 +69,6 @@ public class GlobalException {
     responseEntity.setMessage(errors.size() > 1 ? errors : errors.get(0));
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseEntity);
-  }
-
-  @ExceptionHandler(BadCredentialsException.class)
-  public ResponseEntity<RestResponse<Object>> handleBadCredentialsException(
-      BadCredentialsException e) {
-    RestResponse<Object> res = new RestResponse<>();
-    res.setStatusCode(HttpStatus.UNAUTHORIZED.value());
-    res.setError("Authentication failed");
-    res.setMessage(Translator.toLocale(e.getMessage()));
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
   }
 
   @ExceptionHandler(com.example.clothingstore.exception.AccessDeniedException.class)

@@ -30,6 +30,7 @@ dependencies {
     implementation(platform("com.google.cloud:libraries-bom:26.31.0"))
     implementation("com.google.cloud:google-cloud-storage")
     implementation("com.turkraft.springfilter:jpa:3.1.7")
+    implementation("me.paulschwarz:spring-dotenv:2.5.4")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

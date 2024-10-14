@@ -1,6 +1,5 @@
 package com.example.clothingstore.config;
 
-import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -31,10 +30,12 @@ public class OpenAPIConfig {
 
   @Bean
   public OpenAPI myOpenAPI() {
-    return new OpenAPI().info(createApiInfo()).servers(
-            List.of(createServer("http://localhost:8080", "Server URL in Development environment"),
-                createServer("https://localhost:8080", "Server URL in Production environment")))
-        .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication")).components(
-            new Components().addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()));
+    return new OpenAPI()
+        .info(createApiInfo())
+        .servers(List.of(
+            createServer("http://localhost:8080", "Server URL in Development environment"),
+            createServer("https://localhost:8080", "Server URL in Production environment")))
+        .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+        .schemaRequirement("Bearer Authentication", createAPIKeyScheme());
   }
 }

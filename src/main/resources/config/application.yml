@@ -5,12 +5,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: ${SHOW_SQL:false}
+    show-sql: false
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:clothingstore}
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:123456}
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   servlet:
@@ -24,14 +24,14 @@ spring:
       pageable:
         one-indexed-parameters: true
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:phuquy2k3.2003@gmail.com}
-    password: ${MAIL_PASSWORD:kwocncbgjrsstlia}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -54,20 +54,37 @@ server:
       force: true
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
 jwt:
-  base64-secret: qoAEABDke07+AVLepXB4aCMtsT0wMAqR5x2VFyldsnx6e75YQkJH2UcZKTjEyoNgG71SBCXfq5N6NVZxWOfsHQ==
-  access-token-validity-in-seconds: 86400
-  refresh-token-validity-in-seconds: 2592000
+  base64-secret: ${JWT_SECRET}
+  access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY}
 
 api:
-  version: api/v1
+  version: ${API_VERSION}
 
 google:
   cloud:
     credentials:
-      path: config/protean-garage-432716-r3-9c6d3c671f28.json
+      path: ${GOOGLE_CLOUD_CREDENTIALS_PATH}
     storage:
-      project-id: protean-garage-432716-r3
-      bucket: bucket-quickstart_protean-garage-432716-r3/ecommerce-fashion/products
+      project-id: ${GOOGLE_CLOUD_PROJECT_ID}
+      bucket: ${GOOGLE_CLOUD_BUCKET}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    doc-expansion: list
+    default-models-expand-depth: 0
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  model-and-view-allowed: false
+  show-actuator: false
+  show-login-endpoint: false
+  use-management-port: false
+  paths-to-match: /**
