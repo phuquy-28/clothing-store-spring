@@ -21,6 +21,12 @@ public final class ErrorMessage {
   public static final String OLD_PASSWORD_NOT_MATCH = "error.old_password.not_match";
   public static final String NEW_PASSWORD_NOT_MATCH = "error.new_password.not_match";
   public static final String SHIPPING_PROFILE_NOT_FOUND = "error.shipping_profile.not_found";
+  public static final String INVALID_CHECKSUM = "error.invalid.checksum";
+  public static final String PAYMENT_FAILED = "error.payment.failed";
+  public static final String TRANSACTION_FAILED = "error.transaction.failed";
+  public static final String INVALID_AMOUNT = "error.invalid.amount";
+  public static final String ORDER_NOT_FOUND = "error.order.not_found";
+
   private ErrorMessage() {
   }
 }

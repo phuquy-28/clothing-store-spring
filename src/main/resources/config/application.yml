@@ -53,6 +53,23 @@ server:
       enabled: true
       force: true
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    doc-expansion: list
+    default-models-expand-depth: 0
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  model-and-view-allowed: false
+  show-actuator: false
+  show-login-endpoint: false
+  use-management-port: false
+  paths-to-match: /**
+
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
@@ -72,19 +89,8 @@ google:
       project-id: ${GOOGLE_CLOUD_PROJECT_ID}
       bucket: ${GOOGLE_CLOUD_BUCKET}
 
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    disable-swagger-default-url: true
-    doc-expansion: list
-    default-models-expand-depth: 0
-  default-produces-media-type: application/json
-  default-consumes-media-type: application/json
-  model-and-view-allowed: false
-  show-actuator: false
-  show-login-endpoint: false
-  use-management-port: false
-  paths-to-match: /**
+vnpay:
+  tmncode: ${VNPAY_TMNCODE}
+  hashsecret: ${VNPAY_HASHSECRET}
+  url: ${VNPAY_URL}
+  returnurl: ${VNPAY_RETURNURL}

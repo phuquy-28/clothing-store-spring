@@ -26,8 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -46,8 +44,6 @@ public class AuthServiceImpl implements AuthService {
   private final PasswordEncoder passwordEncoder;
 
   private final RoleRepository roleRepository;
-
-  private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
   private final UserService userService;
 
@@ -116,10 +112,8 @@ public class AuthServiceImpl implements AuthService {
     // .authenticate(authenticationToken);
     // // SecurityContextHolder.getContext().setAuthentication(authentication);
     try {
-      Authentication authentication =
-          authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-              loginReqDto.getEmail(), loginReqDto.getPassword()));
-
+      authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+          loginReqDto.getEmail(), loginReqDto.getPassword()));
     } catch (AuthenticationException e) {
       log.error("Authentication failed: {}", e.getMessage());
       throw new BadCredentialsException(ErrorMessage.USERNAME_OR_PASSWORD_INVALID);

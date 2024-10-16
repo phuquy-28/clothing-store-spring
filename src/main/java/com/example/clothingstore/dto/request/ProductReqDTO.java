@@ -5,10 +5,7 @@ import com.example.clothingstore.annotation.EnumValue;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.Size;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -46,8 +43,10 @@ public class ProductReqDTO {
     @EnumValue(enumClass = Size.class, message = "size.invalid")
     private String size;
 
+    @Min(value = 0, message = "variant.quantity.min")
     private Integer quantity;
 
+    @NotNull(message = "variant.differencePrice.not.null")
     private Double differencePrice;
 
     @NotEmpty(message = "variant.images.not.empty")

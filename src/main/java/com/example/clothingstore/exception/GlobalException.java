@@ -35,7 +35,8 @@ public class GlobalException {
   @ExceptionHandler(value = {UsernameNotFoundException.class, IdInvalidException.class,
       EmailInvalidException.class, TokenInvalidException.class, MissingRequestCookieException.class,
       ResourceNotFoundException.class, ResourceAlreadyExistException.class,
-      InvalidFileTypeException.class, BadRequestException.class, BadCredentialsException.class})
+      InvalidFileTypeException.class, BadRequestException.class, BadCredentialsException.class,
+      PaymentException.class})
   public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());

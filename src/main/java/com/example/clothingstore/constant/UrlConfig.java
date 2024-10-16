@@ -52,6 +52,15 @@ public class UrlConfig {
 	public static final String SHIPPING_PROFILE = "/shipping-profiles";
 	public static final String DEFAULT = "/default";
 
+	// Order controller
+	public static final String ORDERS = "/orders";
+	public static final String PAY_CASH = "/pay-cash";
+	public static final String PAY_VNPAY = "/pay-vnpay";
+
+	// Payment controller
+	public static final String PAYMENT = "/payment";
+	public static final String VNPAY_RETURN = "/vnpay_return";
+
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {
 		return new String[]{
@@ -72,7 +81,9 @@ public class UrlConfig {
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
 			API_VERSION + PRODUCT + PRODUCT_ID + ID,
 			API_VERSION + CATEGORY,
-			API_VERSION + USER
+			API_VERSION + USER,
+			API_VERSION + PAYMENT,
+			API_VERSION + PAYMENT + VNPAY_RETURN
 		};
 	}
 
@@ -82,7 +93,8 @@ public class UrlConfig {
 			API_VERSION + AUTH + LOGIN,
 			API_VERSION + AUTH + REGISTER,
 			API_VERSION + AUTH + REFRESH,
-			API_VERSION + AUTH + RECOVER_PASSWORD
+			API_VERSION + AUTH + RECOVER_PASSWORD,
+			API_VERSION + ORDERS
 		};
 	}
 
