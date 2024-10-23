@@ -1,8 +1,6 @@
 package com.example.clothingstore.dto.request;
 
 import java.util.List;
-import com.example.clothingstore.annotation.EnumValue;
-import com.example.clothingstore.enumeration.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;

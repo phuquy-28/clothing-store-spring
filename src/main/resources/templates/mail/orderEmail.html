@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đơn hàng</title>
+</head>
+
+<body
+    style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f8f8; border-radius: 5px;">
+        <tr>
+            <td style="padding: 20px;">
+                <h1 style="color: #4a4a4a; text-align: center;">Xác nhận đơn hàng</h1>
+                <p style="font-size: 16px;">Kính gửi <span th:text="${customerName}"></span>,</p>
+                <p style="font-size: 16px;">Cảm ơn bạn đã đặt hàng! Chúng tôi xin xác nhận rằng đơn hàng của bạn đã được
+                    tiếp nhận và đang được xử lý.</p>
+
+                <h2 style="color: #4a4a4a; margin-top: 30px;">Thông tin đơn hàng</h2>
+                <table width="100%" cellpadding="10" cellspacing="0"
+                    style="background-color: #ffffff; border-radius: 5px; margin-top: 10px;">
+                    <tr style="background-color: #4a4a4a; color: #ffffff;">
+                        <th style="text-align: left;">Mã đơn hàng</th>
+                        <th style="text-align: left;">Ngày đặt hàng</th>
+                        <th style="text-align: right;">Tổng cộng</th>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #eeeeee;" th:text="${orderNumber}"></td>
+                        <td style="border-bottom: 1px solid #eeeeee;" th:text="${orderDate}"></td>
+                        <td style="text-align: right; border-bottom: 1px solid #eeeeee;" th:text="${orderTotal}"></td>
+                    </tr>
+                </table>
+
+                <h2 style="color: #4a4a4a; margin-top: 30px;">Chi tiết đơn hàng</h2>
+                <table width="100%" cellpadding="10" cellspacing="0"
+                    style="background-color: #ffffff; border-radius: 5px; margin-top: 10px;">
+                    <tr style="background-color: #4a4a4a; color: #ffffff;">
+                        <th style="text-align: left;">Sản phẩm</th>
+                        <th style="text-align: center;">Số lượng</th>
+                        <th style="text-align: right;">Giá</th>
+                    </tr>
+                    <tr th:each="item : ${orderItems}">
+                        <td style="border-bottom: 1px solid #eeeeee;">
+                            <strong th:text="${item.productName}"></strong><br>
+                            Màu: <span th:text="${item.color}"></span><br>
+                            Kích thước: <span th:text="${item.size}"></span>
+                        </td>
+                        <td style="text-align: center; border-bottom: 1px solid #eeeeee;" th:text="${item.quantity}">
+                        </td>
+                        <td style="text-align: right; border-bottom: 1px solid #eeeeee;" th:text="${item.price}"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: right;"><strong>Tổng cộng:</strong></td>
+                        <td style="text-align: right;"><strong th:text="${orderTotal}"></strong></td>
+                    </tr>
+                </table>
+
+                <h2 style="color: #4a4a4a; margin-top: 30px;">Thông tin giao hàng</h2>
+                <table width="100%" cellpadding="10" cellspacing="0"
+                    style="background-color: #ffffff; border-radius: 5px; margin-top: 10px;">
+                    <tr>
+                        <td style="border-bottom: 1px solid #eeeeee;"><strong>Địa chỉ giao hàng:</strong></td>
+                        <td style="border-bottom: 1px solid #eeeeee;" th:text="${shippingAddress}"></td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #eeeeee;"><strong>Phương thức vận chuyển:</strong></td>
+                        <td style="border-bottom: 1px solid #eeeeee;" th:text="${shippingMethod}"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Thời gian giao hàng dự kiến:</strong></td>
+                        <td th:text="${estimatedDelivery}"></td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 16px; margin-top: 30px;">Bạn có thể theo dõi trạng thái đơn hàng bằng cách nhấp vào
+                    nút dưới đây:</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="text-align: center; padding: 20px 0;">
+                            <a th:href="${trackingUrl}"
+                                style="background-color: #4CAF50; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Theo
+                                dõi đơn hàng</a>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 16px;">Nếu bạn có bất kỳ câu hỏi nào về đơn hàng, vui lòng liên hệ với đội ngũ chăm
+                    sóc khách hàng của chúng tôi.</p>
+                <p style="font-size: 16px;">Cảm ơn bạn đã mua sắm cùng chúng tôi!</p>
+                <p style="font-size: 16px;">Trân trọng,<br>Đội ngũ cửa hàng của chúng tôi</p>
+            </td>
+        </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="text-align: center; padding-top: 20px;">
+                <p style="font-size: 12px; color: #888888;">Email này được gửi tự động. Vui lòng không trả lời email
+                    này.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

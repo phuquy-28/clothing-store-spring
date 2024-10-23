@@ -56,6 +56,13 @@ public class UrlConfig {
 	public static final String ORDERS = "/orders";
 	public static final String PAY_CASH = "/pay-cash";
 	public static final String PAY_VNPAY = "/pay-vnpay";
+	public static final String MY_ORDERS = "/my-orders";
+	public static final String LINE_ITEM = "/line-items";
+	public static final String ORDER_ID = "/{orderId}";
+	public static final String STATUS = "/status";
+
+	// Review controller
+  public static final String REVIEW = "/reviews";
 
 	// Payment controller
 	public static final String PAYMENT = "/payment";

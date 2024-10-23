@@ -66,6 +66,9 @@ public class User extends AbstractEntity {
   @JoinColumn(name = "default_shipping_profile_id")
   private ShippingProfile defaultShippingProfile;
 
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Review> reviews;
+
   public User(String email, String password, boolean activated) {
     this.email = email;
     this.password = password;

@@ -1,16 +1,48 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
-  <title>Account Activation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kích hoạt tài khoản của bạn</title>
 </head>
-<body>
-<h1>Welcome, <span th:text="${name}">User</span>!</h1>
-<p>Thank you for registering. Please click the link below to activate your account:</p>
-<p>
-  <a th:href="@{${baseUrl} + '/auth/confirm-user?key=' + ${key}}">
-    Activate your account
-  </a>
-</p>
-<p>If you did not register for an account, please ignore this email.</p>
+
+<body
+  style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f8f8; border-radius: 5px;">
+    <tr>
+      <td style="padding: 20px;">
+        <h1 style="color: #4a4a4a; text-align: center;">Kích hoạt tài khoản của bạn</h1>
+        <p style="font-size: 16px;">Xin chào <span th:text="${name}"></span>,</p>
+        <p style="font-size: 16px;">Cảm ơn bạn đã đăng ký tài khoản trên hệ thống của chúng tôi. Để hoàn tất quá trình
+          đăng ký và kích hoạt tài khoản của bạn, vui lòng nhấp vào nút bên dưới:</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="text-align: center; padding: 30px 0;">
+              <a th:href="@{${baseUrl} + '/auth/confirm-user?key=' + ${key}}"
+                style="background-color: #4CAF50; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Kích
+                hoạt tài khoản</a>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size: 16px;">Nếu nút trên không hoạt động, bạn có thể sao chép và dán liên kết sau vào trình
+          duyệt của mình:</p>
+        <p style="font-size: 14px; word-break: break-all; background-color: #ffffff; padding: 10px; border-radius: 5px;"
+          th:text="@{${baseUrl} + '/auth/confirm-user?key=' + ${key}}"></p>
+        <p style="font-size: 16px;">Lưu ý: Liên kết này sẽ hết hạn sau 24 giờ vì lý do bảo mật.</p>
+        <p style="font-size: 16px;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ với
+          chúng tôi nếu bạn có bất kỳ câu hỏi nào.</p>
+        <p style="font-size: 16px;">Trân trọng,<br>Đội ngũ hỗ trợ của chúng tôi</p>
+      </td>
+    </tr>
+  </table>
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="text-align: center; padding-top: 20px;">
+        <p style="font-size: 12px; color: #888888;">Email này được gửi tự động. Vui lòng không trả lời email này.</p>
+      </td>
+    </tr>
+  </table>
 </body>
+
 </html>

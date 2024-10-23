@@ -3,6 +3,7 @@ package com.example.clothingstore.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.JoinColumn;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,4 +33,7 @@ public class LineItem extends AbstractEntity {
   private Double discountAmount;
 
   private Double totalPrice;
+
+  @OneToOne(mappedBy = "lineItem")
+  private Review review;
 }

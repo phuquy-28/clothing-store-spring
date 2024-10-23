@@ -49,6 +49,9 @@ public class Product extends AbstractEntity {
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductVariant> variants;
 
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Review> reviews;
+
   private boolean isDeleted = false;
 
   private Instant deletedAt;

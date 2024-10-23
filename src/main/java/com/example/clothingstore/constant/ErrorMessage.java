@@ -26,7 +26,11 @@ public final class ErrorMessage {
   public static final String TRANSACTION_FAILED = "error.transaction.failed";
   public static final String INVALID_AMOUNT = "error.invalid.amount";
   public static final String ORDER_NOT_FOUND = "error.order.not_found";
-
+  public static final String LINE_ITEM_NOT_FOUND = "error.line_item.not_found";
+  public static final String REVIEW_NOT_FOUND = "error.review.not_found";
+  public static final String REVIEW_ALREADY_EXISTS = "error.review.already_exists";
+  public static final String REVIEW_NOT_ALLOWED = "error.review.not_allowed";
+  public static final String PRE_PAYMENT_NOT_SUCCESS = "error.pre_payment.not_success";
   private ErrorMessage() {
   }
 }

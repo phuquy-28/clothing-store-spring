@@ -21,6 +21,9 @@ public class ShippingProfileReqDTO {
   @NotBlank(message = "address.not.blank")
   private String address;
 
+  @NotBlank(message = "ward.not.blank")
+  private String ward;
+
   @NotBlank(message = "district.not.blank")
   private String district;
 

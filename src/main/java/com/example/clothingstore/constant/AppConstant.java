@@ -12,9 +12,11 @@ public final class AppConstant {
   public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh-token";
   public static final String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
   public static final String RECOVER_PASSWORD_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
+  public static final String ORDER_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Order confirmation";
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
   public static final String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
-
+  public static final String ORDER_EMAIL_TEMPLATE = "mail/orderEmail";
+  
   public static final String SIMPLE_DATE_FORMAT = "dd/MM/yyyy";
 
   private AppConstant() {
