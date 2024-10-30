@@ -15,7 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import lombok.ToString;
 import java.time.Instant;
 import java.util.List;
 
@@ -25,6 +25,7 @@ import java.util.List;
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
+@ToString(exclude = {"images", "variants", "reviews"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product extends AbstractEntity {
@@ -37,6 +38,8 @@ public class Product extends AbstractEntity {
   private Double price;
 
   private String slug;
+
+  private boolean isFeatured;
 
   @ManyToOne
   @JoinColumn(name = "category_id", referencedColumnName = "id")

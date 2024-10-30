@@ -2,6 +2,7 @@ package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.ColumnDefault;
 
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.Size;
@@ -11,21 +12,24 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import lombok.ToString;
 import java.time.Instant;
 import java.util.List;
+
 @Entity
 @Table(name = "product_variants")
 @SQLDelete(sql = "UPDATE product_variants SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
+@ToString(exclude = {"images"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariant extends AbstractEntity {
@@ -52,4 +56,8 @@ public class ProductVariant extends AbstractEntity {
   private Instant deletedAt;
 
   private String deletedBy;
+
+  @Version
+  @ColumnDefault("0")
+  private Long version;
 }

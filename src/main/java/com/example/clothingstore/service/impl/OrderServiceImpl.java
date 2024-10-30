@@ -3,6 +3,11 @@ package com.example.clothingstore.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import lombok.RequiredArgsConstructor;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.OrderReqDTO;
@@ -21,12 +26,12 @@ import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.exception.BadRequestException;
+import com.example.clothingstore.exception.OrderCreationException;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.UserService;
-import com.example.clothingstore.service.VnPayService;
 import com.example.clothingstore.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import com.example.clothingstore.repository.ProductVariantRepository;
@@ -35,6 +40,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.clothingstore.service.strategy.PaymentStrategy;
+import com.example.clothingstore.service.strategy.DeliveryStrategy;
+import com.example.clothingstore.service.strategy.factory.PaymentStrategyFactory;
+import com.example.clothingstore.service.strategy.factory.DeliveryStrategyFactory;
+import com.example.clothingstore.enumeration.DeliveryMethod;
 
 @Service
 @RequiredArgsConstructor
@@ -44,95 +54,111 @@ public class OrderServiceImpl implements OrderService {
 
   private final OrderRepository orderRepository;
 
-  private final VnPayService vnPayService;
-
   private final ProductVariantRepository productVariantRepository;
 
   private final UserService userService;
 
   private final ReviewRepository reviewRepository;
 
-  @Override
-  public OrderPaymentDTO createCashOrder(OrderReqDTO orderReqDTO, User user) {
-    Order order = createOrder(orderReqDTO, user, PaymentMethod.COD);
-    OrderPaymentDTO orderResDTO = new OrderPaymentDTO();
-    orderResDTO.setCode(order.getCode());
-    orderResDTO.setStatus(order.getStatus());
-    orderResDTO.setPaymentMethod(order.getPaymentMethod());
-    orderResDTO.setPaymentStatus(order.getPaymentStatus());
-    orderResDTO.setPaymentUrl(null);
-    return orderResDTO;
-  }
+  private final PaymentStrategyFactory paymentStrategyFactory;
+
+  private final DeliveryStrategyFactory deliveryStrategyFactory;
 
   @Override
-  public OrderPaymentDTO createVnPayOrder(OrderReqDTO orderReqDTO, User user,
-      HttpServletRequest request) {
-    Order order = createOrder(orderReqDTO, user, PaymentMethod.VNPAY);
-    String paymentUrl = vnPayService.createPaymentUrl(order, request);
-    OrderPaymentDTO orderResDTO = new OrderPaymentDTO();
-    orderResDTO.setCode(order.getCode());
-    orderResDTO.setStatus(order.getStatus());
-    orderResDTO.setPaymentMethod(order.getPaymentMethod());
-    orderResDTO.setPaymentStatus(order.getPaymentStatus());
-    orderResDTO.setPaymentUrl(paymentUrl);
-    return orderResDTO;
+  @Transactional
+  @Retryable(value = {ObjectOptimisticLockingFailureException.class}, maxAttempts = 5,
+      backoff = @Backoff(delay = 200))
+  public OrderPaymentDTO checkOut(OrderReqDTO orderReqDTO, User user, HttpServletRequest request) {
+    // Validate product quantity first
+    validateProductQuantity(orderReqDTO);
+    
+    // Create order without updating product quantity
+    Order order = createOrder(orderReqDTO, user);
+
+    // Process delivery
+    DeliveryStrategy deliveryStrategy =
+        deliveryStrategyFactory.getStrategy(order.getDeliveryMethod());
+    deliveryStrategy.processDelivery(order);
+    order.setShippingFee(deliveryStrategy.calculateShippingFee(order));
+
+    // Calculate final total
+    double total = order.getTotal() != null ? order.getTotal() : 0;
+    double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
+    double discount = order.getDiscount() != null ? order.getDiscount() : 0;
+    order.setFinalTotal(total + shippingFee - discount);
+
+    // Process payment
+    PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(order.getPaymentMethod());
+    OrderPaymentDTO paymentResult = paymentStrategy.processPayment(order, request);
+
+    // If everything is successful, update product quantities and save order
+    updateProductQuantities(order);
+    orderRepository.save(order);
+
+    return paymentResult;
   }
 
-  private Order createOrder(OrderReqDTO orderReqDTO, User user, PaymentMethod paymentMethod) {
+  private void validateProductQuantity(OrderReqDTO orderReqDTO) {
+    for (OrderReqDTO.LineItemReqDTO lineItemDTO : orderReqDTO.getLineItems()) {
+        ProductVariant productVariant = productVariantRepository.findById(lineItemDTO.getProductVariantId())
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_VARIANT_NOT_FOUND));
+
+        if (productVariant.getQuantity() < lineItemDTO.getQuantity()) {
+            throw new BadRequestException(String.format(ErrorMessage.NOT_ENOUGH_STOCK));
+        }
+    }
+  }
+
+  private void updateProductQuantities(Order order) {
+    for (LineItem lineItem : order.getLineItems()) {
+        ProductVariant productVariant = lineItem.getProductVariant();
+        int newQuantity = productVariant.getQuantity() - lineItem.getQuantity().intValue();
+        if (newQuantity < 0) {
+            throw new BadRequestException(String.format(ErrorMessage.NOT_ENOUGH_STOCK));
+        }
+        productVariant.setQuantity(newQuantity);
+        productVariantRepository.save(productVariant);
+    }
+  }
+
+  private Order createOrder(OrderReqDTO orderReqDTO, User user) {
     Order order = new Order();
     order.setUser(user);
     order.setOrderDate(Instant.now());
     order.setCode(generateOrderCode());
     order.setNote(orderReqDTO.getNote());
-    order.setPaymentMethod(paymentMethod);
+    order.setPaymentMethod(PaymentMethod.valueOf(orderReqDTO.getPaymentMethod().toUpperCase()));
+    order.setDeliveryMethod(DeliveryMethod.valueOf(orderReqDTO.getDeliveryMethod().toUpperCase()));
 
     // Set shipping information
-    Order.ShippingInformation shippingInfo = new Order.ShippingInformation();
-    ShippingProfileReqDTO shippingProfile = orderReqDTO.getShippingProfile();
-    shippingInfo.setFirstName(shippingProfile.getFirstName());
-    shippingInfo.setLastName(shippingProfile.getLastName());
-    shippingInfo.setPhoneNumber(shippingProfile.getPhoneNumber());
-    shippingInfo.setAddress(shippingProfile.getAddress());
-    shippingInfo.setDistrict(shippingProfile.getDistrict());
-    shippingInfo.setProvince(shippingProfile.getProvince());
-    shippingInfo.setCountry(shippingProfile.getCountry());
-    order.setShippingInformation(shippingInfo);
+    setShippingInformation(order, orderReqDTO.getShippingProfile());
 
-    // Create and calculate line items
-    List<LineItem> lineItems = new ArrayList<>();
-    double total = 0.0;
-    for (OrderReqDTO.LineItemReqDTO lineItemDTO : orderReqDTO.getLineItems()) {
-      LineItem lineItem = new LineItem();
-      ProductVariant productVariant =
-          productVariantRepository.findById(lineItemDTO.getProductVariantId())
-              .orElseThrow(() -> new ResourceNotFoundException("productVariant.not.found"));
-
-      lineItem.setProductVariant(productVariant);
-      lineItem.setQuantity(lineItemDTO.getQuantity().longValue());
-      lineItem.setUnitPrice(
-          productVariant.getProduct().getPrice() + productVariant.getDifferencePrice());
-      lineItem.setTotalPrice(lineItem.getUnitPrice() * lineItem.getQuantity());
-      lineItem.setOrder(order);
-
-      lineItems.add(lineItem);
-      total += lineItem.getTotalPrice();
-    }
+    // Create line items without updating product quantity
+    List<LineItem> lineItems = createLineItems(orderReqDTO, order);
     order.setLineItems(lineItems);
-    order.setTotal(total);
+    order.setTotal(calculateTotal(lineItems));
 
     // Set initial status
     order.setStatus(OrderStatus.PENDING);
     order.setPaymentStatus(PaymentStatus.PENDING);
 
-    // Save the order
-    Order savedOrder = orderRepository.save(order);
-    log.debug("Saved order with order code: {}", savedOrder.getCode());
-    return savedOrder;
+    return order;
   }
 
   private String generateOrderCode() {
     long timestamp = System.currentTimeMillis();
     return String.format("ORD-%d", timestamp);
+  }
+
+  @Recover
+  public OrderPaymentDTO recoverCreateOrder(ObjectOptimisticLockingFailureException e, OrderReqDTO orderReqDTO) {
+    log.error("Failed to create order after 5 attempts with order req dto: {}", orderReqDTO);
+    throw new OrderCreationException(ErrorMessage.SYSTEM_BUSY);
+  }
+
+  @Recover 
+  public OrderPaymentDTO recoverCreateOrder(BadRequestException e, OrderReqDTO orderReqDTO) {
+    throw e;
   }
 
   @Override
@@ -149,8 +175,8 @@ public class OrderServiceImpl implements OrderService {
 
     boolean isReviewed = order.getUser() != null && order.getLineItems().stream()
         .anyMatch(lineItem -> lineItem.getProductVariant().getProduct().getReviews().stream()
-            .anyMatch(review -> review.getUser() != null && 
-                      review.getUser().getId().equals(order.getUser().getId())));
+            .anyMatch(review -> review.getUser() != null
+                && review.getUser().getId().equals(order.getUser().getId())));
 
     canReview = canReview && !isReviewed;
 
@@ -285,7 +311,8 @@ public class OrderServiceImpl implements OrderService {
 
     OrderStatus newStatus = OrderStatus.valueOf(orderStatusReqDTO.getStatus().toUpperCase());
 
-    if (order.getPaymentMethod() == PaymentMethod.VNPAY && order.getPaymentStatus() != PaymentStatus.SUCCESS) {
+    if (order.getPaymentMethod() == PaymentMethod.VNPAY
+        && order.getPaymentStatus() != PaymentStatus.SUCCESS) {
       throw new BadRequestException(ErrorMessage.PRE_PAYMENT_NOT_SUCCESS);
     }
 
@@ -304,6 +331,44 @@ public class OrderServiceImpl implements OrderService {
     orderRepository.save(order);
 
     return mapToOrderResDTO(order);
+  }
+
+  private void setShippingInformation(Order order, ShippingProfileReqDTO shippingProfile) {
+    Order.ShippingInformation shippingInfo = new Order.ShippingInformation();
+    shippingInfo.setFirstName(shippingProfile.getFirstName());
+    shippingInfo.setLastName(shippingProfile.getLastName());
+    shippingInfo.setPhoneNumber(shippingProfile.getPhoneNumber());
+    shippingInfo.setAddress(shippingProfile.getAddress());
+    shippingInfo.setDistrict(shippingProfile.getDistrict());
+    shippingInfo.setProvince(shippingProfile.getProvince());
+    shippingInfo.setCountry(shippingProfile.getCountry());
+    order.setShippingInformation(shippingInfo);
+  }
+
+  private List<LineItem> createLineItems(OrderReqDTO orderReqDTO, Order order) {
+    List<LineItem> lineItems = new ArrayList<>();
+    
+    for (OrderReqDTO.LineItemReqDTO lineItemDTO : orderReqDTO.getLineItems()) {
+        ProductVariant productVariant = productVariantRepository.findById(lineItemDTO.getProductVariantId())
+            .orElseThrow(() -> new ResourceNotFoundException("productVariant.not.found"));
+
+        LineItem lineItem = new LineItem();
+        lineItem.setProductVariant(productVariant);
+        lineItem.setQuantity(lineItemDTO.getQuantity().longValue());
+        lineItem.setUnitPrice(productVariant.getProduct().getPrice() + productVariant.getDifferencePrice());
+        lineItem.setTotalPrice(lineItem.getUnitPrice() * lineItem.getQuantity());
+        lineItem.setOrder(order);
+        
+        lineItems.add(lineItem);
+    }
+    
+    return lineItems;
+  }
+
+  private double calculateTotal(List<LineItem> lineItems) {
+    return lineItems.stream()
+        .mapToDouble(LineItem::getTotalPrice)
+        .sum();
   }
 
 }

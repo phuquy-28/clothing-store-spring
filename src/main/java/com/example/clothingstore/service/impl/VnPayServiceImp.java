@@ -3,8 +3,6 @@ package com.example.clothingstore.service.impl;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.ErrorMessage;
@@ -29,8 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.clothingstore.util.VnPayUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -48,8 +45,6 @@ public class VnPayServiceImp implements VnPayService {
   @Value("${vnpay.returnurl}")
   private String vnp_ReturnUrl;
 
-  private final Logger log = LoggerFactory.getLogger(VnPayServiceImp.class);
-
   private final OrderRepository orderRepository;
 
   @Override
@@ -57,7 +52,7 @@ public class VnPayServiceImp implements VnPayService {
     String vnp_Version = "2.1.0";
     String vnp_Command = "pay";
     String orderType = "other";
-    String vnp_IpAddr = getIpAddress(request);
+    String vnp_IpAddr = VnPayUtils.getIpAddress(request);
     String vnp_TxnRef = order.getCode();
     String vnp_OrderInfo = "Thanh toan don hang: " + order.getCode();
     String vnp_OrderType = orderType;
@@ -116,7 +111,7 @@ public class VnPayServiceImp implements VnPayService {
       }
     }
     String queryUrl = query.toString();
-    String vnp_SecureHash = hmacSHA512(vnp_HashSecret, hashData.toString());
+    String vnp_SecureHash = VnPayUtils.hmacSHA512(vnp_HashSecret, hashData.toString());
     queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
     return vnp_PayUrl + "?" + queryUrl;
   }
@@ -125,11 +120,11 @@ public class VnPayServiceImp implements VnPayService {
   public Void validatePayment(HttpServletRequest request) {
     Map<String, String> fields = new HashMap<>();
     for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
-        String fieldName = params.nextElement();
-        String fieldValue = request.getParameter(fieldName);
-        if ((fieldValue != null) && (fieldValue.length() > 0)) {
-            fields.put(fieldName, fieldValue);
-        }
+      String fieldName = params.nextElement();
+      String fieldValue = request.getParameter(fieldName);
+      if ((fieldValue != null) && (fieldValue.length() > 0)) {
+        fields.put(fieldName, fieldValue);
+      }
     }
 
     String vnp_SecureHash = request.getParameter("vnp_SecureHash");
@@ -139,43 +134,44 @@ public class VnPayServiceImp implements VnPayService {
 
     // Remove unnecessary fields
     if (fields.containsKey("vnp_SecureHashType")) {
-        fields.remove("vnp_SecureHashType");
+      fields.remove("vnp_SecureHashType");
     }
     if (fields.containsKey("vnp_SecureHash")) {
-        fields.remove("vnp_SecureHash");
+      fields.remove("vnp_SecureHash");
     }
 
     // Calculate checksum
     String signValue = hashAllFields(fields);
 
     if (signValue.equals(vnp_SecureHash)) {
-        if ("00".equals(vnp_ResponseCode)) {
-            // Find order in database
-            Order order = orderRepository.findByCode(vnp_TxnRef)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+      if ("00".equals(vnp_ResponseCode)) {
+        // Find order in database
+        Order order = orderRepository.findByCode(vnp_TxnRef)
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
-            // Check amount
-            long vnpAmount = Long.parseLong(fields.get("vnp_Amount")) / 100;
-            if (vnpAmount != Math.round(order.getTotal())) {
-                throw new PaymentException(ErrorMessage.INVALID_AMOUNT);
-            }
-
-            // Convert vnp_PayDate to Instant
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
-            Instant paymentDate = Instant.from(formatter.parse(vnp_PayDate));
-
-            // Update order status and payment date
-            order.setPaymentStatus(PaymentStatus.SUCCESS);
-            order.setStatus(OrderStatus.PROCESSING);
-            order.setPaymentDate(paymentDate);
-            orderRepository.save(order);
-
-            return null;
-        } else {
-            throw new PaymentException(ErrorMessage.PAYMENT_FAILED);
+        // Check amount
+        long vnpAmount = Long.parseLong(fields.get("vnp_Amount")) / 100;
+        if (vnpAmount != Math.round(order.getTotal())) {
+          throw new PaymentException(ErrorMessage.INVALID_AMOUNT);
         }
+
+        // Convert vnp_PayDate to Instant
+        DateTimeFormatter formatter =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
+        Instant paymentDate = Instant.from(formatter.parse(vnp_PayDate));
+
+        // Update order status and payment date
+        order.setPaymentStatus(PaymentStatus.SUCCESS);
+        order.setStatus(OrderStatus.PROCESSING);
+        order.setPaymentDate(paymentDate);
+        orderRepository.save(order);
+
+        return null;
+      } else {
+        throw new PaymentException(ErrorMessage.PAYMENT_FAILED);
+      }
     } else {
-        throw new PaymentException(ErrorMessage.INVALID_CHECKSUM);
+      throw new PaymentException(ErrorMessage.INVALID_CHECKSUM);
     }
   }
 
@@ -185,53 +181,17 @@ public class VnPayServiceImp implements VnPayService {
     StringBuilder hashData = new StringBuilder();
     Iterator<String> itr = fieldNames.iterator();
     while (itr.hasNext()) {
-        String fieldName = itr.next();
-        String fieldValue = fields.get(fieldName);
-        if ((fieldValue != null) && (fieldValue.length() > 0)) {
-            hashData.append(fieldName);
-            hashData.append('=');
-            hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-            if (itr.hasNext()) {
-                hashData.append('&');
-            }
+      String fieldName = itr.next();
+      String fieldValue = fields.get(fieldName);
+      if ((fieldValue != null) && (fieldValue.length() > 0)) {
+        hashData.append(fieldName);
+        hashData.append('=');
+        hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+        if (itr.hasNext()) {
+          hashData.append('&');
         }
-    }
-    return hmacSHA512(vnp_HashSecret, hashData.toString());
-  }
-
-  private String hmacSHA512(final String key, final String data) {
-    try {
-      if (key == null || data == null) {
-        throw new NullPointerException();
       }
-      final Mac hmac512 = Mac.getInstance("HmacSHA512");
-      byte[] hmacKeyBytes = key.getBytes();
-      final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
-      hmac512.init(secretKey);
-      byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
-      byte[] result = hmac512.doFinal(dataBytes);
-      StringBuilder sb = new StringBuilder(2 * result.length);
-      for (byte b : result) {
-        sb.append(String.format("%02x", b & 0xff));
-      }
-      return sb.toString();
-    } catch (Exception ex) {
-      log.error("Error hashing data: {}", ex.getMessage());
-      return "";
     }
-  }
-
-  private String getIpAddress(HttpServletRequest request) {
-    String ipAdress;
-    try {
-      ipAdress = request.getHeader("X-FORWARDED-FOR");
-      if (ipAdress == null) {
-        ipAdress = request.getRemoteAddr();
-      }
-    } catch (Exception e) {
-      log.error("Error getting IP address: {}", e.getMessage());
-      ipAdress = "Invalid IP:" + e.getMessage();
-    }
-    return ipAdress;
+    return VnPayUtils.hmacSHA512(vnp_HashSecret, hashData.toString());
   }
 }

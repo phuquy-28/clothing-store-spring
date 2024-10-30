@@ -39,27 +39,16 @@ public class OrderController {
 
   private final UserService userService;
 
-  @PostMapping(UrlConfig.ORDERS + UrlConfig.PAY_CASH)
-  public ResponseEntity<OrderPaymentDTO> createOrder(@RequestBody @Valid OrderReqDTO orderReqDTO) {
-    log.debug("REST request to create order: {}", orderReqDTO);
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.CHECK_OUT)
+  public ResponseEntity<OrderPaymentDTO> checkOut(@RequestBody @Valid OrderReqDTO orderReqDTO,
+      HttpServletRequest request) {
+    log.debug("REST request to check out order: {}", orderReqDTO);
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     User user = (authentication != null && authentication.isAuthenticated())
         ? userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get())
         : null;
-    OrderPaymentDTO createdOrder = orderService.createCashOrder(orderReqDTO, user);
-    return ResponseEntity.ok(createdOrder);
-  }
-
-  @PostMapping(UrlConfig.ORDERS + UrlConfig.PAY_VNPAY)
-  public ResponseEntity<OrderPaymentDTO> createOrderVNPay(
-      @RequestBody @Valid OrderReqDTO orderReqDTO, HttpServletRequest request) {
-    log.debug("REST request to create order: {}", orderReqDTO);
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    User user = (authentication != null && authentication.isAuthenticated())
-        ? userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get())
-        : null;
-    OrderPaymentDTO createdOrder = orderService.createVnPayOrder(orderReqDTO, user, request);
-    return ResponseEntity.ok(createdOrder);
+    OrderPaymentDTO result = orderService.checkOut(orderReqDTO, user, request);
+    return ResponseEntity.ok(result);
   }
 
   @GetMapping(UrlConfig.ORDERS + UrlConfig.MY_ORDERS)

@@ -23,7 +23,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users")
-@ToString
+@ToString(exclude = {"shippingProfiles", "reviews"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractEntity {

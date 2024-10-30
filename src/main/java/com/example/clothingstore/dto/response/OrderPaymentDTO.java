@@ -3,9 +3,11 @@ package com.example.clothingstore.dto.response;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class OrderPaymentDTO {
 
   private String code;

@@ -7,13 +7,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import lombok.ToString;
 import java.util.List;
 
 @Entity
 @Table(name = "categories")
 @Getter
 @Setter
+@ToString(exclude = {"products"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category extends AbstractEntity {

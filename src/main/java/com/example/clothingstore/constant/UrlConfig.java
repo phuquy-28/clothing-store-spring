@@ -54,8 +54,7 @@ public class UrlConfig {
 
 	// Order controller
 	public static final String ORDERS = "/orders";
-	public static final String PAY_CASH = "/pay-cash";
-	public static final String PAY_VNPAY = "/pay-vnpay";
+	public static final String CHECK_OUT = "/check-out";
 	public static final String MY_ORDERS = "/my-orders";
 	public static final String LINE_ITEM = "/line-items";
 	public static final String ORDER_ID = "/{orderId}";
@@ -101,7 +100,8 @@ public class UrlConfig {
 			API_VERSION + AUTH + REGISTER,
 			API_VERSION + AUTH + REFRESH,
 			API_VERSION + AUTH + RECOVER_PASSWORD,
-			API_VERSION + ORDERS
+			API_VERSION + ORDERS,
+			API_VERSION + ORDERS + CHECK_OUT
 		};
 	}
 

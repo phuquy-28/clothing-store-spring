@@ -12,9 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface OrderService {
 
-  OrderPaymentDTO createCashOrder(OrderReqDTO orderReqDTO, User user);
-
-  OrderPaymentDTO createVnPayOrder(OrderReqDTO orderReqDTO, User user, HttpServletRequest request);
+  OrderPaymentDTO checkOut(OrderReqDTO orderReqDTO, User user, HttpServletRequest request);
 
   List<OrderResDTO> getOrdersByUser();
 

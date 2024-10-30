@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import lombok.ToString;
 import java.time.Instant;
 
 @Entity
@@ -20,6 +20,7 @@ import java.time.Instant;
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductImage extends AbstractEntity {

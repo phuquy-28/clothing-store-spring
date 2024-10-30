@@ -31,6 +31,10 @@ public final class ErrorMessage {
   public static final String REVIEW_ALREADY_EXISTS = "error.review.already_exists";
   public static final String REVIEW_NOT_ALLOWED = "error.review.not_allowed";
   public static final String PRE_PAYMENT_NOT_SUCCESS = "error.pre_payment.not_success";
+  public static final String SYSTEM_BUSY = "error.system.busy";
+  public static final String NOT_ENOUGH_STOCK = "error.not_enough_stock";
+  public static final String PRODUCT_VARIANT_NOT_FOUND = "error.product_variant.not_found";
+  
   private ErrorMessage() {
   }
 }

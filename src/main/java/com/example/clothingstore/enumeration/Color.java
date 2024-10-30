@@ -1,13 +1,15 @@
 package com.example.clothingstore.enumeration;
 
 public enum Color {
-  BROWN,
-  GREEN,
-  GREY,
-  OLIVE_GREEN,
-  PINK,
   RED,
   YELLOW,
+  BLUE,
+  GREEN,
+  PURPLE,
+  BROWN,
+  GRAY,
+  PINK,
+  ORANGE,
+  BLACK,
   WHITE,
-  BLACK
 }

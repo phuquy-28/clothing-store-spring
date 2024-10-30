@@ -14,8 +14,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import java.time.Instant;
 import java.util.List;
+import com.example.clothingstore.enumeration.DeliveryMethod;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
@@ -24,6 +26,7 @@ import com.example.clothingstore.enumeration.PaymentStatus;
 @Table(name = "orders")
 @Getter
 @Setter
+@ToString(exclude = {"lineItems"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order extends AbstractEntity {
@@ -63,6 +66,9 @@ public class Order extends AbstractEntity {
 
   @Enumerated(EnumType.STRING)
   private OrderStatus status;
+
+  @Enumerated(EnumType.STRING)
+  private DeliveryMethod deliveryMethod;
 
   @Getter
   @Setter

@@ -25,6 +25,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.retry:spring-retry")
+    implementation("org.springframework:spring-aspects")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     implementation(platform("com.google.cloud:libraries-bom:26.31.0"))
@@ -49,4 +51,5 @@ tasks.jar {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    systemProperty("env.file", ".env")
 }

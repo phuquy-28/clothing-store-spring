@@ -6,6 +6,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    defer-datasource-initialization: ${DEFER_DATASOURCE_INITIALIZATION}
+
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE}
+      encoding: UTF-8
 
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
@@ -47,6 +53,7 @@ logging:
     org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
 
 server:
+  port: ${SERVER_PORT}
   servlet:
     encoding:
       charset: UTF-8
