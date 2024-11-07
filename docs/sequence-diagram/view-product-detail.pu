@@ -1,0 +1,84 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "ShopPage" as shopPage
+boundary "ProductDetailPage" as detailPage
+control "ProductController" as controller
+control "ProductService" as service
+control "ProductRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+actor -> shopPage: clickProduct(slug)
+activate shopPage
+
+shopPage -> detailPage: navigate(slug)
+deactivate shopPage
+activate detailPage
+
+detailPage -> controller: getProductBySlug(slug)
+activate controller
+
+controller -> service: getProductBySlug(slug)
+activate service
+
+service -> repo: getProductBySlug(slug)
+activate repo
+repo -> db: findBySlug(slug)
+activate db
+db --> repo: return(product)
+deactivate db
+repo --> service: return(product)
+deactivate repo
+
+alt product found
+    service -> service: convertToProductResDTO()
+    service --> controller: return(productDTO)
+    controller --> detailPage: return(productDTO)
+    detailPage --> actor: display(productDetails)
+else product not found
+    service --> controller: throwException()
+    deactivate service
+    controller --> detailPage: return(error)
+    deactivate controller
+    detailPage --> actor: display("Product not found")
+    deactivate detailPage
+end
+
+deactivate service
+deactivate controller
+deactivate detailPage
+
+hide footbox
+@enduml

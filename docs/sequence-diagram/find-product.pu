@@ -1,0 +1,84 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "HomePage" as homePage
+boundary "ShopPage" as shopPage
+control "ProductController" as controller
+control "ProductService" as service
+control "ProductRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+actor -> homePage: accessWebsite()
+activate homePage
+
+actor -> homePage: inputProductName(name)
+homePage -> controller: searchProduct(name)
+deactivate homePage
+activate controller
+
+controller -> service: getProducts(name)
+activate service
+
+service -> repo: getProducts(name)
+activate repo
+repo -> db: findAll(name)
+activate db
+db --> repo: return(products)
+deactivate db
+repo --> service: return(products)
+deactivate repo
+
+alt products found
+    service --> controller: return(products)
+    controller --> shopPage: return(products)
+    activate shopPage
+    shopPage --> actor: display(products)
+    opt View Product Detail
+        actor -> shopPage: clickViewProductDetail()
+        ref over shopPage   
+            //sd:Xem chi tiết sản phẩm//
+        end ref
+    end
+else no products found
+    service --> controller: return(no products)
+    deactivate service
+    controller --> shopPage: return(no products)
+    deactivate controller
+    shopPage --> actor: display("No products found")
+    deactivate shopPage
+end
+
+hide footbox
+@enduml

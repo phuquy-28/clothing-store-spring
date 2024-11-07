@@ -1,0 +1,93 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "HomePage" as homePage
+boundary "ShopPage" as shopPage
+control "ProductController" as controller
+control "ProductService" as service
+control "ProductRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+actor -> homePage: clickShopPage()
+activate homePage
+
+homePage -> shopPage: navigate()
+deactivate homePage
+activate shopPage
+
+shopPage -> controller: getProducts()
+activate controller
+
+controller -> service: getProducts()
+activate service
+
+service -> repo: getProducts()
+activate repo
+repo -> db: findAll()
+activate db
+db --> repo: return(products)
+deactivate db
+repo --> service: return(products)
+deactivate repo
+
+alt products found
+    service --> controller: return(products)
+    controller --> shopPage: return(products)
+    shopPage --> actor: display(products)
+    
+    opt Filter Products
+        actor -> shopPage: applyFilter(criteria)
+        ref over shopPage
+            //sd:Lọc sản phẩm//
+        end ref
+    end
+    
+    opt View Product Detail
+        actor -> shopPage: clickViewProductDetail()
+        ref over shopPage
+            //sd:Xem chi tiết sản phẩm//
+        end ref
+    end
+else system error
+    service --> controller: throwException()
+    deactivate service
+    controller --> shopPage: return(error)
+    deactivate controller
+    shopPage --> actor: display("System Error")
+    deactivate shopPage
+end
+
+hide footbox
+@enduml
