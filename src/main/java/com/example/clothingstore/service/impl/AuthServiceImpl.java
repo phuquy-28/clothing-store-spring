@@ -4,6 +4,7 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.entity.Profile;
+import com.example.clothingstore.entity.TokenBlacklist;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.dto.request.LoginReqDTO;
@@ -11,6 +12,7 @@ import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RegisterResDTO;
 import com.example.clothingstore.mapper.UserMapper;
 import com.example.clothingstore.repository.RoleRepository;
+import com.example.clothingstore.repository.TokenBlacklistRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.AuthService;
 import com.example.clothingstore.service.EmailService;
@@ -54,6 +56,8 @@ public class AuthServiceImpl implements AuthService {
   private final UserMapper userMapper;
 
   private final AuthenticationManager authenticationManager;
+
+  private final TokenBlacklistRepository tokenBlacklistRepository;
 
   @Override
   public RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException {
@@ -143,16 +147,28 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void logout() {
-    // get email
-    String email =
-        SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get()
-            : null;
-    // get user
-    User currentUserDB = userService.handleGetUserByUsername(email);
-    // update user with refresh token
-    userService.updateUserWithRefreshToken(currentUserDB, null);
-    log.debug("Logout Information for User: {}", currentUserDB);
+  public void logout(String refreshToken) {
+    // Get current access token
+    String token = SecurityUtil.getCurrentUserJWT().orElse(null);
+    if (token == null) {
+        throw new TokenInvalidException(ErrorMessage.ACCESS_TOKEN_INVALID);
+    }
+
+    // Add access token to blacklist
+    Jwt jwt = securityUtil.jwtDecoder(token);
+    TokenBlacklist blacklistToken = new TokenBlacklist();
+    blacklistToken.setToken(token);
+    blacklistToken.setCreatedDate(jwt.getIssuedAt());
+    blacklistToken.setExpiryDate(jwt.getExpiresAt());
+    tokenBlacklistRepository.save(blacklistToken);
+
+    // Remove refresh token for current device
+    String email = SecurityUtil.getCurrentUserLogin().orElse(null);
+    if (email != null) {
+        User user = userService.handleGetUserByUsername(email);
+        user.getRefreshTokens().removeIf(rt -> rt.getRefreshToken().equals(refreshToken));
+        userRepository.save(user);
+    }
   }
 
   @Override
@@ -196,25 +212,37 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public LoginResDTO refreshToken(String refreshToken) throws TokenInvalidException {
+    // Decode and validate refresh token
     Jwt jwt = securityUtil.jwtDecoder(refreshToken);
-
     String email = jwt.getSubject();
-
-    // check exist user with email and refresh token
-    User loginUser = userRepository.findByEmailAndRefreshToken(email, refreshToken)
+    
+    // Get user and validate refresh token
+    User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID));
+    
+    // Check if refresh token exists and is not expired
+    boolean validRefreshToken = user.getRefreshTokens().stream()
+        .anyMatch(rt -> rt.getRefreshToken().equals(refreshToken) 
+            && rt.getExpiryDate().isAfter(Instant.now()));
+            
+    if (!validRefreshToken) {
+        throw new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID);
+    }
 
-    // Tạo response
-    LoginResDTO loginResDTO = convertUserToResLoginDTO(loginUser);
+    // Create response
+    LoginResDTO loginResDTO = convertUserToResLoginDTO(user);
 
-    // Tạo access token
-    String accessToken = securityUtil.createAccessToken(loginUser, loginResDTO);
+    // Create new access token
+    String accessToken = securityUtil.createAccessToken(user, loginResDTO);
     loginResDTO.setAccessToken(accessToken);
 
-    // Tạo refresh token
+    // Create new refresh token
     String newRefreshToken = securityUtil.createRefreshToken(email, loginResDTO);
-    userService.updateUserWithRefreshToken(loginUser, newRefreshToken);
     loginResDTO.setRefreshToken(newRefreshToken);
+
+    // Remove old refresh token and add new one
+    user.getRefreshTokens().removeIf(rt -> rt.getRefreshToken().equals(refreshToken));
+    userService.updateUserWithRefreshToken(user, newRefreshToken);
 
     return loginResDTO;
   }

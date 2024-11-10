@@ -6,6 +6,7 @@ import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.entity.UserRefreshToken;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
@@ -15,16 +16,18 @@ import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(rollbackFor = Exception.class)
 public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
 
   private final PasswordEncoder passwordEncoder;
+
+  private final SecurityUtil securityUtil;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -33,8 +36,24 @@ public class UserServiceImpl implements UserService {
     return null;
   }
 
+  @Override
   public void updateUserWithRefreshToken(User user, String refreshToken) {
-    user.setRefreshToken(refreshToken);
+    // Decode refresh token to get expiry
+    Jwt jwt = securityUtil.jwtDecoder(refreshToken);
+
+    // Create new refresh token entity
+    UserRefreshToken userRefreshToken = new UserRefreshToken();
+    userRefreshToken.setRefreshToken(refreshToken);
+    userRefreshToken.setCreatedDate(jwt.getIssuedAt());
+    userRefreshToken.setExpiryDate(jwt.getExpiresAt());
+    userRefreshToken.setUser(user);
+
+    // Add to user's refresh tokens
+    if (user.getRefreshTokens() == null) {
+        user.setRefreshTokens(new ArrayList<>());
+    }
+    user.getRefreshTokens().add(userRefreshToken);
+    
     userRepository.save(user);
   }
 

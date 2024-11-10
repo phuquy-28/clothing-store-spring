@@ -1,0 +1,93 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "HomePage" as homePage
+boundary "WishlistPage" as wishlistPage
+control "ProductController" as controller
+control "ProductService" as service
+control "ProductRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+actor -> homePage: clickWishlistIcon()
+activate homePage
+
+homePage -> wishlistPage: navigate()
+deactivate homePage
+activate wishlistPage
+
+wishlistPage -> controller: getProducts(ids)
+activate controller
+
+controller -> service: getProducts(ids)
+activate service
+
+service -> repo: getProducts(ids)
+activate repo
+repo -> db: findAllById(ids)
+activate db
+db --> repo: return(products)
+deactivate db
+repo --> service: return(products)
+deactivate repo
+
+alt products found
+    service --> controller: return(products)
+    controller --> wishlistPage: return(products)
+    wishlistPage --> actor: display(products)
+    
+    opt Remove from Wishlist
+        actor -> wishlistPage: clickRemoveProduct()
+        ref over wishlistPage
+            //sd:Xoá sản phẩm khỏi danh sách yêu thích//
+        end ref
+    end
+    
+    opt View Product Detail
+        actor -> wishlistPage: clickViewProduct()
+        ref over wishlistPage
+            //sd:Xem chi tiết sản phẩm//
+        end ref
+    end
+else no products found
+    service --> controller: return(empty list)
+    deactivate service
+    controller --> wishlistPage: return(empty list)
+    deactivate controller
+    wishlistPage --> actor: display("No products in wishlist")
+    deactivate wishlistPage
+end
+
+hide footbox
+@enduml

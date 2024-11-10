@@ -19,7 +19,7 @@ import java.time.LocalDate;
 @Setter
 @Entity
 @Table(name = "profiles")
-@ToString
+@ToString(exclude = {"user"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Profile extends AbstractEntity {

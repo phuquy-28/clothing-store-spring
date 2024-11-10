@@ -13,7 +13,7 @@ public interface AuthService {
 
   LoginResDTO login(LoginReqDTO loginReqDto);
 
-  void logout();
+  void logout(String refreshToken);
 
   LoginResDTO activateAccount(String key) throws TokenInvalidException;
 

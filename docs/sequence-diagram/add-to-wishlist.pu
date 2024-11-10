@@ -1,0 +1,73 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "ProductDetailPage" as detailPage
+boundary "ShopPage" as shopPage
+database "LocalStorage" as localStorage
+
+' Start processing flow
+activate actor
+
+alt From Product Detail Page
+    actor -> detailPage: clickHeartIcon(productId)
+    activate detailPage
+    detailPage -> localStorage: addToWishlist(productId)
+    activate localStorage
+    localStorage --> detailPage: return(result)
+    deactivate localStorage
+    alt product not in wishlist
+        detailPage --> actor: message("Added to wishlist")
+    else product already in wishlist
+        detailPage --> actor: message("Product already in wishlist")
+    end
+    deactivate localStorage
+    deactivate detailPage
+
+else From Shop Page
+    actor -> shopPage: clickHeartIcon(productId)
+    activate shopPage
+    shopPage -> localStorage: addToWishlist(productId)
+    activate localStorage
+    localStorage --> shopPage: return(result)
+    deactivate localStorage
+    alt product not in wishlist
+        shopPage --> actor: message("Added to wishlist")
+    else product already in wishlist
+        shopPage --> actor: message("Product already in wishlist")
+    end
+    deactivate localStorage
+    deactivate shopPage
+end
+
+hide footbox
+@enduml

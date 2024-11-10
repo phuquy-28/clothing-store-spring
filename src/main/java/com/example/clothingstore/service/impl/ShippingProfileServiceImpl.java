@@ -167,6 +167,10 @@ public class ShippingProfileServiceImpl implements ShippingProfileService {
     User currentUser = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().orElseThrow())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
+    if (currentUser.getDefaultShippingProfile() == null) {
+      throw new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND);
+    }
+
     ShippingProfile defaultProfile = currentUser.getDefaultShippingProfile();
     ShippingProfileResDTO shippingProfileResDTO =
         shippingProfileMapper.toShippingProfileResDTO(defaultProfile);

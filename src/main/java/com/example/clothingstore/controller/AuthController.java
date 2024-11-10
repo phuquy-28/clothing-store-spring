@@ -5,6 +5,7 @@ import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.dto.request.ReqEmailRecover;
 import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.request.LogoutReqDTO;
 import com.example.clothingstore.dto.request.ReqResetPassword;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RegisterResDTO;
@@ -70,12 +71,12 @@ public class AuthController {
   }
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.LOGOUT)
-  public ResponseEntity<Void> logout() {
+  public ResponseEntity<Void> logout(@RequestBody @Valid LogoutReqDTO logoutReqDTO) {
     log.debug("REST request to logout");
     ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, "").httpOnly(true)
         .secure(true).path("/").maxAge(AppConstant.COOKIE_INVALID_EXPIRE).build();
 
-    authService.logout();
+    authService.logout(logoutReqDTO.getRefreshToken());
     log.debug("Set refresh token cookie: {}", springCookie.toString());
     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).build();
   }

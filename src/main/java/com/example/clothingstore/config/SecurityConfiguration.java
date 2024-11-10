@@ -7,6 +7,7 @@ import com.nimbusds.jose.util.Base64;
 import java.time.Duration;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
@@ -31,14 +31,21 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.jwt.JwtValidationException;
+import java.util.Collections;
+import com.example.clothingstore.repository.TokenBlacklistRepository;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
 @Slf4j
+@RequiredArgsConstructor
 public class SecurityConfiguration {
 
   @Value("${jwt.base64-secret}")
   private String jwtKey;
+
+  private final TokenBlacklistRepository tokenBlacklistRepository;
 
   private SecretKey getSecretKey() {
     byte[] keyBytes = Base64.from(jwtKey).decode();
@@ -95,17 +102,20 @@ public class SecurityConfiguration {
   public JwtDecoder jwtDecoder() {
     NimbusJwtDecoder jwtDecoder =
         NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
-    // Set a clock skew to handle token expiration window
-    jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
-        JwtValidators.createDefault(), new JwtTimestampValidator(Duration.ofSeconds(0))));
-    return token -> {
-      try {
-        return jwtDecoder.decode(token);
-      } catch (Exception e) {
-        log.error("Error decoding token: {}", e.getMessage());
-        throw e;
+
+    jwtDecoder.setJwtValidator(token -> {
+      // Check if token is blacklisted
+      if (tokenBlacklistRepository.findByToken(token.getTokenValue()).isPresent()) {
+        throw new JwtValidationException(null,
+            Collections.singletonList(new OAuth2Error("invalid_token")));
       }
-    };
+
+      // Validate expiry
+      return new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefault(),
+          new JwtTimestampValidator(Duration.ofSeconds(0))).validate(token);
+    });
+
+    return jwtDecoder;
   }
 
   @Bean

@@ -23,7 +23,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users")
-@ToString(exclude = {"shippingProfiles", "reviews"})
+@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractEntity {
@@ -38,9 +38,6 @@ public class User extends AbstractEntity {
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
   private Profile profile;
-
-  @Column(columnDefinition = "MEDIUMTEXT")
-  private String refreshToken;
 
   @NotNull
   @Column(nullable = false)
@@ -68,6 +65,9 @@ public class User extends AbstractEntity {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Review> reviews;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<UserRefreshToken> refreshTokens;
 
   public User(String email, String password, boolean activated) {
     this.email = email;

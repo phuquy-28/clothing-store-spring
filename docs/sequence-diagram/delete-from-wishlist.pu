@@ -1,0 +1,55 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "WishlistPage" as wishlistPage
+database "LocalStorage" as localStorage
+
+' Start processing flow
+activate actor
+actor -> wishlistPage: clickDeleteIcon(productId)
+activate wishlistPage
+
+wishlistPage -> localStorage: removeFromWishlist(productId)
+activate localStorage
+localStorage --> wishlistPage: return(result)
+deactivate localStorage
+alt product in wishlist
+    wishlistPage --> actor: message("Removed from wishlist")
+else product not in wishlist
+    wishlistPage --> actor: message("Product not in wishlist")
+end
+deactivate localStorage
+deactivate wishlistPage
+
+hide footbox
+@enduml
