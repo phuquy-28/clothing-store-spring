@@ -9,7 +9,7 @@ public final class AppConstant {
   public static final Long REFRESH_TOKEN_COOKIE_EXPIRE = 30L * 24 * 60 * 60;
   public static final Long COOKIE_INVALID_EXPIRE = 0L;
 
-  public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh-token";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
   public static final String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
   public static final String RECOVER_PASSWORD_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
   public static final String ORDER_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Order confirmation";
