@@ -2,7 +2,7 @@
 
 ' General configuration
 skinparam defaultFontSize 20
-skinparam maxMessageSize 60
+' skinparam maxMessageSize 60
 skinparam sequenceMessageAlign center
 
 ' Actor style configuration

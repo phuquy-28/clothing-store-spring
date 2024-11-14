@@ -33,6 +33,7 @@ skinparam {
 actor "Actor" as actor
 boundary "HomePage" as homePage
 boundary "WishlistPage" as wishlistPage
+database "LocalStorage" as localStorage
 control "ProductController" as controller
 control "ProductService" as service
 control "ProductRepository" as repo
@@ -69,9 +70,11 @@ alt products found
     
     opt Remove from Wishlist
         actor -> wishlistPage: clickRemoveProduct()
-        ref over wishlistPage
-            //sd:Xoá sản phẩm khỏi danh sách yêu thích//
-        end ref
+        wishlistPage -> localStorage: removeProduct(productId)
+        activate localStorage
+        localStorage --> wishlistPage: return(result)
+        deactivate localStorage
+        wishlistPage --> actor: display(result)
     end
     
     opt View Product Detail

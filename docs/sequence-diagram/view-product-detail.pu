@@ -67,6 +67,18 @@ alt product found
     service --> controller: return(productDTO)
     controller --> detailPage: return(productDTO)
     detailPage --> actor: display(productDetails)
+    opt Add to Cart
+        actor -> detailPage: clickAddToCart()
+        ref over detailPage
+            //sd:Thêm sản phẩm vào giỏ hàng//
+        end ref
+    end opt
+    opt Add to Wishlist
+        actor -> detailPage: clickAddToWishlist()
+        ref over detailPage
+            //sd:Thêm sản phẩm vào danh sách yêu thích//
+        end ref
+    end opt
 else product not found
     service --> controller: throwException()
     deactivate service

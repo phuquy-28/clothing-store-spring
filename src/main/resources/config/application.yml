@@ -60,7 +60,7 @@ server:
       enabled: true
       force: true
   tomcat:
-    relaxed-query-chars: "|,{,},[,],^"
+    relaxed-query-chars: "|,(,),{,},[,],^"
 
 springdoc:
   api-docs:

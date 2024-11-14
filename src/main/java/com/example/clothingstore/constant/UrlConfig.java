@@ -97,6 +97,7 @@ public class UrlConfig {
 	public static String[] PUBLIC_POST_ENDPOINTS() {
 		return new String[]{
 			API_VERSION + AUTH + LOGIN,
+			API_VERSION + AUTH + LOGOUT,
 			API_VERSION + AUTH + REGISTER,
 			API_VERSION + AUTH + REFRESH,
 			API_VERSION + AUTH + RECOVER_PASSWORD,

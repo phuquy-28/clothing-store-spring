@@ -154,6 +154,13 @@ public class AuthServiceImpl implements AuthService {
         throw new TokenInvalidException(ErrorMessage.ACCESS_TOKEN_INVALID);
     }
 
+    // Validate refresh token
+    try {
+      securityUtil.jwtDecoder(refreshToken);
+    } catch (Exception e) {
+      throw new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID);
+    }
+
     // Add access token to blacklist
     Jwt jwt = securityUtil.jwtDecoder(token);
     TokenBlacklist blacklistToken = new TokenBlacklist();
