@@ -47,6 +47,7 @@ public class UrlConfig {
 	public static final String PROFILE = "/profile";
 	public static final String EDIT_PROFILE = "/edit-profile";
 	public static final String CHANGE_PASSWORD = "/change-password";
+	public static final String INFO = "/info";
 
 	// Shipping profile controller
 	public static final String SHIPPING_PROFILE = "/shipping-profiles";
@@ -83,6 +84,7 @@ public class UrlConfig {
 			API_VERSION + AUTH + ACTIVATE + "/**",
 			API_VERSION + AUTH + SEND_ACTIVATION_EMAIL + "/**",
 			API_VERSION + AUTH + RESET_PASSWORD + "/**",
+			API_VERSION + AUTH + REFRESH,
 			API_VERSION + PRODUCT,
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
 			API_VERSION + PRODUCT + PRODUCT_ID + ID,
@@ -98,7 +100,6 @@ public class UrlConfig {
 		return new String[]{
 			API_VERSION + AUTH + LOGIN,
 			API_VERSION + AUTH + REGISTER,
-			API_VERSION + AUTH + REFRESH,
 			API_VERSION + AUTH + RECOVER_PASSWORD,
 			API_VERSION + ORDERS,
 			API_VERSION + ORDERS + CHECK_OUT

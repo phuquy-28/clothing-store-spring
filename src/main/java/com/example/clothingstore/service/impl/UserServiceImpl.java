@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.User;
@@ -50,10 +51,10 @@ public class UserServiceImpl implements UserService {
 
     // Add to user's refresh tokens
     if (user.getRefreshTokens() == null) {
-        user.setRefreshTokens(new ArrayList<>());
+      user.setRefreshTokens(new ArrayList<>());
     }
     user.getRefreshTokens().add(userRefreshToken);
-    
+
     userRepository.save(user);
   }
 
@@ -92,5 +93,17 @@ public class UserServiceImpl implements UserService {
 
     user.setPassword(passwordEncoder.encode(changePasswordReqDTO.getNewPassword()));
     userRepository.save(user);
+  }
+
+  @Override
+  public UserInfoDTO getUserInfo(String email) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    return UserInfoDTO.builder().email(user.getEmail() != null ? user.getEmail() : null)
+        .firstName(
+            user.getProfile().getFirstName() != null ? user.getProfile().getFirstName() : null)
+        .lastName(user.getProfile().getLastName() != null ? user.getProfile().getLastName() : null)
+        .role(user.getRole().getName() != null ? user.getRole().getName() : null).build();
   }
 }
