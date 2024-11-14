@@ -4,7 +4,6 @@ import static com.example.clothingstore.util.SecurityUtil.JWT_ALGORITHM;
 import static com.example.clothingstore.constant.UrlConfig.*;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -36,7 +35,6 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
 import java.util.Collections;
 import com.example.clothingstore.repository.TokenBlacklistRepository;
-import org.springframework.web.context.request.RequestContextHolder;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
@@ -68,41 +66,17 @@ public class SecurityConfiguration {
   public SecurityFilterChain filterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
       CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
-    http.csrf(c -> c.disable())
-        .cors(Customizer.withDefaults())
-        .authorizeHttpRequests(authz -> authz
-            .requestMatchers(PUBLIC_ENDPOINTS()).permitAll()
+    http.csrf(c -> c.disable()).cors(Customizer.withDefaults())
+        .authorizeHttpRequests(authz -> authz.requestMatchers(PUBLIC_ENDPOINTS()).permitAll()
             .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
             .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
-            .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll()
-            .anyRequest().authenticated()
-        )
-        .oauth2ResourceServer(oauth2 -> oauth2
-            .jwt(jwt -> jwt
-                .decoder(jwtDecoder())
-                .authenticationManager(token -> {
-                    try {
-                        return token;
-                    } catch (Exception e) {
-                        String requestPath = ((HttpServletRequest) RequestContextHolder
-                            .currentRequestAttributes())
-                            .getRequestURI();
-                        
-                        // Check if the current path is public
-                        if (isPublicPath(requestPath)) {
-                            return token;
-                        }
-                        throw e;
-                    }
-                })
-            )
+            .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll().anyRequest()
+            .authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
             .authenticationEntryPoint(customAuthenticationEntryPoint)
-            .accessDeniedHandler(customAccessDeniedHandler)
-        )
-        .formLogin(f -> f.disable())
-        .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        );
+            .accessDeniedHandler(customAccessDeniedHandler))
+        .formLogin(f -> f.disable()).sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
     return http.build();
   }
@@ -141,44 +115,5 @@ public class SecurityConfiguration {
   public AuthenticationManager authenticationManager(
       AuthenticationConfiguration authenticationConfiguration) throws Exception {
     return authenticationConfiguration.getAuthenticationManager();
-  }
-
-  private boolean isPublicPath(String path) {
-    // Check exact matches
-    for (String endpoint : PUBLIC_ENDPOINTS()) {
-        if (path.equals(endpoint)) return true;
-    }
-    
-    // Check GET endpoints
-    for (String endpoint : PUBLIC_GET_ENDPOINTS()) {
-        if (pathMatches(path, endpoint)) return true;
-    }
-    
-    // Check POST endpoints
-    for (String endpoint : PUBLIC_POST_ENDPOINTS()) {
-        if (pathMatches(path, endpoint)) return true;
-    }
-    
-    // Check PUT endpoints
-    for (String endpoint : PUBLIC_PUT_ENDPOINTS()) {
-        if (pathMatches(path, endpoint)) return true;
-    }
-    
-    return false;
-  }
-
-  private boolean pathMatches(String path, String pattern) {
-    // Escape special regex characters and convert Spring URL patterns to regex patterns
-    String regexPattern = pattern
-        // Escape special regex characters
-        .replace(".", "\\.")
-        // Convert /** wildcard
-        .replace("/**", ".*")
-        // Convert /* wildcard
-        .replace("/*", "/[^/]*")
-        // Convert URL template variables (e.g., {slug}, {id})
-        .replaceAll("\\{[^/]+\\}", "[^/]+");
-
-    return path.matches(regexPattern);
   }
 }
