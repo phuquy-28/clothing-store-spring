@@ -85,4 +85,12 @@ public class CategoryServiceImpl implements CategoryService {
     return categoryResDTOs;
   }
 
+  @Override
+  public CategoryResDTO convertToCategoryResDTO(Category category) {
+    return CategoryResDTO.builder()
+        .id(category.getId())
+        .name(category.getName())
+        .build();
+  }
+
 }

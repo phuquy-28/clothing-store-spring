@@ -18,6 +18,10 @@ public class ProductResDTO {
 
   private Long categoryId;
 
+  private boolean isFeatured;
+
+  private Double discountRate;
+
   private List<String> images;
 
   private List<ProductVariantResDTO> variants;

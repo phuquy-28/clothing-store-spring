@@ -7,6 +7,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -25,7 +26,7 @@ import java.util.List;
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
-@ToString(exclude = {"images", "variants", "reviews"})
+@ToString(exclude = {"images", "variants", "reviews", "promotions"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product extends AbstractEntity {
@@ -54,6 +55,9 @@ public class Product extends AbstractEntity {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Review> reviews;
+
+  @ManyToMany(mappedBy = "products")
+  private List<Promotion> promotions;
 
   private boolean isDeleted = false;
 

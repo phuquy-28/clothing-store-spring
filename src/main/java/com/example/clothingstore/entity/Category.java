@@ -1,6 +1,7 @@
 package com.example.clothingstore.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.List;
 @Table(name = "categories")
 @Getter
 @Setter
-@ToString(exclude = {"products"})
+@ToString(exclude = {"products", "promotions"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category extends AbstractEntity {
@@ -23,4 +24,7 @@ public class Category extends AbstractEntity {
 
   @OneToMany(mappedBy = "category")
   private List<Product> products;
+
+  @ManyToMany(mappedBy = "categories")
+  private List<Promotion> promotions;
 }

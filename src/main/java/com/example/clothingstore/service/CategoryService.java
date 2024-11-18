@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.clothingstore.dto.request.CategoryReqDTO;
 import com.example.clothingstore.dto.response.CategoryResDTO;
+import com.example.clothingstore.entity.Category;
 
 public interface CategoryService {
 
@@ -16,5 +17,7 @@ public interface CategoryService {
     void deleteCategory(Long id);
 
     List<CategoryResDTO> getAllCategories();
+
+    CategoryResDTO convertToCategoryResDTO(Category category);
 
 }

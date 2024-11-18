@@ -1,5 +1,8 @@
 package com.example.clothingstore.service.impl;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +24,9 @@ import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.enumeration.Color;
+import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.CategoryRepository;
@@ -284,6 +289,7 @@ public class ProductServiceImpl implements ProductService {
     return input.isEmpty() ? "product" : input;
   }
 
+  @Override
   public ProductResDTO convertToProductResDTO(Product product) {
     return ProductResDTO.builder()
         .id(product.getId())
@@ -291,6 +297,8 @@ public class ProductServiceImpl implements ProductService {
         .description(product.getDescription())
         .price(product.getPrice())
         .categoryId(product.getCategory().getId())
+        .isFeatured(product.isFeatured())
+        .discountRate(calculateDiscountRate(product))
         .images(product.getImages().stream()
             .map(ProductImage::getPublicUrl)
             .collect(Collectors.toList()))
@@ -305,6 +313,60 @@ public class ProductServiceImpl implements ProductService {
                     .map(ProductImage::getPublicUrl)
                     .collect(Collectors.toList()))
                 .build())
+            .collect(Collectors.toList()))
+        .build();
+  }
+
+  @Override
+  public ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable) {
+    Page<Product> bestSellers;
+
+    if (days != null) {
+      LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+      bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS,
+          startDate.toInstant(ZoneOffset.UTC), pageable);
+    } else {
+      bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS, pageable);
+    }
+
+    return ResultPaginationDTO.builder()
+        .meta(ResultPaginationDTO.Meta.builder().page((long) bestSellers.getNumber())
+            .pageSize((long) bestSellers.getSize()).pages((long) bestSellers.getTotalPages())
+            .total(bestSellers.getTotalElements()).build())
+        .data(bestSellers.getContent().stream().map(this::convertToProductResDTO)
+            .collect(Collectors.toList()))
+        .build();
+  }
+
+  private Double calculateDiscountRate(Product product) {
+    Instant now = Instant.now();
+
+    Double maxProductDiscount = product.getPromotions().stream()
+        .filter(promotion -> promotion.getStartDate().isBefore(now)
+            && promotion.getEndDate().isAfter(now))
+        .map(Promotion::getDiscountRate).max(Double::compare).orElse(0.0);
+
+    Double maxCategoryDiscount = product.getCategory().getPromotions().stream()
+        .filter(promotion -> promotion.getStartDate().isBefore(now)
+            && promotion.getEndDate().isAfter(now))
+        .map(Promotion::getDiscountRate).max(Double::compare).orElse(0.0);
+
+    return Math.max(maxProductDiscount, maxCategoryDiscount);
+  }
+
+  @Override
+  public ResultPaginationDTO getDiscountedProducts(Pageable pageable) {
+    Page<Product> discountedProducts = productRepository.findDiscountedProducts(Instant.now(), pageable);
+
+    return ResultPaginationDTO.builder()
+        .meta(Meta.builder()
+            .page((long) discountedProducts.getNumber())
+            .pageSize((long) discountedProducts.getSize())
+            .pages((long) discountedProducts.getTotalPages())
+            .total(discountedProducts.getTotalElements())
+            .build())
+        .data(discountedProducts.getContent().stream()
+            .map(this::convertToProductResDTO)
             .collect(Collectors.toList()))
         .build();
   }

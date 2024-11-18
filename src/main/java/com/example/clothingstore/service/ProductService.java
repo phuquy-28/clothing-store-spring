@@ -23,4 +23,10 @@ public interface ProductService {
   void deleteProduct(Long id);
 
   ProductResDTO getProductById(Long id);
+
+  ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable);
+
+  ProductResDTO convertToProductResDTO(Product product);
+
+  ResultPaginationDTO getDiscountedProducts(Pageable pageable);
 }

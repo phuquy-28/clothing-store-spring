@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.ProductReqDTO;
@@ -86,5 +87,18 @@ public class ProductController {
     log.debug("Delete product request: {}", id);
     productService.deleteProduct(id);
     return ResponseEntity.status(HttpStatus.OK).build();
+  }
+
+  @GetMapping(UrlConfig.PRODUCT + UrlConfig.BEST_SELLERS)
+  public ResponseEntity<ResultPaginationDTO> getBestSellerProducts(
+      @RequestParam(required = false) Integer days, Pageable pageable) {
+    log.debug("Get best seller products with days: {}, pageable: {}", days, pageable);
+    return ResponseEntity.ok(productService.getBestSellerProducts(days, pageable));
+  }
+
+  @GetMapping(UrlConfig.PRODUCT + UrlConfig.DISCOUNTED)
+  public ResponseEntity<ResultPaginationDTO> getDiscountedProducts(Pageable pageable) {
+    log.debug("Get discounted products with pageable: {}", pageable);
+    return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
   }
 }
