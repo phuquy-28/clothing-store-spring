@@ -41,6 +41,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
     Category newCategory = new Category();
     newCategory.setName(categoryReqDTO.getName());
+    newCategory.setImageUrl(categoryReqDTO.getImageUrl());
     log.debug("Creating category: {}", newCategory);
     return categoryMapper.toCategoryResDTO(categoryRepository.save(newCategory));
   }
@@ -87,10 +88,7 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   public CategoryResDTO convertToCategoryResDTO(Category category) {
-    return CategoryResDTO.builder()
-        .id(category.getId())
-        .name(category.getName())
-        .build();
+    return CategoryResDTO.builder().id(category.getId()).name(category.getName()).build();
   }
 
 }

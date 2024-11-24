@@ -112,7 +112,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable) {
+  public ResultPaginationDTO  getProducts(Specification<Product> specification, Pageable pageable) {
     Page<Product> products = productRepository.findAll(specification, pageable);
     return ResultPaginationDTO.builder()
         .meta(Meta.builder().page((long) products.getNumber()).pageSize((long) products.getSize())

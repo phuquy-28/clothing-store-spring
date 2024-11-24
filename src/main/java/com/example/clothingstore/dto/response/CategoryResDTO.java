@@ -10,4 +10,6 @@ public class CategoryResDTO {
     private Long id;
 
     private String name;
+
+    private String imageUrl;
 }
