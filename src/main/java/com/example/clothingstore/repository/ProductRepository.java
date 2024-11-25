@@ -15,6 +15,8 @@ import com.example.clothingstore.enumeration.PaymentStatus;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
+  Optional<Product> findByName(String name);
+
   Optional<Product> findBySlug(String slug);
 
   @Query("""

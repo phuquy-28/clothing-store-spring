@@ -37,6 +37,7 @@ public final class ErrorMessage {
   public static final String PRODUCT_PROMOTION_NOT_FOUND = "error.product.not_found";
   public static final String CATEGORY_PROMOTION_NOT_FOUND = "error.category.not_found";
   public static final String PROMOTION_NOT_FOUND = "error.promotion.not_found";
+  public static final String PRODUCT_ALREADY_EXISTS = "error.product.already_exists";
   
   private ErrorMessage() {
   }

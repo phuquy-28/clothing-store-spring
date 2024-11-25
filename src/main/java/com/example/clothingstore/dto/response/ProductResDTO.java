@@ -22,6 +22,8 @@ public class ProductResDTO {
 
   private Double discountRate;
 
+  private Double averageRating;
+
   private List<String> images;
 
   private List<ProductVariantResDTO> variants;

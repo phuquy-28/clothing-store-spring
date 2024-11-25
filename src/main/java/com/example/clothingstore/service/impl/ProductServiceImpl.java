@@ -24,15 +24,16 @@ import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
-import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
+import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
+import com.example.clothingstore.service.PromotionCalculatorService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -47,6 +48,8 @@ public class ProductServiceImpl implements ProductService {
 
   private final CategoryRepository categoryRepository;
 
+  private final PromotionCalculatorService promotionCalculatorService;
+
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
     return cloudStorageService.createSignedUrl(uploadImageReqDTO);
@@ -54,6 +57,11 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public ProductResDTO createProduct(ProductReqDTO productReqDTO) {
+    productRepository.findByName(productReqDTO.getName())
+        .ifPresent(product -> {
+          throw new ResourceAlreadyExistException(ErrorMessage.PRODUCT_ALREADY_EXISTS);
+        });
+
     Product product = new Product();
     product.setName(productReqDTO.getName());
     product.setDescription(productReqDTO.getDescription());
@@ -298,7 +306,7 @@ public class ProductServiceImpl implements ProductService {
         .price(product.getPrice())
         .categoryId(product.getCategory().getId())
         .isFeatured(product.isFeatured())
-        .discountRate(calculateDiscountRate(product))
+        .discountRate(promotionCalculatorService.calculateDiscountRate(product))
         .images(product.getImages().stream()
             .map(ProductImage::getPublicUrl)
             .collect(Collectors.toList()))
@@ -336,22 +344,6 @@ public class ProductServiceImpl implements ProductService {
         .data(bestSellers.getContent().stream().map(this::convertToProductResDTO)
             .collect(Collectors.toList()))
         .build();
-  }
-
-  private Double calculateDiscountRate(Product product) {
-    Instant now = Instant.now();
-
-    Double maxProductDiscount = product.getPromotions().stream()
-        .filter(promotion -> promotion.getStartDate().isBefore(now)
-            && promotion.getEndDate().isAfter(now))
-        .map(Promotion::getDiscountRate).max(Double::compare).orElse(0.0);
-
-    Double maxCategoryDiscount = product.getCategory().getPromotions().stream()
-        .filter(promotion -> promotion.getStartDate().isBefore(now)
-            && promotion.getEndDate().isAfter(now))
-        .map(Promotion::getDiscountRate).max(Double::compare).orElse(0.0);
-
-    return Math.max(maxProductDiscount, maxCategoryDiscount);
   }
 
   @Override
