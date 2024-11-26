@@ -1,0 +1,125 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "HomePage" as homePage
+boundary "CartPage" as cartPage
+boundary "CheckoutPage" as checkoutPage
+control "CartController" as controller
+control "CartService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> homePage: clickCartIcon()
+activate homePage
+
+homePage -> cartPage: navigate()
+deactivate homePage
+activate cartPage
+
+cartPage -> controller: getCartItems()
+activate controller
+
+controller -> service: getCartItems()
+activate service
+
+service -> db: findCartByUser()
+activate db
+db --> service: return(cart)
+deactivate db
+
+service --> controller: return(cartItems)
+deactivate service
+
+controller --> cartPage: return(cartItems)
+cartPage --> actor: display(cartItems)
+
+opt Delete Item
+    actor -> cartPage: clickDeleteIcon(itemId)
+    cartPage -> controller: deleteCartItem(itemId)
+    activate controller
+    controller -> service: deleteCartItem(itemId)
+    activate service
+    service -> db: delete()
+    activate db
+    db --> service: return()
+    deactivate db
+    service --> controller: return()
+    deactivate service
+    controller --> cartPage: return()
+    cartPage --> actor: display("Item removed")
+    deactivate controller
+end
+
+opt Update Quantity
+    actor -> cartPage: updateQuantity(itemId, quantity)
+    cartPage -> controller: updateCartItem(itemId, quantity)
+    activate controller
+    controller -> service: updateCartItem(dto)
+    activate service
+    
+    alt sufficient stock
+        service -> db: save()
+        activate db
+        db --> service: return()
+        deactivate db
+        service --> controller: return()
+        controller --> cartPage: return()
+        cartPage --> actor: display("Quantity updated")
+    else insufficient stock
+        service --> controller: throwException()
+        controller --> cartPage: return(error)
+        cartPage --> actor: display("Not enough stock")
+    end
+    
+    deactivate service
+    deactivate controller
+end
+
+alt Proceed to Checkout
+    actor -> cartPage: selectItems()
+    actor -> cartPage: clickCheckout()
+    cartPage -> checkoutPage: navigate()
+    activate checkoutPage
+    
+    ref over checkoutPage
+        //sd:Thanh toán//
+    end ref
+    
+    deactivate checkoutPage
+end
+
+deactivate cartPage
+
+hide footbox
+@enduml

@@ -2,7 +2,6 @@
 
 ' General configuration
 skinparam defaultFontSize 20
-' skinparam maxMessageSize 100
 skinparam sequenceMessageAlign center
 
 ' Actor style configuration
@@ -30,32 +29,62 @@ skinparam {
 }
 
 ' Define components
-actor "Actor" as actor
+actor "Customer" as actor
 boundary "ProductDetailPage" as detailPage
-database "LocalStorage" as localStorage
+control "CartController" as controller
+control "CartService" as service
+control "ProductVariantRepository" as variantRepo
+control "CartRepository" as cartRepo
+database "Database" as db
 
 ' Start processing flow
 activate actor
+
 actor -> detailPage: selectVariant(size, color)
 activate detailPage
+
 actor -> detailPage: inputQuantity(quantity)
 
 alt product in stock
     actor -> detailPage: clickAddToCart()
-    detailPage -> localStorage: getCart()
-    activate localStorage
-    localStorage --> detailPage: return(cartItems)
     
-    alt product exists in cart
-        detailPage -> localStorage: updateCart(id, quantity)
-        localStorage --> detailPage: return()
-        detailPage --> actor: display("Updated quantity in cart")
-    else product not in cart
-        detailPage -> localStorage: addToCart(id, quantity)
-        localStorage --> detailPage: return()
-        detailPage --> actor: display("Added to cart")
+    detailPage -> controller: addToCart(variantId, quantity)
+    activate controller
+    
+    controller -> service: addToCart(dto)
+    activate service
+    
+    service -> variantRepo: findById(variantId)
+    activate variantRepo
+    variantRepo -> db: findById(variantId)
+    activate db
+    db --> variantRepo: return(variant)
+    deactivate db
+    variantRepo --> service: return(variant)
+    deactivate variantRepo
+    
+    alt sufficient stock
+        service -> service: updateCart()
+        service -> cartRepo: update(cart)
+        activate cartRepo
+        cartRepo -> db: update(cart)
+        activate db
+        db --> cartRepo: return(result)
+        deactivate db
+        cartRepo --> service: return(result)
+        deactivate cartRepo
+        service --> controller: return(result)
+        controller --> detailPage: return(result)
+        detailPage --> actor: display(result)
+    else insufficient stock
+        service --> controller: throwException("Not enough stock")
+        controller --> detailPage: return(error)
+        detailPage --> actor: display("Not enough stock")
     end
-    deactivate localStorage
+    
+    deactivate service
+    deactivate controller
+    
 else product out of stock
     detailPage --> actor: disableAddToCartButton()
     detailPage --> actor: display("Out of stock")

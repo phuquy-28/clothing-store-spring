@@ -18,7 +18,7 @@ import lombok.ToString;
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"user"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShippingProfile extends AbstractEntity {

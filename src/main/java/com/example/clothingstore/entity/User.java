@@ -23,7 +23,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users")
-@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens"})
+@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens", "defaultShippingProfile", "cart", "profile"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractEntity {
@@ -68,6 +68,9 @@ public class User extends AbstractEntity {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<UserRefreshToken> refreshTokens;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Cart cart;
 
   public User(String email, String password, boolean activated) {
     this.email = email;

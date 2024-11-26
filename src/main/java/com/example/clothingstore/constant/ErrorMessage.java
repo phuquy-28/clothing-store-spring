@@ -38,6 +38,10 @@ public final class ErrorMessage {
   public static final String CATEGORY_PROMOTION_NOT_FOUND = "error.category.not_found";
   public static final String PROMOTION_NOT_FOUND = "error.promotion.not_found";
   public static final String PRODUCT_ALREADY_EXISTS = "error.product.already_exists";
+  public static final String USER_NOT_LOGGED_IN = "error.user.not_logged_in";
+  public static final String CART_NOT_FOUND = "error.cart.not_found";
+  public static final String CART_ITEM_NOT_FOUND = "error.cart_item.not_found";
+  public static final String DEFAULT_SHIPPING_PROFILE_NOT_FOUND = "error.default_shipping_profile.not_found";
   
   private ErrorMessage() {
   }

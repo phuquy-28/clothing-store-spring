@@ -16,5 +16,13 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
   public double calculateShippingFee(Order order) {
     return 0;
   }
-  
+
+  @Override
+  public double calculateShippingFee(double subtotal) {
+    if (subtotal < 1000000) {
+      return 30000;
+    }
+    return 0;
+  }
+
 }

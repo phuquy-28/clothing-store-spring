@@ -10,17 +10,25 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import lombok.RequiredArgsConstructor;
 import com.example.clothingstore.constant.ErrorMessage;
+import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
 import com.example.clothingstore.dto.request.ShippingProfileReqDTO;
+import com.example.clothingstore.dto.response.CartItemDTO;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
+import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
+import com.example.clothingstore.dto.response.ShippingProfileResDTO;
+import com.example.clothingstore.entity.Cart;
+import com.example.clothingstore.entity.CartItem;
 import com.example.clothingstore.entity.LineItem;
 import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.Review;
+import com.example.clothingstore.entity.ShippingProfile;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
@@ -31,14 +39,17 @@ import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.service.OrderService;
+import com.example.clothingstore.service.PromotionCalculatorService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.repository.ReviewRepository;
+import com.example.clothingstore.repository.UserRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.example.clothingstore.service.strategy.PaymentStrategy;
 import com.example.clothingstore.service.strategy.DeliveryStrategy;
@@ -64,10 +75,14 @@ public class OrderServiceImpl implements OrderService {
 
   private final DeliveryStrategyFactory deliveryStrategyFactory;
 
+  private final UserRepository userRepository;
+
+  private final PromotionCalculatorService promotionCalculatorService;
+
   @Override
   @Transactional
   @Retryable(value = {ObjectOptimisticLockingFailureException.class}, maxAttempts = 5,
-      backoff = @Backoff(delay = 200))
+      backoff = @Backoff(delay = 500))
   public OrderPaymentDTO checkOut(OrderReqDTO orderReqDTO, User user, HttpServletRequest request) {
     // Validate product quantity first
     validateProductQuantity(orderReqDTO);
@@ -369,6 +384,109 @@ public class OrderServiceImpl implements OrderService {
     return lineItems.stream()
         .mapToDouble(LineItem::getTotalPrice)
         .sum();
+  }
+
+  @Override
+  public OrderPreviewDTO previewOrder(OrderPreviewReqDTO orderPreviewReqDTO) {
+    // Lấy thông tin user hiện tại
+    String email = SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new BadRequestException(ErrorMessage.USER_NOT_LOGGED_IN));
+    
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    // Lấy shipping profile
+    ShippingProfile shippingProfile;
+    if (orderPreviewReqDTO.getShippingProfileId() != null) {
+        shippingProfile = user.getShippingProfiles().stream()
+            .filter(profile -> profile.getId().equals(orderPreviewReqDTO.getShippingProfileId()))
+            .findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND));
+    } else {
+        shippingProfile = user.getDefaultShippingProfile();
+        if (shippingProfile == null) {
+            throw new BadRequestException(ErrorMessage.DEFAULT_SHIPPING_PROFILE_NOT_FOUND);
+        }
+    }
+
+    Cart cart = user.getCart();
+    if (cart == null) {
+        throw new ResourceNotFoundException(ErrorMessage.CART_NOT_FOUND);
+    }
+
+    // Tạo map để lưu cartItem theo id để dễ truy xuất
+    Map<Long, CartItem> cartItemMap = cart.getCartItems().stream()
+        .collect(Collectors.toMap(CartItem::getId, item -> item));
+
+    // Tính toán các sản phẩm được chọn
+    List<CartItemDTO> selectedItems = new ArrayList<>();
+    double subtotal = 0.0;
+    double discount = 0.0;
+
+    for (Long cartItemId : orderPreviewReqDTO.getCartItemIds()) {
+        CartItem cartItem = cartItemMap.get(cartItemId);
+        if (cartItem == null) {
+            throw new ResourceNotFoundException(ErrorMessage.CART_ITEM_NOT_FOUND);
+        }
+
+        // Kiểm tra số lượng tồn kho
+        if (cartItem.getProductVariant().getQuantity() < cartItem.getQuantity()) {
+            throw new BadRequestException(ErrorMessage.NOT_ENOUGH_STOCK);
+        }
+
+        ProductVariant variant = cartItem.getProductVariant();
+        Product product = variant.getProduct();
+
+        // Tính giá gốc và giá sau khuyến mãi
+        Double originalPrice = product.getPrice() + 
+            (variant.getDifferencePrice() != null ? variant.getDifferencePrice() : 0.0);
+        Double discountRate = promotionCalculatorService.calculateDiscountRate(product);
+        Double finalPrice = originalPrice * (1 - discountRate);
+
+        // Tính tổng tiền và discount cho item này
+        subtotal += originalPrice * cartItem.getQuantity();
+        discount += (originalPrice - finalPrice) * cartItem.getQuantity();
+
+        selectedItems.add(CartItemDTO.builder()
+            .cartItemId(cartItem.getId())
+            .productName(product.getName())
+            .productVariant(CartItemDTO.ProductVariantDTO.builder()
+                .id(variant.getId())
+                .color(variant.getColor().toString())
+                .size(variant.getSize().toString())
+                .image(variant.getImages().get(0).getPublicUrl())
+                .build())
+            .price(originalPrice)
+            .finalPrice(finalPrice)
+            .quantity(cartItem.getQuantity())
+            .inStock(variant.getQuantity())
+            .image(product.getImages().get(0).getPublicUrl())
+            .build());
+    }
+
+    // Tính phí vận chuyển sử dụng strategy
+    DeliveryMethod deliveryMethod = DeliveryMethod.valueOf(orderPreviewReqDTO.getDeliveryMethod());
+    DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
+    Double shippingFee = deliveryStrategy.calculateShippingFee(subtotal);
+
+    // Tạo preview order
+    return OrderPreviewDTO.builder()
+        .shippingProfile(ShippingProfileResDTO.builder()
+            .id(shippingProfile.getId())
+            .firstName(shippingProfile.getFirstName())
+            .lastName(shippingProfile.getLastName())
+            .phoneNumber(shippingProfile.getPhoneNumber())
+            .address(shippingProfile.getAddress())
+            .ward(shippingProfile.getWard())
+            .district(shippingProfile.getDistrict())
+            .province(shippingProfile.getProvince())
+            .country(shippingProfile.getCountry())
+            .build())
+        .lineItems(selectedItems)
+        .shippingFee(shippingFee)
+        .discount(discount)
+        .finalTotal(subtotal + shippingFee - discount)
+        .build();
   }
 
 }

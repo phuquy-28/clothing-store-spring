@@ -56,6 +56,7 @@ public class UrlConfig {
 
 	// Order controller
 	public static final String ORDERS = "/orders";
+	public static final String PREVIEW = "/preview";
 	public static final String CHECK_OUT = "/check-out";
 	public static final String MY_ORDERS = "/my-orders";
 	public static final String LINE_ITEM = "/line-items";
@@ -71,6 +72,10 @@ public class UrlConfig {
 
 	// Promotion controller
 	public static final String PROMOTION = "/promotions";
+
+  // Cart controller
+  public static final String CART = "/carts";
+  public static final String ITEMS = "/items";
 
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {

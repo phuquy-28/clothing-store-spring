@@ -16,4 +16,12 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
   public double calculateShippingFee(Order order) {
     return 0;
   }
+
+  @Override
+  public double calculateShippingFee(double subtotal) {
+    if (subtotal < 2000000) {
+      return 50000;
+    }
+    return 0;
+  }
 }

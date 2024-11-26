@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
+import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
 import com.example.clothingstore.entity.User;
@@ -38,6 +40,13 @@ public class OrderController {
   private final OrderService orderService;
 
   private final UserService userService;
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.PREVIEW)
+  public ResponseEntity<OrderPreviewDTO> previewOrder(
+      @RequestBody @Valid OrderPreviewReqDTO orderPreviewReqDTO) {
+    OrderPreviewDTO result = orderService.previewOrder(orderPreviewReqDTO);
+    return ResponseEntity.ok(result);
+  }
 
   @PostMapping(UrlConfig.ORDERS + UrlConfig.CHECK_OUT)
   public ResponseEntity<OrderPaymentDTO> checkOut(@RequestBody @Valid OrderReqDTO orderReqDTO,

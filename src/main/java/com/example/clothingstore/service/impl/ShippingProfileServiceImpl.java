@@ -41,11 +41,11 @@ public class ShippingProfileServiceImpl implements ShippingProfileService {
         shippingProfileMapper.toShippingProfile(shippingProfileReqDTO);
     shippingProfile.setUser(currentUser);
 
+    boolean isDefault = currentUser.getDefaultShippingProfile() == null;
+
     ShippingProfile savedProfile = shippingProfileRepository.save(shippingProfile);
     log.debug("Saved shipping profile: {}", savedProfile);
 
-    List<ShippingProfile> userProfiles = shippingProfileRepository.findByUser(currentUser);
-    boolean isDefault = userProfiles.isEmpty();
     if (isDefault) {
       currentUser.setDefaultShippingProfile(savedProfile);
       userRepository.save(currentUser);
