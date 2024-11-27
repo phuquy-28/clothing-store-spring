@@ -24,6 +24,7 @@ import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.entity.Review;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
@@ -307,6 +308,8 @@ public class ProductServiceImpl implements ProductService {
         .categoryId(product.getCategory().getId())
         .isFeatured(product.isFeatured())
         .discountRate(promotionCalculatorService.calculateDiscountRate(product))
+        .averageRating(calculateAverageRating(product) == 0 ? null : calculateAverageRating(product))
+        .slug(product.getSlug())
         .images(product.getImages().stream()
             .map(ProductImage::getPublicUrl)
             .collect(Collectors.toList()))
@@ -361,5 +364,12 @@ public class ProductServiceImpl implements ProductService {
             .map(this::convertToProductResDTO)
             .collect(Collectors.toList()))
         .build();
+  }
+
+  private Double calculateAverageRating(Product product) {
+    return product.getReviews().stream()
+        .mapToDouble(Review::getRating)
+        .average()
+        .orElse(0.0);
   }
 }

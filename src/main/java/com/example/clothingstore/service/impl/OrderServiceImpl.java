@@ -14,7 +14,6 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
-import com.example.clothingstore.dto.request.ShippingProfileReqDTO;
 import com.example.clothingstore.dto.response.CartItemDTO;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
@@ -37,6 +36,7 @@ import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.OrderCreationException;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.repository.CartRepository;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.PromotionCalculatorService;
@@ -79,64 +79,69 @@ public class OrderServiceImpl implements OrderService {
 
   private final PromotionCalculatorService promotionCalculatorService;
 
+  private final CartRepository cartRepository;
+
   @Override
   @Transactional
   @Retryable(value = {ObjectOptimisticLockingFailureException.class}, maxAttempts = 5,
       backoff = @Backoff(delay = 500))
   public OrderPaymentDTO checkOut(OrderReqDTO orderReqDTO, User user, HttpServletRequest request) {
-    // Validate product quantity first
-    validateProductQuantity(orderReqDTO);
-    
-    // Create order without updating product quantity
-    Order order = createOrder(orderReqDTO, user);
+    // Lấy shipping profile
+    ShippingProfile shippingProfile = user.getShippingProfiles().stream()
+        .filter(profile -> profile.getId().equals(orderReqDTO.getShippingProfileId()))
+        .findFirst()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND));
 
-    // Process delivery
-    DeliveryStrategy deliveryStrategy =
-        deliveryStrategyFactory.getStrategy(order.getDeliveryMethod());
-    deliveryStrategy.processDelivery(order);
-    order.setShippingFee(deliveryStrategy.calculateShippingFee(order));
-
-    // Calculate final total
-    double total = order.getTotal() != null ? order.getTotal() : 0;
-    double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
-    double discount = order.getDiscount() != null ? order.getDiscount() : 0;
-    order.setFinalTotal(total + shippingFee - discount);
-
-    // Process payment
-    PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(order.getPaymentMethod());
-    OrderPaymentDTO paymentResult = paymentStrategy.processPayment(order, request);
-
-    // If everything is successful, update product quantities and save order
-    updateProductQuantities(order);
-    orderRepository.save(order);
-
-    return paymentResult;
-  }
-
-  private void validateProductQuantity(OrderReqDTO orderReqDTO) {
-    for (OrderReqDTO.LineItemReqDTO lineItemDTO : orderReqDTO.getLineItems()) {
-        ProductVariant productVariant = productVariantRepository.findById(lineItemDTO.getProductVariantId())
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_VARIANT_NOT_FOUND));
-
-        if (productVariant.getQuantity() < lineItemDTO.getQuantity()) {
-            throw new BadRequestException(String.format(ErrorMessage.NOT_ENOUGH_STOCK));
-        }
+    Cart cart = user.getCart();
+    if (cart == null) {
+        throw new ResourceNotFoundException(ErrorMessage.CART_NOT_FOUND);
     }
-  }
 
-  private void updateProductQuantities(Order order) {
-    for (LineItem lineItem : order.getLineItems()) {
-        ProductVariant productVariant = lineItem.getProductVariant();
-        int newQuantity = productVariant.getQuantity() - lineItem.getQuantity().intValue();
-        if (newQuantity < 0) {
-            throw new BadRequestException(String.format(ErrorMessage.NOT_ENOUGH_STOCK));
+    // Tạo map để lưu cartItem theo id để dễ truy xuất
+    Map<Long, CartItem> cartItemMap = cart.getCartItems().stream()
+        .collect(Collectors.toMap(CartItem::getId, item -> item));
+
+    // Validate product quantity và tạo line items
+    List<LineItem> lineItems = new ArrayList<>();
+    double total = 0.0;
+    double discount = 0.0;
+
+    for (Long cartItemId : orderReqDTO.getCartItemIds()) {
+        CartItem cartItem = cartItemMap.get(cartItemId);
+        if (cartItem == null) {
+            throw new ResourceNotFoundException(ErrorMessage.CART_ITEM_NOT_FOUND);
         }
-        productVariant.setQuantity(newQuantity);
-        productVariantRepository.save(productVariant);
-    }
-  }
 
-  private Order createOrder(OrderReqDTO orderReqDTO, User user) {
+        ProductVariant variant = cartItem.getProductVariant();
+        // Kiểm tra số lượng tồn kho
+        if (variant.getQuantity() < cartItem.getQuantity()) {
+            throw new BadRequestException(ErrorMessage.NOT_ENOUGH_STOCK);
+        }
+
+        Product product = variant.getProduct();
+        Double originalPrice = product.getPrice() + 
+            (variant.getDifferencePrice() != null ? variant.getDifferencePrice() : 0.0);
+        Double discountRate = promotionCalculatorService.calculateDiscountRate(product);
+        Double finalPrice = originalPrice * (1 - discountRate);
+
+        // Tạo line item
+        LineItem lineItem = new LineItem();
+        lineItem.setProductVariant(variant);
+        lineItem.setQuantity(cartItem.getQuantity().longValue());
+        lineItem.setUnitPrice(originalPrice);
+        lineItem.setDiscountAmount(originalPrice - finalPrice);
+        lineItem.setTotalPrice(finalPrice);
+
+        lineItems.add(lineItem);
+        total += originalPrice * cartItem.getQuantity();
+        discount += (originalPrice - finalPrice) * cartItem.getQuantity();
+
+        // Cập nhật số lượng tồn kho
+        variant.setQuantity(variant.getQuantity() - cartItem.getQuantity());
+        productVariantRepository.save(variant);
+    }
+
+    // Tạo order
     Order order = new Order();
     order.setUser(user);
     order.setOrderDate(Instant.now());
@@ -144,20 +149,54 @@ public class OrderServiceImpl implements OrderService {
     order.setNote(orderReqDTO.getNote());
     order.setPaymentMethod(PaymentMethod.valueOf(orderReqDTO.getPaymentMethod().toUpperCase()));
     order.setDeliveryMethod(DeliveryMethod.valueOf(orderReqDTO.getDeliveryMethod().toUpperCase()));
-
-    // Set shipping information
-    setShippingInformation(order, orderReqDTO.getShippingProfile());
-
-    // Create line items without updating product quantity
-    List<LineItem> lineItems = createLineItems(orderReqDTO, order);
+    order.setShippingInformation(mapToShippingInformation(shippingProfile));
     order.setLineItems(lineItems);
-    order.setTotal(calculateTotal(lineItems));
+    order.setTotal(total);
+    order.setDiscount(discount);
 
     // Set initial status
     order.setStatus(OrderStatus.PENDING);
     order.setPaymentStatus(PaymentStatus.PENDING);
 
-    return order;
+    // Process delivery
+    DeliveryStrategy deliveryStrategy = 
+        deliveryStrategyFactory.getStrategy(order.getDeliveryMethod());
+    // deliveryStrategy.processDelivery(order);
+    order.setShippingFee(deliveryStrategy.calculateShippingFee(total));
+
+    // Calculate final total
+    order.setFinalTotal(total + order.getShippingFee() - discount);
+
+    // Set bi-directional relationship
+    lineItems.forEach(lineItem -> lineItem.setOrder(order));
+
+    // Process payment
+    PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(order.getPaymentMethod());
+    OrderPaymentDTO paymentResult = paymentStrategy.processPayment(order, request);
+
+    // Save order
+    orderRepository.save(order);
+
+    // Clear cart items that were ordered
+    orderReqDTO.getCartItemIds().forEach(cartItemId -> {
+        cart.getCartItems().removeIf(item -> item.getId().equals(cartItemId));
+    });
+    cartRepository.save(cart);
+
+    return paymentResult;
+  }
+
+  private Order.ShippingInformation mapToShippingInformation(ShippingProfile profile) {
+    Order.ShippingInformation shippingInfo = new Order.ShippingInformation();
+    shippingInfo.setFirstName(profile.getFirstName());
+    shippingInfo.setLastName(profile.getLastName());
+    shippingInfo.setPhoneNumber(profile.getPhoneNumber());
+    shippingInfo.setAddress(profile.getAddress());
+    shippingInfo.setWard(profile.getWard());
+    shippingInfo.setDistrict(profile.getDistrict());
+    shippingInfo.setProvince(profile.getProvince());
+    shippingInfo.setCountry(profile.getCountry());
+    return shippingInfo;
   }
 
   private String generateOrderCode() {
@@ -173,6 +212,11 @@ public class OrderServiceImpl implements OrderService {
 
   @Recover 
   public OrderPaymentDTO recoverCreateOrder(BadRequestException e, OrderReqDTO orderReqDTO) {
+    throw e;
+  }
+
+  @Recover
+  public OrderPaymentDTO recoverCreateOrder(ResourceNotFoundException e, OrderReqDTO orderReqDTO) {
     throw e;
   }
 
@@ -346,44 +390,6 @@ public class OrderServiceImpl implements OrderService {
     orderRepository.save(order);
 
     return mapToOrderResDTO(order);
-  }
-
-  private void setShippingInformation(Order order, ShippingProfileReqDTO shippingProfile) {
-    Order.ShippingInformation shippingInfo = new Order.ShippingInformation();
-    shippingInfo.setFirstName(shippingProfile.getFirstName());
-    shippingInfo.setLastName(shippingProfile.getLastName());
-    shippingInfo.setPhoneNumber(shippingProfile.getPhoneNumber());
-    shippingInfo.setAddress(shippingProfile.getAddress());
-    shippingInfo.setDistrict(shippingProfile.getDistrict());
-    shippingInfo.setProvince(shippingProfile.getProvince());
-    shippingInfo.setCountry(shippingProfile.getCountry());
-    order.setShippingInformation(shippingInfo);
-  }
-
-  private List<LineItem> createLineItems(OrderReqDTO orderReqDTO, Order order) {
-    List<LineItem> lineItems = new ArrayList<>();
-    
-    for (OrderReqDTO.LineItemReqDTO lineItemDTO : orderReqDTO.getLineItems()) {
-        ProductVariant productVariant = productVariantRepository.findById(lineItemDTO.getProductVariantId())
-            .orElseThrow(() -> new ResourceNotFoundException("productVariant.not.found"));
-
-        LineItem lineItem = new LineItem();
-        lineItem.setProductVariant(productVariant);
-        lineItem.setQuantity(lineItemDTO.getQuantity().longValue());
-        lineItem.setUnitPrice(productVariant.getProduct().getPrice() + productVariant.getDifferencePrice());
-        lineItem.setTotalPrice(lineItem.getUnitPrice() * lineItem.getQuantity());
-        lineItem.setOrder(order);
-        
-        lineItems.add(lineItem);
-    }
-    
-    return lineItems;
-  }
-
-  private double calculateTotal(List<LineItem> lineItems) {
-    return lineItems.stream()
-        .mapToDouble(LineItem::getTotalPrice)
-        .sum();
   }
 
   @Override

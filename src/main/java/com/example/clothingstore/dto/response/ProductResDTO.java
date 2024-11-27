@@ -24,6 +24,8 @@ public class ProductResDTO {
 
   private Double averageRating;
 
+  private String slug;
+
   private List<String> images;
 
   private List<ProductVariantResDTO> variants;

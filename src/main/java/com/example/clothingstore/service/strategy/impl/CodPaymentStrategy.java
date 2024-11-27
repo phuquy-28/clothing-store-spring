@@ -8,7 +8,7 @@ import com.example.clothingstore.service.strategy.PaymentStrategy;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Component
-public class CashPaymentStrategy implements PaymentStrategy {
+public class CodPaymentStrategy implements PaymentStrategy {
     @Override
     public OrderPaymentDTO processPayment(Order order, HttpServletRequest request) {
         order.setPaymentStatus(PaymentStatus.PENDING);

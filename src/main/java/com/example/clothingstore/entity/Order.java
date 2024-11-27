@@ -84,6 +84,8 @@ public class Order extends AbstractEntity {
 
     private String address;
 
+    private String ward;
+
     private String district;
 
     private String province;

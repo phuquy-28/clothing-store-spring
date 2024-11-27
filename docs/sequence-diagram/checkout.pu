@@ -1,0 +1,193 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "CartPage" as cartPage
+boundary "CheckoutPage" as checkoutPage
+boundary "VNPayPaymentPage" as paymentPage
+control "OrderController" as controller
+control "OrderService" as service
+entity "Order" as order
+control "DeliveryStrategy" as deliveryStrategy
+control "PaymentStrategyFactory" as paymentFactory
+control "CODStrategy" as codStrategy
+control "VNPayStrategy" as vnpayStrategy
+control "EmailService" as emailService
+control "CartRepository" as cartRepo
+control "OrderRepository" as orderRepo
+control "ProductVariantRepository" as variantRepo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> cartPage: clickCheckout()
+activate cartPage
+
+cartPage -> checkoutPage: navigate()
+deactivate cartPage
+activate checkoutPage
+
+actor -> checkoutPage: selectShippingProfile()
+actor -> checkoutPage: selectPaymentMethod()
+actor -> checkoutPage: selectDeliveryMethod()
+actor -> checkoutPage: inputNote()
+
+actor -> checkoutPage: clickPlaceOrder()
+
+checkoutPage -> controller: checkout(orderReqDTO)
+activate controller
+
+controller -> service: checkout(orderReqDTO)
+activate service
+
+service -> cartRepo: findByUser()
+activate cartRepo
+cartRepo -> db: findByUser()
+activate db
+db --> cartRepo: return(cart)
+deactivate db
+cartRepo --> service: return(cart)
+deactivate cartRepo
+
+service -> service: validateOrder()
+service -> order: new Order()
+activate order
+order --> service: return(order)
+deactivate order
+
+service -> variantRepo: updateStock()
+activate variantRepo
+variantRepo -> db: update()
+activate db
+db --> variantRepo: return()
+deactivate db
+variantRepo --> service: return()
+deactivate variantRepo
+
+service -> deliveryStrategy: processDelivery()
+activate deliveryStrategy
+deliveryStrategy --> service: return()
+deactivate deliveryStrategy
+
+service -> paymentFactory: getStrategy(paymentMethod)
+activate paymentFactory
+paymentFactory --> service: return(paymentStrategy)
+deactivate paymentFactory
+
+alt payment method is CASH
+    
+    service -> codStrategy: processPayment(order)
+    activate codStrategy
+    codStrategy --> service: return()
+    deactivate codStrategy
+    
+    service -> orderRepo: save(order)
+    activate orderRepo
+    orderRepo -> db: save(order)
+    activate db
+    db --> orderRepo: return(order)
+    deactivate db
+    orderRepo --> service: return(order)
+    deactivate orderRepo
+    
+    service -> emailService: sendOrderConfirmation(order)
+    activate emailService
+    emailService --> service: return()
+    deactivate emailService
+    
+    service -> cartRepo: clearItems(cart)
+    activate cartRepo
+    cartRepo -> db: update(cart)
+    activate db
+    db --> cartRepo: return()
+    deactivate db
+    cartRepo --> service: return()
+    deactivate cartRepo
+    
+    service --> controller: return(orderPaymentDTO)
+    controller --> checkoutPage: return(success)
+    checkoutPage --> actor: display("Order placed successfully")
+
+else payment method is VNPAY
+    deactivate paymentFactory
+    
+    service -> vnpayStrategy: processPayment(order)
+    activate vnpayStrategy
+    
+    vnpayStrategy --> service: return(paymentUrl)
+    deactivate vnpayStrategy
+    
+    service -> orderRepo: save(order)
+    activate orderRepo
+    orderRepo -> db: save(order)
+    activate db
+    db --> orderRepo: return(order)
+    deactivate db
+    orderRepo --> service: return(order)
+    deactivate orderRepo
+
+    service -> emailService: sendOrderConfirmation(order)
+    activate emailService
+    emailService --> service: return()
+    deactivate emailService
+    
+    service -> cartRepo: clearItems(cart)
+    activate cartRepo
+    cartRepo -> db: update(cart)
+    activate db
+    db --> cartRepo: return()
+    deactivate db
+    cartRepo --> service: return()
+    deactivate cartRepo
+    
+    service --> controller: return(orderPaymentDTO)
+    deactivate service
+    controller --> checkoutPage: return(paymentUrl)
+    deactivate controller
+    
+    checkoutPage -> paymentPage: redirect(paymentUrl)
+    deactivate checkoutPage
+    activate paymentPage
+    
+    actor -> paymentPage: processPayment()
+
+    ref over paymentPage
+        Use case: Thanh toán qua VNPay
+    end ref
+    
+    paymentPage --> actor: display("Payment successful")
+    deactivate paymentPage
+end
+
+hide footbox
+@enduml
