@@ -1,8 +1,6 @@
 package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,19 +15,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.time.Instant;
 import java.util.List;
 
 @Entity
 @Table(name = "products")
-@SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE products SET is_deleted = 1 WHERE id = ?")
 @Getter
 @Setter
 @ToString(exclude = {"images", "variants", "reviews", "promotions"})
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product extends AbstractEntity {
+public class Product extends SoftDeleteEntity {
 
   private String name;
 
@@ -58,10 +54,4 @@ public class Product extends AbstractEntity {
 
   @ManyToMany(mappedBy = "products")
   private List<Promotion> promotions;
-
-  private boolean isDeleted = false;
-
-  private Instant deletedAt;
-
-  private String deletedBy;
 }

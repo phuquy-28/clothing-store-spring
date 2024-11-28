@@ -14,21 +14,37 @@ public class PromotionCalculatorServiceImpl implements PromotionCalculatorServic
   
   @Override
   public Double calculateDiscountRate(Product product) {
+    if (product == null) {
+      return 0.0;
+    }
+
     Instant now = Instant.now();
 
-    Double maxProductDiscount = product.getPromotions().stream()
-        .filter(promotion -> promotion.getStartDate().isBefore(now)
-            && promotion.getEndDate().isAfter(now))
-        .map(Promotion::getDiscountRate)
-        .max(Double::compare)
-        .orElse(0.0);
+    Double maxProductDiscount = 0.0;
+    if (product.getPromotions() != null) {
+      maxProductDiscount = product.getPromotions().stream()
+          .filter(promotion -> promotion != null 
+              && promotion.getStartDate() != null 
+              && promotion.getEndDate() != null
+              && promotion.getStartDate().isBefore(now)
+              && promotion.getEndDate().isAfter(now))
+          .map(Promotion::getDiscountRate)
+          .max(Double::compare)
+          .orElse(0.0);
+    }
 
-    Double maxCategoryDiscount = product.getCategory().getPromotions().stream()
-        .filter(promotion -> promotion.getStartDate().isBefore(now)
-            && promotion.getEndDate().isAfter(now))
-        .map(Promotion::getDiscountRate)
-        .max(Double::compare)
-        .orElse(0.0);
+    Double maxCategoryDiscount = 0.0;
+    if (product.getCategory() != null && product.getCategory().getPromotions() != null) {
+      maxCategoryDiscount = product.getCategory().getPromotions().stream()
+          .filter(promotion -> promotion != null
+              && promotion.getStartDate() != null
+              && promotion.getEndDate() != null 
+              && promotion.getStartDate().isBefore(now)
+              && promotion.getEndDate().isAfter(now))
+          .map(Promotion::getDiscountRate)
+          .max(Double::compare)
+          .orElse(0.0);
+    }
 
     return Math.max(maxProductDiscount, maxCategoryDiscount);
   }

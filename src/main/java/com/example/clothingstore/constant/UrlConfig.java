@@ -38,8 +38,6 @@ public class UrlConfig {
 	public static final String PRODUCT_ID = "/ids";
 	public static final String UPLOAD_IMAGES = "/upload-images";
 	public static final String PRODUCT_SLUG = "/{slug}";
-	public static final String BEST_SELLERS = "/best-sellers";
-	public static final String DISCOUNTED = "/discounted";
 	// Category controller
 	public static final String CATEGORY = "/categories";
 
@@ -97,8 +95,6 @@ public class UrlConfig {
 			API_VERSION + PRODUCT,
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
 			API_VERSION + PRODUCT + PRODUCT_ID + ID,
-			API_VERSION + PRODUCT + BEST_SELLERS,
-			API_VERSION + PRODUCT + DISCOUNTED,
 			API_VERSION + CATEGORY,
 			API_VERSION + USER,
 			API_VERSION + PAYMENT,

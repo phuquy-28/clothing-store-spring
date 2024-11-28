@@ -305,7 +305,7 @@ public class ProductServiceImpl implements ProductService {
         .name(product.getName())
         .description(product.getDescription())
         .price(product.getPrice())
-        .categoryId(product.getCategory().getId())
+        .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
         .isFeatured(product.isFeatured())
         .discountRate(promotionCalculatorService.calculateDiscountRate(product))
         .averageRating(calculateAverageRating(product) == 0 ? null : calculateAverageRating(product))
@@ -367,6 +367,9 @@ public class ProductServiceImpl implements ProductService {
   }
 
   private Double calculateAverageRating(Product product) {
+    if (product == null || product.getReviews() == null) {
+      return 0.0;
+    }
     return product.getReviews().stream()
         .mapToDouble(Review::getRating)
         .average()

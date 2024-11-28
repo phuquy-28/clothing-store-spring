@@ -14,4 +14,6 @@ public class UserInfoDTO {
   private String lastName;
 
   private String role;
+
+  private Long cartItemsCount;
 }

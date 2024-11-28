@@ -1,0 +1,99 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+participant "VNPAY" as VNPAY
+actor "Actor" as actor
+boundary "Frontend" as frontend
+control "PaymentController" as controller
+control "VNPayService" as vnpayService
+control "OrderRepository" as orderRepo
+database "Database" as db
+
+' Start processing flow
+activate VNPAY
+activate actor
+
+VNPAY -> frontend: redirect(returnUrl)
+deactivate VNPAY
+activate frontend
+
+frontend -> controller: validatePayment(request)
+activate controller
+
+controller -> vnpayService: validatePayment(request)
+activate vnpayService
+
+' Validate checksum
+vnpayService -> vnpayService: validateChecksum()
+
+' Get payment info from request
+vnpayService -> vnpayService: extractPaymentInfo()
+
+' Find order
+vnpayService -> orderRepo: findByCode(orderCode)
+activate orderRepo
+orderRepo -> db: findByCode(orderCode)
+activate db
+db --> orderRepo: return(order)
+deactivate db
+orderRepo --> vnpayService: return(order)
+deactivate orderRepo
+
+vnpayService -> vnpayService: validateAmount()
+
+alt payment successful    
+    ' Update order status
+    vnpayService -> orderRepo: updateOrder(order)
+    activate orderRepo
+    orderRepo -> db: update(order)
+    activate db
+    db --> orderRepo: return(updatedOrder)
+    deactivate db
+    orderRepo --> vnpayService: return(updatedOrder)
+    deactivate orderRepo
+    
+    vnpayService --> controller: return()
+    controller --> frontend: return(success)
+    frontend --> actor: display("Payment successful")
+    
+else payment failed
+    vnpayService --> controller: throw PaymentException
+    controller --> frontend: return(error)
+    frontend --> actor: display("Payment failed")
+end
+
+deactivate vnpayService
+deactivate controller
+deactivate frontend
+
+hide footbox
+@enduml

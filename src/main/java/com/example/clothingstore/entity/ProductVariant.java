@@ -1,7 +1,6 @@
 package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.ColumnDefault;
 
 import com.example.clothingstore.enumeration.Color;
@@ -20,19 +19,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.time.Instant;
 import java.util.List;
 
 @Entity
 @Table(name = "product_variants")
-@SQLDelete(sql = "UPDATE product_variants SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE product_variants SET is_deleted = 1 WHERE id = ? AND version = ?")
 @Getter
 @Setter
 @ToString(exclude = {"images"})
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductVariant extends AbstractEntity {
+public class ProductVariant extends SoftDeleteEntity {
 
   @ManyToOne
   @JoinColumn(name = "product_id", referencedColumnName = "id")
@@ -50,12 +47,6 @@ public class ProductVariant extends AbstractEntity {
 
   @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductImage> images;
-
-  private boolean isDeleted = false;
-
-  private Instant deletedAt;
-
-  private String deletedBy;
 
   @Version
   @ColumnDefault("0")

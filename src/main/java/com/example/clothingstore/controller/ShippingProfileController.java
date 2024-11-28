@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.SetDefaultProfileReqDTO;
 import com.example.clothingstore.dto.request.ShippingProfileReqDTO;
 import com.example.clothingstore.dto.response.ShippingProfileResDTO;
 import com.example.clothingstore.service.ShippingProfileService;
@@ -58,8 +59,10 @@ public class ShippingProfileController {
   }
 
   @PostMapping(UrlConfig.SHIPPING_PROFILE + UrlConfig.DEFAULT)
-  public ResponseEntity<Void> setDefaultShippingProfile(@RequestBody Long id) {
-    shippingProfileService.setDefaultShippingProfile(id);
+  public ResponseEntity<Void> setDefaultShippingProfile(
+      @RequestBody @Valid SetDefaultProfileReqDTO setDefaultProfileReqDTO) {
+    shippingProfileService
+        .setDefaultShippingProfile(setDefaultProfileReqDTO.getShippingProfileId());
     return ResponseEntity.ok().build();
   }
 

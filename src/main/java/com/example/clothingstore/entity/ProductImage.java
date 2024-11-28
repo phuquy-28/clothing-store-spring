@@ -1,7 +1,6 @@
 package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -12,18 +11,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.time.Instant;
 
 @Entity
 @Table(name = "product_images")
-@SQLDelete(sql = "UPDATE product_images SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE product_images SET is_deleted = 1 WHERE id = ?")
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductImage extends AbstractEntity {
+public class ProductImage extends SoftDeleteEntity {
 
   private String publicUrl;
 
@@ -39,10 +36,4 @@ public class ProductImage extends AbstractEntity {
   @ManyToOne
   @JoinColumn(name = "product_variant_id", referencedColumnName = "id")
   private ProductVariant productVariant;
-
-  private boolean isDeleted = false;
-
-  private Instant deletedAt;
-
-  private String deletedBy;
 }

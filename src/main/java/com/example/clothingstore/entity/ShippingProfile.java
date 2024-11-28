@@ -1,7 +1,5 @@
 package com.example.clothingstore.entity;
 
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,8 +12,6 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "shipping_profiles")
-@SQLDelete(sql = "UPDATE shipping_profiles SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
 @Getter
 @Setter
 @ToString(exclude = {"user"})
@@ -31,9 +27,15 @@ public class ShippingProfile extends AbstractEntity {
 
   private String address;
 
+  private Long wardId;
+
   private String ward;
 
+  private Long districtId;
+
   private String district;
+
+  private Long provinceId;
 
   private String province;
 
@@ -42,6 +44,4 @@ public class ShippingProfile extends AbstractEntity {
   @ManyToOne
   @JoinColumn(name = "user_id")
   private User user;
-
-  private boolean isDeleted = false;
 }

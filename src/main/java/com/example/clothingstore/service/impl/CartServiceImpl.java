@@ -175,4 +175,20 @@ public class CartServiceImpl implements CartService {
     cart.getCartItems().remove(cartItemToRemove);
     cartRepository.save(cart);
   }
+
+  @Override
+  public Long getCartItemsCount() {
+    String email = SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new BadRequestException(ErrorMessage.USER_NOT_LOGGED_IN));
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    Cart cart = user.getCart();
+    if (cart == null) {
+      return 0L;
+    }
+
+    return Long.valueOf(cart.getCartItems().size());
+  }
 }

@@ -22,14 +22,29 @@ public class HibernateFilterAspect {
     Session session = entityManager.unwrap(Session.class);
     if (applyDeletedFilter.value()) {
       Filter filter = session.enableFilter("deletedFilter");
-      filter.setParameter("isDeleted", false); // Only get products that are not deleted
+      filter.setParameter("isDeleted", false);
     } else {
       session.disableFilter("deletedFilter");
     }
   }
 
+  @Before("execution(* com.example.clothingstore..*(..))" + 
+         " && !@annotation(com.example.clothingstore.annotation.ApplyDeletedFilter)")
+  public void enableDefaultFilter() {
+    Session session = entityManager.unwrap(Session.class);
+    Filter filter = session.enableFilter("deletedFilter");
+    filter.setParameter("isDeleted", false);
+  }
+
   @After("@annotation(applyDeletedFilter)")
   public void disableFilter(ApplyDeletedFilter applyDeletedFilter) {
+    Session session = entityManager.unwrap(Session.class);
+    session.disableFilter("deletedFilter");
+  }
+
+  @After("execution(* com.example.clothingstore..*(..))" + 
+        " && !@annotation(com.example.clothingstore.annotation.ApplyDeletedFilter)")
+  public void disableDefaultFilter() {
     Session session = entityManager.unwrap(Session.class);
     session.disableFilter("deletedFilter");
   }

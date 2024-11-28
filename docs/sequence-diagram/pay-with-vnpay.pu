@@ -1,0 +1,65 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+' skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Khách hàng" as Customer
+participant "Website-APP TMDT" as Website
+participant "VNPAY" as VNPAY
+participant "Ngân hàng" as Bank
+
+activate Customer
+Customer -> Website : 1. Mua hàng & Chọn thanh toán qua VNPAY
+activate Website
+Website -> VNPAY : 2. Gửi yêu cầu thanh toán
+deactivate Website
+activate VNPAY
+Customer -> VNPAY : 3. Nhập thông tin thẻ hoặc tài khoản để tiếp tục
+VNPAY ->> Bank : 3.1 Gửi yêu cầu xác thực
+activate Bank
+Bank -->> VNPAY : 3.2 Thành công
+deactivate Bank
+Customer -> VNPAY : 4. Nhập OTP
+VNPAY ->> Bank : 4.1 Xác thực OTP, chuẩn chi GD
+activate Bank
+Bank -->> VNPAY : 4.2 Thành công
+deactivate Bank
+VNPAY -> Website : 5.1 Thông báo kết quả GD (Return URL)
+ref over Website
+    sd: // Xử lý kết quả thanh toán VNPay //
+end
+
+deactivate VNPAY
+activate Website
+Customer <-- Website : 6. Thông báo kết quả GD
+deactivate Website
+
+hide footbox
+@enduml

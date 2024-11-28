@@ -168,7 +168,7 @@ public class ShippingProfileServiceImpl implements ShippingProfileService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
     if (currentUser.getDefaultShippingProfile() == null) {
-      throw new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND);
+      throw new ResourceNotFoundException(ErrorMessage.DEFAULT_SHIPPING_PROFILE_NOT_FOUND);
     }
 
     ShippingProfile defaultProfile = currentUser.getDefaultShippingProfile();

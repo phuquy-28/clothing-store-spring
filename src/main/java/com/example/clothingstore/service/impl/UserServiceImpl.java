@@ -12,6 +12,7 @@ import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.UserRepository;
+import com.example.clothingstore.service.CartService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,8 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
 
   private final SecurityUtil securityUtil;
+
+  private final CartService cartService;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -100,10 +103,13 @@ public class UserServiceImpl implements UserService {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
+    Long cartItemsCount = cartService.getCartItemsCount();
+
     return UserInfoDTO.builder().email(user.getEmail() != null ? user.getEmail() : null)
         .firstName(
             user.getProfile().getFirstName() != null ? user.getProfile().getFirstName() : null)
         .lastName(user.getProfile().getLastName() != null ? user.getProfile().getLastName() : null)
-        .role(user.getRole().getName() != null ? user.getRole().getName() : null).build();
+        .role(user.getRole().getName() != null ? user.getRole().getName() : null)
+        .cartItemsCount(cartItemsCount).build();
   }
 }

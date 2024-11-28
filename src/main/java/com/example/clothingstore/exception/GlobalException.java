@@ -18,8 +18,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalException {
 
-  // @ExceptionHandler(value = Exception.class)
-  @ExceptionHandler(value = AccessDeniedException.class)
+  @ExceptionHandler(value = Exception.class)
+  // @ExceptionHandler(value = AccessDeniedException.class)
   public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
     if (ex instanceof AccessDeniedException) {
       throw (AccessDeniedException) ex; // Re-throw AccessDeniedException to be handled by
