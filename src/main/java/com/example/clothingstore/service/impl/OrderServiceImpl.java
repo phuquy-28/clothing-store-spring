@@ -430,9 +430,6 @@ public class OrderServiceImpl implements OrderService {
             .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND));
     } else {
         shippingProfile = user.getDefaultShippingProfile();
-        if (shippingProfile == null) {
-            throw new BadRequestException(ErrorMessage.DEFAULT_SHIPPING_PROFILE_NOT_FOUND);
-        }
     }
 
     Cart cart = user.getCart();
@@ -497,7 +494,7 @@ public class OrderServiceImpl implements OrderService {
 
     // Tạo preview order
     return OrderPreviewDTO.builder()
-        .shippingProfile(ShippingProfileResDTO.builder()
+        .shippingProfile(shippingProfile != null ? ShippingProfileResDTO.builder()
             .id(shippingProfile.getId())
             .firstName(shippingProfile.getFirstName())
             .lastName(shippingProfile.getLastName())
@@ -507,7 +504,7 @@ public class OrderServiceImpl implements OrderService {
             .district(shippingProfile.getDistrict())
             .province(shippingProfile.getProvince())
             .country(shippingProfile.getCountry())
-            .build())
+            .build() : null)
         .lineItems(selectedItems)
         .shippingFee(shippingFee)
         .discount(discount)

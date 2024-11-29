@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ProductReqDTO;
 import com.example.clothingstore.dto.request.UploadImageReqDTO;
@@ -23,9 +25,11 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
 import com.example.clothingstore.dto.response.ReviewProductDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
+import com.example.clothingstore.entity.Category;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.entity.Review;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.PaymentStatus;
@@ -38,6 +42,10 @@ import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -139,12 +147,66 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ResultPaginationDTO  getProducts(Specification<Product> specification, Pageable pageable) {
-    Page<Product> products = productRepository.findAll(specification, pageable);
+  public ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable) {
+    // Kết hợp specification từ spring-filter với custom specification
+    Specification<Product> finalSpec = specification;
+
+    // Lấy các parameters từ request context
+    var request =
+        ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+    String averageRatingStr = request.getParameter("averageRating");
+    String hasDiscountStr = request.getParameter("hasDiscount");
+
+    if (averageRatingStr != null) {
+      double rating = Double.parseDouble(averageRatingStr);
+      Specification<Product> ratingSpec = (root, query, cb) -> {
+        query.distinct(true);
+
+        // Subquery để tính average rating
+        Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
+        Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
+        avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
+            .where(cb.equal(reviewRoot.get("product"), root));
+
+        return cb.greaterThanOrEqualTo(avgRatingSubquery, rating);
+      };
+
+      finalSpec = finalSpec != null ? finalSpec.and(ratingSpec) : ratingSpec;
+    }
+
+    if ("true".equalsIgnoreCase(hasDiscountStr)) {
+      Instant now = Instant.now();
+      Specification<Product> discountSpec = (root, query, cb) -> {
+        query.distinct(true);
+
+        // Join với promotions của product
+        Join<Product, Promotion> productPromotions = root.join("promotions", JoinType.LEFT);
+        // Join với category và promotions của category
+        Join<Product, Category> category = root.join("category", JoinType.LEFT);
+        Join<Category, Promotion> categoryPromotions = category.join("promotions", JoinType.LEFT);
+
+        return cb.or(
+            // Check product promotions
+            cb.and(cb.lessThan(productPromotions.get("startDate"), now),
+                cb.greaterThan(productPromotions.get("endDate"), now)),
+            // Check category promotions
+            cb.and(cb.lessThan(categoryPromotions.get("startDate"), now),
+                cb.greaterThan(categoryPromotions.get("endDate"), now)));
+      };
+
+      finalSpec = finalSpec != null ? finalSpec.and(discountSpec) : discountSpec;
+    }
+
+    Page<Product> products = productRepository.findAll(finalSpec, pageable);
     return ResultPaginationDTO.builder()
-        .meta(Meta.builder().page((long) products.getNumber()).pageSize((long) products.getSize())
-            .pages((long) products.getTotalPages()).total(products.getTotalElements()).build())
-        .data(products.getContent().stream().map(this::convertToProductResDTO)
+        .meta(Meta.builder()
+            .page((long) products.getNumber())
+            .pageSize((long) products.getSize())
+            .pages((long) products.getTotalPages())
+            .total(products.getTotalElements())
+            .build())
+        .data(products.getContent().stream()
+            .map(this::convertToProductResDTO)
             .collect(Collectors.toList()))
         .build();
   }
