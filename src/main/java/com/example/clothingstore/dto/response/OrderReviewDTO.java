@@ -9,16 +9,20 @@ import lombok.Data;
 @Data
 @Builder
 public class OrderReviewDTO {
-  
+
   private Long lineItemId;
-  
+
   private String productName;
 
   private Color color;
 
   private Size size;
 
-  private String user;
+  private String variantImage;
+
+  private String firstName;
+
+  private String lastName;
 
   private Instant createdAt;
 

@@ -1,9 +1,12 @@
 package com.example.clothingstore.entity;
 
 import org.hibernate.annotations.SQLDelete;
+import com.example.clothingstore.enumeration.Color;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
@@ -37,6 +40,9 @@ public class Product extends SoftDeleteEntity {
   private String slug;
 
   private boolean isFeatured;
+
+  @Enumerated(EnumType.STRING)
+  private Color colorDefault;
 
   @ManyToOne
   @JoinColumn(name = "category_id", referencedColumnName = "id")

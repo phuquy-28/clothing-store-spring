@@ -1,0 +1,98 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "HomePage" as homePage
+boundary "AccountPage" as accountPage
+boundary "ShippingProfilesPage" as profilePage
+boundary "UpdateProfileModal" as updateModal
+control "ShippingProfileController" as controller
+control "ShippingProfileService" as service
+control "ShippingProfileRepository" as profileRepo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> homePage: clickAccountIcon()
+activate homePage
+
+homePage -> accountPage: navigate()
+deactivate homePage
+activate accountPage
+
+actor -> accountPage: clickShippingProfilesTab()
+accountPage -> profilePage: navigate()
+deactivate accountPage
+activate profilePage
+
+actor -> profilePage: clickUpdateProfile(profileId)
+
+profilePage -> updateModal: openModal(profileDTO)
+activate updateModal
+
+actor -> updateModal: inputProfileData()
+actor -> updateModal: clickSave()
+
+updateModal -> controller: updateShippingProfile(profileDTO)
+activate controller
+
+controller -> service: updateShippingProfile(profileDTO)
+activate service
+
+alt valid input
+    service -> profileRepo: save(profile)
+    activate profileRepo
+    profileRepo -> db: save(profile)
+    activate db
+    db --> profileRepo: return(updatedProfile)
+    deactivate db
+    profileRepo --> service: return(updatedProfile)
+    deactivate profileRepo
+    
+    service --> controller: return(profileDTO)
+    controller --> updateModal: return(success)
+    updateModal -> updateModal: closeModal()
+    updateModal --> actor: message("Profile updated successfully")
+else invalid input
+    service --> controller: throwException()
+    deactivate service
+    controller --> updateModal: return(error)
+    deactivate controller
+    updateModal --> actor: message("Please fill all required fields")
+end
+
+deactivate updateModal
+deactivate profilePage
+
+hide footbox
+@enduml

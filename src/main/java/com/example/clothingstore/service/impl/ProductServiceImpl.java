@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import com.example.clothingstore.dto.request.UploadImageReqDTO;
 import com.example.clothingstore.dto.response.ProductResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
+import com.example.clothingstore.dto.response.ReviewProductDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
@@ -32,6 +34,7 @@ import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
+import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
@@ -51,6 +54,8 @@ public class ProductServiceImpl implements ProductService {
 
   private final PromotionCalculatorService promotionCalculatorService;
 
+  private final ReviewRepository reviewRepository;
+
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
     return cloudStorageService.createSignedUrl(uploadImageReqDTO);
@@ -69,12 +74,15 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(productReqDTO.getPrice());
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
+    product.setColorDefault(Color.valueOf(productReqDTO.getColorDefault().toUpperCase()));
+    product.setFeatured(productReqDTO.getIsFeatured());
 
     final Product finalProduct = product;
+    AtomicReference<ProductImage> defaultImage = new AtomicReference<>();
     product.setImages(IntStream.range(0, productReqDTO.getImages().size()).mapToObj(index -> {
         ProductImage productImage = new ProductImage();
         productImage.setPublicUrl(productReqDTO.getImages().get(index));
-        productImage.setImageOrder(index);
+        productImage.setImageOrder(index + 1);
         productImage.setProduct(finalProduct);
         return productImage;
     }).collect(Collectors.toList()));
@@ -90,16 +98,26 @@ public class ProductServiceImpl implements ProductService {
         // Handle variant images
         List<ProductImage> variantImages = IntStream.range(0, variant.getImages().size())
             .mapToObj(index -> {
+                if (productReqDTO.getColorDefault().equals(variant.getColor()) && defaultImage.get() == null) {
+                    ProductImage img = new ProductImage();
+                    img.setPublicUrl(variant.getImages().get(0));
+                    img.setImageOrder(0);
+                    img.setProduct(finalProduct);
+                    defaultImage.set(img);
+                }
                 ProductImage productImage = new ProductImage();
                 productImage.setPublicUrl(variant.getImages().get(index));
-                productImage.setImageOrder(index);
+                productImage.setImageOrder(0);
                 productImage.setProductVariant(productVariant);
                 return productImage;
             }).collect(Collectors.toList());
         productVariant.setImages(variantImages);
 
         return productVariant;
-    }).collect(Collectors.toList()));
+    }).collect(Collectors.toList())); 
+
+    // Add default image to the fist index of product images
+    product.getImages().add(0, defaultImage.get());
 
     product = productRepository.save(product);
     log.debug("Product created with id: {}", product.getId());
@@ -306,10 +324,12 @@ public class ProductServiceImpl implements ProductService {
         .description(product.getDescription())
         .price(product.getPrice())
         .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+        .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
         .isFeatured(product.isFeatured())
         .discountRate(promotionCalculatorService.calculateDiscountRate(product))
         .averageRating(calculateAverageRating(product) == 0 ? null : calculateAverageRating(product))
         .slug(product.getSlug())
+        .colorDefault(product.getColorDefault() != null ? product.getColorDefault().name() : null)
         .images(product.getImages().stream()
             .map(ProductImage::getPublicUrl)
             .collect(Collectors.toList()))
@@ -374,5 +394,52 @@ public class ProductServiceImpl implements ProductService {
         .mapToDouble(Review::getRating)
         .average()
         .orElse(0.0);
+  }
+
+  @Override
+  public ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable) {
+    if (slug == null) {
+      throw new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND);
+    }
+
+    Page<Review> reviews = reviewRepository.findByProductSlug(slug, pageable);
+
+    return ResultPaginationDTO.builder()
+        .meta(Meta.builder()
+            .page((long) reviews.getNumber())
+            .pageSize((long) reviews.getSize())
+            .pages((long) reviews.getTotalPages())
+            .total(reviews.getTotalElements())
+            .build())
+        .data(reviews.getContent().stream()
+            .map(review -> {
+              if (review == null) {
+                return null;
+              }
+
+              ReviewProductDTO.BoughtVariantDTO variantDTO = null;
+              if (review.getLineItem() != null && 
+                  review.getLineItem().getProductVariant() != null) {
+                var variant = review.getLineItem().getProductVariant();
+                variantDTO = ReviewProductDTO.BoughtVariantDTO.builder()
+                    .variantId(variant.getId())
+                    .color(variant.getColor() != null ? variant.getColor().name() : null)
+                    .size(variant.getSize() != null ? variant.getSize().name() : null)
+                    .build();
+              }
+
+              return ReviewProductDTO.builder()
+                  .reviewId(review.getId())
+                  .rating(review.getRating())
+                  .description(review.getDescription())
+                  .createdAt(review.getCreatedAt() != null ? 
+                      review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime() : null)
+                  .variant(variantDTO)
+                  .description(review.getDescription())
+                  .build();
+            })
+            .filter(dto -> dto != null)
+            .collect(Collectors.toList()))
+        .build();
   }
 }

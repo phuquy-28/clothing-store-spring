@@ -51,6 +51,8 @@ public class OrderResDTO {
 
     private Size size;
 
+    private String variantImage;
+
     private Long quantity;
 
     private Double unitPrice;

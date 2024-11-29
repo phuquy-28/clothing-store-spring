@@ -1,5 +1,6 @@
 package com.example.clothingstore.entity;
 
+import org.hibernate.annotations.SQLDelete;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -13,12 +14,13 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "reviews")
+@SQLDelete(sql = "UPDATE reviews SET is_deleted = 1 WHERE id = ?")
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class Review extends AbstractEntity {
+public class Review extends SoftDeleteEntity {
 
   private String description;
 

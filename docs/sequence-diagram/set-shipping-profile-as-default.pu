@@ -1,0 +1,93 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "HomePage" as homePage
+boundary "AccountPage" as accountPage
+boundary "ShippingProfilesPage" as profilePage
+control "ShippingProfileController" as controller
+control "ShippingProfileService" as service
+control "ShippingProfileRepository" as profileRepo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> homePage: clickAccountIcon()
+activate homePage
+
+homePage -> accountPage: navigate()
+deactivate homePage
+activate accountPage
+
+actor -> accountPage: clickShippingProfilesTab()
+accountPage -> profilePage: navigate()
+deactivate accountPage
+activate profilePage
+
+actor -> profilePage: clickSetDefaultProfile(profileId)
+
+profilePage -> controller: setDefaultShippingProfile(profileId)
+activate controller
+
+controller -> service: setDefaultShippingProfile(profileId)
+activate service
+
+service -> profileRepo: findById(profileId)
+activate profileRepo
+profileRepo -> db: findById()
+activate db
+db --> profileRepo: return(profile)
+deactivate db
+profileRepo --> service: return(profile)
+deactivate profileRepo
+
+service -> profileRepo: update(profile)
+activate profileRepo
+profileRepo -> db: save()
+activate db
+db --> profileRepo: return(updatedProfile)
+deactivate db
+profileRepo --> service: return(updatedProfile)
+deactivate profileRepo
+
+service --> controller: return()
+deactivate service
+
+controller --> profilePage: return(success)
+deactivate controller
+
+profilePage --> actor: display("Default profile set successfully")
+
+deactivate profilePage
+
+hide footbox
+@enduml

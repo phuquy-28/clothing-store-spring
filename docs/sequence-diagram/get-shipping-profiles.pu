@@ -1,0 +1,120 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "HomePage" as homePage
+boundary "AccountPage" as accountPage
+boundary "ShippingProfilesPage" as profilePage
+control "ShippingProfileController" as controller
+control "ShippingProfileService" as service
+control "UserRepository" as userRepo
+control "ShippingProfileRepository" as profileRepo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> homePage: clickAccountIcon()
+activate homePage
+
+homePage -> accountPage: navigate()
+deactivate homePage
+activate accountPage
+
+actor -> accountPage: clickShippingProfilesTab()
+accountPage -> profilePage: navigate()
+deactivate accountPage
+activate profilePage
+
+profilePage -> controller: getShippingProfiles()
+activate controller
+
+controller -> service: getShippingProfiles()
+activate service
+
+service -> userRepo: findByEmail(currentUserEmail)
+activate userRepo
+userRepo -> db: findByEmail()
+activate db
+db --> userRepo: return(user)
+deactivate db
+userRepo --> service: return(user)
+deactivate userRepo
+
+service -> profileRepo: findByUser(user)
+activate profileRepo
+profileRepo -> db: findByUser()
+activate db
+db --> profileRepo: return(profiles)
+deactivate db
+profileRepo --> service: return(profiles)
+deactivate profileRepo
+
+service --> controller: return(profileDTOs)
+deactivate service
+
+controller --> profilePage: return(profileDTOs)
+deactivate controller
+
+profilePage --> actor: display(shippingProfiles)
+
+opt Add New Profile
+    actor -> profilePage: clickAddNewProfile()
+    ref over profilePage
+        Use case: Thêm địa chỉ nhận hàng
+    end ref
+end
+
+opt Update Profile
+    actor -> profilePage: clickUpdateProfile()
+    ref over profilePage
+        Use case: Cập nhật địa chỉ nhận hàng
+    end ref
+end
+
+opt Delete Profile
+    actor -> profilePage: clickDeleteProfile()
+    ref over profilePage
+        Use case: Xoá địa chỉ nhận hàng
+    end ref
+end
+
+opt Set Default Profile
+    actor -> profilePage: clickSetDefaultProfile()
+    ref over profilePage
+        Use case: Đặt địa chỉ nhận hàng thành mặc định
+    end ref
+end
+
+deactivate profilePage
+
+hide footbox
+@enduml

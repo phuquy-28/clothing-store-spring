@@ -26,6 +26,11 @@ public class ProductReqDTO {
   @NotNull(message = "product.category.not.null")
   private Long categoryId;
 
+  private Boolean isFeatured = false;
+
+  @EnumValue(enumClass = Color.class, message = "color.invalid")
+  private String colorDefault;
+
   @NotEmpty(message = "product.images.not.empty")
   private List<String> images;
 

@@ -7,6 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import lombok.RequiredArgsConstructor;
 import com.example.clothingstore.constant.ErrorMessage;
@@ -19,6 +22,7 @@ import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ShippingProfileResDTO;
 import com.example.clothingstore.entity.Cart;
 import com.example.clothingstore.entity.CartItem;
@@ -221,12 +225,29 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  public List<OrderResDTO> getOrdersByUser() {
-    User user = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get());
-    List<Order> orders = orderRepository.findByUser(user);
+  public ResultPaginationDTO getOrdersByUser(Specification<Order> spec, Pageable pageable) {
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get());
+    
+    Specification<Order> userSpec = (root, query, cb) -> 
+        cb.equal(root.get("user").get("id"), currentUser.getId());
+    
+    Specification<Order> finalSpec = spec != null ? userSpec.and(spec) : userSpec;
+    
+    Page<Order> orderPage = orderRepository.findAll(finalSpec, pageable);
+    
+    List<OrderResDTO> orderDTOs = orderPage.getContent().stream()
+        .map(this::mapToOrderResDTO)
+        .collect(Collectors.toList());
 
-    // mapping order to order res dto
-    return orders.stream().map(this::mapToOrderResDTO).collect(Collectors.toList());
+    return ResultPaginationDTO.builder()
+        .meta(ResultPaginationDTO.Meta.builder()
+            .page(Long.valueOf(pageable.getPageNumber()))
+            .pageSize(Long.valueOf(pageable.getPageSize()))
+            .total(orderPage.getTotalElements())
+            .pages(Long.valueOf(orderPage.getTotalPages()))
+            .build())
+        .data(orderDTOs)
+        .build();
   }
 
   private OrderResDTO mapToOrderResDTO(Order order) {
@@ -253,6 +274,7 @@ public class OrderServiceImpl implements OrderService {
     return OrderResDTO.LineItem.builder().id(lineItem.getId())
         .productName(lineItem.getProductVariant().getProduct().getName())
         .color(lineItem.getProductVariant().getColor()).size(lineItem.getProductVariant().getSize())
+        .variantImage(lineItem.getProductVariant().getImages().get(0).getPublicUrl())
         .quantity(lineItem.getQuantity()).unitPrice(lineItem.getUnitPrice())
         .discount(lineItem.getDiscountAmount()).build();
   }
@@ -263,14 +285,19 @@ public class OrderServiceImpl implements OrderService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
     checkOrderBelongsToCurrentUser(order);
 
-    return order.getLineItems().stream().filter(lineItem -> lineItem.getReview() != null)
-        .map(lineItem -> OrderReviewDTO.builder().lineItemId(lineItem.getId())
+    return order.getLineItems().stream()
+        .map(lineItem -> OrderReviewDTO.builder()
+            .lineItemId(lineItem.getId())
             .productName(lineItem.getProductVariant().getProduct().getName())
             .color(lineItem.getProductVariant().getColor())
             .size(lineItem.getProductVariant().getSize())
-            .user(lineItem.getReview().getUser().getEmail())
-            .createdAt(lineItem.getReview().getCreatedAt()).rating(lineItem.getReview().getRating())
-            .description(lineItem.getReview().getDescription()).build())
+            .variantImage(lineItem.getProductVariant().getImages().get(0).getPublicUrl())
+            .firstName(lineItem.getReview() != null ? lineItem.getReview().getUser().getProfile().getFirstName() : null)
+            .lastName(lineItem.getReview() != null ? lineItem.getReview().getUser().getProfile().getLastName() : null)
+            .createdAt(lineItem.getReview() != null ? lineItem.getReview().getCreatedAt() : null)
+            .rating(lineItem.getReview() != null ? lineItem.getReview().getRating() : null)
+            .description(lineItem.getReview() != null ? lineItem.getReview().getDescription() : null)
+            .build())
         .collect(Collectors.toList());
   }
 
@@ -307,29 +334,27 @@ public class OrderServiceImpl implements OrderService {
     checkOrderBelongsToCurrentUser(order);
 
     if (order.getStatus() != OrderStatus.DELIVERED) {
-      throw new BadRequestException(ErrorMessage.REVIEW_NOT_ALLOWED);
+        throw new BadRequestException(ErrorMessage.REVIEW_NOT_ALLOWED);
     }
 
-    List<OrderReviewReqDTO.ReviewItem> reviewItems = orderReviewReqDTO.getReviewItems();
-    List<Review> reviews = new ArrayList<>();
-    for (OrderReviewReqDTO.ReviewItem reviewItem : reviewItems) {
-      LineItem lineItem = order.getLineItems().stream()
-          .filter(item -> item.getId().equals(reviewItem.getLineItemId())).findFirst()
-          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.LINE_ITEM_NOT_FOUND));
+    OrderReviewReqDTO.ReviewItem reviewItem = orderReviewReqDTO.getReviewItem();
+    
+    LineItem lineItem = order.getLineItems().stream()
+        .filter(item -> item.getId().equals(reviewItem.getLineItemId()))
+        .findFirst()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.LINE_ITEM_NOT_FOUND));
 
-      if (lineItem.getReview() != null) {
+    if (lineItem.getReview() != null) {
         throw new ResourceAlreadyExistException(ErrorMessage.REVIEW_ALREADY_EXISTS);
-      }
-
-      Review review = new Review();
-      review.setUser(order.getUser());
-      review.setProduct(lineItem.getProductVariant().getProduct());
-      review.setRating(reviewItem.getRating().doubleValue());
-      review.setDescription(reviewItem.getDescription());
-      review.setLineItem(lineItem);
-      reviews.add(review);
     }
-    reviewRepository.saveAll(reviews);
+
+    Review review = new Review();
+    review.setUser(order.getUser());
+    review.setProduct(lineItem.getProductVariant().getProduct());
+    review.setRating(reviewItem.getRating().doubleValue());
+    review.setDescription(reviewItem.getDescription());
+    review.setLineItem(lineItem);
+    reviewRepository.save(review);
 
     return orderReviewReqDTO;
   }
@@ -340,25 +365,20 @@ public class OrderServiceImpl implements OrderService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
     checkOrderBelongsToCurrentUser(order);
 
-    List<OrderReviewReqDTO.ReviewItem> reviewItems = orderReviewReqDTO.getReviewItems();
-    List<Review> updatedReviews = new ArrayList<>();
+    OrderReviewReqDTO.ReviewItem reviewItem = orderReviewReqDTO.getReviewItem();
 
-    for (OrderReviewReqDTO.ReviewItem reviewItem : reviewItems) {
-      LineItem lineItem = order.getLineItems().stream()
-          .filter(item -> item.getId().equals(reviewItem.getLineItemId())).findFirst()
-          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.LINE_ITEM_NOT_FOUND));
+    LineItem lineItem = order.getLineItems().stream()
+        .filter(item -> item.getId().equals(reviewItem.getLineItemId()))
+        .findFirst()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.LINE_ITEM_NOT_FOUND));
 
-      Review review = reviewRepository.findByLineItemId(lineItem.getId())
-          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.REVIEW_NOT_FOUND));
+    Review review = reviewRepository.findByLineItemId(lineItem.getId())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.REVIEW_NOT_FOUND));
 
-      // Update review details
-      review.setRating(reviewItem.getRating().doubleValue());
-      review.setDescription(reviewItem.getDescription());
-
-      updatedReviews.add(review);
-    }
-
-    reviewRepository.saveAll(updatedReviews);
+    review.setRating(reviewItem.getRating().doubleValue());
+    review.setDescription(reviewItem.getDescription());
+    
+    reviewRepository.save(review);
 
     return orderReviewReqDTO;
   }

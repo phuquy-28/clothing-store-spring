@@ -100,9 +100,11 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserInfoDTO getUserInfo(String email) {
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+    User user = userRepository.findByEmail(email).orElse(null);
 
+    if (user == null) {
+      return null;
+    }
     Long cartItemsCount = cartService.getCartItemsCount();
 
     return UserInfoDTO.builder().email(user.getEmail() != null ? user.getEmail() : null)

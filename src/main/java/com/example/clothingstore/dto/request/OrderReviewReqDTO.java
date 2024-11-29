@@ -3,9 +3,7 @@ package com.example.clothingstore.dto.request;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import lombok.Data;
 
 @Data
@@ -14,8 +12,8 @@ public class OrderReviewReqDTO {
   @NotNull(message = "orderId.not.null")
   private Long orderId;
 
-  @NotEmpty(message = "reviewItems.not.empty")
-  private List<ReviewItem> reviewItems;
+  @NotNull(message = "reviewItem.not.null")
+  private ReviewItem reviewItem;
 
   @Data
   @Valid

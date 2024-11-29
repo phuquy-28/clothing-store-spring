@@ -18,6 +18,8 @@ public class ProductResDTO {
 
   private Long categoryId;
 
+  private String categoryName;
+
   private boolean isFeatured;
 
   private Double discountRate;
@@ -25,6 +27,8 @@ public class ProductResDTO {
   private Double averageRating;
 
   private String slug;
+
+  private String colorDefault;
 
   private List<String> images;
 

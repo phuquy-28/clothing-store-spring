@@ -56,7 +56,7 @@ public class UrlConfig {
 	public static final String ORDERS = "/orders";
 	public static final String PREVIEW = "/preview";
 	public static final String CHECK_OUT = "/check-out";
-	public static final String MY_ORDERS = "/my-orders";
+	public static final String USER_ORDERS = "/user";
 	public static final String LINE_ITEM = "/line-items";
 	public static final String ORDER_ID = "/{orderId}";
 	public static final String STATUS = "/status";
@@ -95,8 +95,10 @@ public class UrlConfig {
 			API_VERSION + PRODUCT,
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
 			API_VERSION + PRODUCT + PRODUCT_ID + ID,
+			API_VERSION + PRODUCT + PRODUCT_SLUG + REVIEW,
 			API_VERSION + CATEGORY,
 			API_VERSION + USER,
+      API_VERSION + USER + INFO,
 			API_VERSION + PAYMENT,
 			API_VERSION + PAYMENT + VNPAY_RETURN
 		};

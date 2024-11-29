@@ -29,4 +29,6 @@ public interface ProductService {
   ProductResDTO convertToProductResDTO(Product product);
 
   ResultPaginationDTO getDiscountedProducts(Pageable pageable);
+
+  ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable);
 }
