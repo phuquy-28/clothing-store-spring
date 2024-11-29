@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.exception.PaymentException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
+import com.example.clothingstore.service.EmailService;
 import com.example.clothingstore.service.VnPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,8 @@ public class VnPayServiceImp implements VnPayService {
   private String vnp_ReturnUrl;
 
   private final OrderRepository orderRepository;
+
+  private final EmailService emailService;
 
   @Override
   public String createPaymentUrl(Order order, HttpServletRequest request) {
@@ -165,6 +169,12 @@ public class VnPayServiceImp implements VnPayService {
         order.setStatus(OrderStatus.PROCESSING);
         order.setPaymentDate(paymentDate);
         orderRepository.save(order);
+
+        // Eagerly fetch order details
+        Order orderWithDetails = orderRepository.findOrderWithDetailsById(order.getId());
+        List<ProductVariant> productVariants = orderRepository
+            .findProductVariantsWithImagesByOrderId(order.getId());
+        emailService.sendOrderConfirmationEmail(orderWithDetails, productVariants);
 
         return null;
       } else {

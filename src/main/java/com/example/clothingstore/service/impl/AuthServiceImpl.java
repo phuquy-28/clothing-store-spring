@@ -96,6 +96,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     newUser.setProfile(profile);
+    profile.setUser(newUser);
 
     User savedUser = userRepository.save(newUser);
 
@@ -260,9 +261,9 @@ public class AuthServiceImpl implements AuthService {
     User user = userRepository.findByEmailAndActivatedTrue(email)
         .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
 
-    // check if the last password recovery request has expired (10 minutes)
+    // check if the last password recovery request has expired (3 minutes)
     if (user.getResetDate() != null
-        && user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 10))) {
+        && user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 3))) {
       throw new EmailInvalidException(ErrorMessage.PASSWORD_RECOVERY_TOO_FREQUENT);
     }
 

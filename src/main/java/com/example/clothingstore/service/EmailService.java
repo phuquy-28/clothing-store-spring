@@ -1,5 +1,8 @@
 package com.example.clothingstore.service;
 
+import java.util.List;
+import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.User;
 
 public interface EmailService {
@@ -13,4 +16,6 @@ public interface EmailService {
   public void sendActivationEmail(User user);
 
   public void sendRecoverPasswordEmail(User user);
+
+  public void sendOrderConfirmationEmail(Order order, List<ProductVariant> productVariants);
 }

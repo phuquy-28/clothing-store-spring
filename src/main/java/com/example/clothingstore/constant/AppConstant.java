@@ -3,6 +3,8 @@ package com.example.clothingstore.constant;
 public final class AppConstant {
 
   public static final String ROLE_USER = "USER";
+  public static final String ROLE_STAFF = "STAFF";
+  public static final String ROLE_MANAGER = "MANAGER";
   public static final String ROLE_ADMIN = "ADMIN";
 
   // JWT
@@ -16,6 +18,7 @@ public final class AppConstant {
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
   public static final String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
   public static final String ORDER_EMAIL_TEMPLATE = "mail/orderEmail";
+  public static final String ORDER_CONFIRMATION_EMAIL_TEMPLATE = "mail/orderEmail";
   
   public static final String SIMPLE_DATE_FORMAT = "dd/MM/yyyy";
 

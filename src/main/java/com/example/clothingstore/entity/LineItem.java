@@ -34,7 +34,7 @@ public class LineItem extends AbstractEntity {
 
   private Double discountAmount;
 
-  private Double totalPrice;
+  private Double finalPrice;
 
   @OneToOne(mappedBy = "lineItem")
   private Review review;

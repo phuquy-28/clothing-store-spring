@@ -40,7 +40,7 @@ public class Order extends AbstractEntity {
   private User user;
 
   @Embedded
-  private ShippingInformation shippingInformation;
+  public ShippingInformation shippingInformation;
 
   @Column(columnDefinition = "text")
   private String note;

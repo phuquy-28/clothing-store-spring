@@ -134,7 +134,7 @@ public class OrderServiceImpl implements OrderService {
         lineItem.setQuantity(cartItem.getQuantity().longValue());
         lineItem.setUnitPrice(originalPrice);
         lineItem.setDiscountAmount(originalPrice - finalPrice);
-        lineItem.setTotalPrice(finalPrice);
+        lineItem.setFinalPrice(finalPrice);
 
         lineItems.add(lineItem);
         total += originalPrice * cartItem.getQuantity();
