@@ -1,0 +1,90 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "OrdersPage" as ordersPage
+boundary "ReviewModal" as reviewModal
+control "OrderController" as orderController
+control "OrderService" as orderService
+entity "Review" as review
+control "ReviewRepository" as reviewRepo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> ordersPage: clickReview(orderId)
+activate ordersPage
+
+ordersPage -> reviewModal: openModal(orderReviewDTO)
+deactivate ordersPage
+activate reviewModal
+
+actor -> reviewModal: selectRating(stars)
+actor -> reviewModal: inputComment(text)
+actor -> reviewModal: clickSubmit()
+
+reviewModal -> orderController: createReview(reviewDTO)
+activate orderController
+
+orderController -> orderService: createReview(reviewDTO)
+activate orderService
+
+alt valid input
+    orderService -> review: new Review()
+    activate review
+    review --> orderService: return(review)
+    deactivate review
+    orderService -> reviewRepo: save(review)
+    activate reviewRepo
+    reviewRepo -> db: save(review)
+    activate db
+    db --> reviewRepo: return(savedReview)
+    deactivate db
+    reviewRepo --> orderService: return(savedReview)
+    deactivate reviewRepo
+    
+    orderService --> orderController: return(reviewDTO)
+    orderController --> reviewModal: return(success)
+    reviewModal --> actor: display("Review submitted successfully")
+else invalid input
+    orderService --> orderController: throwException()
+    deactivate orderService
+    orderController --> reviewModal: return(error)
+    deactivate orderController
+    reviewModal --> actor: display("Invalid review data")
+end
+
+deactivate reviewModal
+
+hide footbox
+@enduml

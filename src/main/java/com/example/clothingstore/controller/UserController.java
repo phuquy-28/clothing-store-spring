@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.response.ProfileResDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.service.UserService;
@@ -27,6 +28,12 @@ public class UserController {
   private final Logger log = LoggerFactory.getLogger(UserController.class);
 
   private final UserService userService;
+
+  @GetMapping(UrlConfig.USER + UrlConfig.PROFILE)
+  public ResponseEntity<ProfileResDTO> getProfile() {
+    log.debug("REST request to get profile");
+    return ResponseEntity.status(HttpStatus.OK).body(userService.getProfile());
+  }
 
   @PutMapping(UrlConfig.USER + UrlConfig.EDIT_PROFILE)
   public ResponseEntity<UserResDTO> editProfile(

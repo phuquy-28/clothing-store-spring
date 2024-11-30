@@ -1,0 +1,104 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+' skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "HomePage" as homePage
+boundary "OrdersPage" as ordersPage
+control "OrderController" as controller
+control "OrderService" as service
+control "OrderRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> homePage: clickTrackOrders()
+activate homePage
+
+homePage -> ordersPage: navigate()
+deactivate homePage
+activate ordersPage
+
+ordersPage -> controller: getOrders()
+activate controller
+
+controller -> service: getOrdersByUser()
+activate service
+
+service -> repo: findAll()
+activate repo
+repo -> db: query()
+activate db
+db --> repo: return(orders)
+deactivate db
+repo --> service: return(orders)
+deactivate repo
+
+alt orders found
+    service --> controller: return(orderDTOs)
+    controller --> ordersPage: return(orderDTOs)
+    ordersPage --> actor: display(orders)
+    
+    opt Filter Orders
+        actor -> ordersPage: selectStatusTab(status)
+        ordersPage -> controller: getOrders(status)
+        controller -> service: getOrdersByUserAndStatus()
+        service --> controller: return(filteredOrders)
+        controller --> ordersPage: return(filteredOrders)
+        ordersPage --> actor: display(filteredOrders)
+    end
+    
+    opt Review Delivered Order
+        actor -> ordersPage: clickReview(orderId)
+        ref over ordersPage
+            //sd:Đánh giá sản phẩm//
+        end ref
+    end
+    
+    opt Edit Review
+        actor -> ordersPage: clickViewReview(orderId)
+        ref over ordersPage
+            //sd:Sửa đánh giá sản phẩm//
+        end ref
+    end
+    
+else no orders found
+    service --> controller: return(empty list)
+    deactivate service
+    controller --> ordersPage: return(empty list)
+    deactivate controller
+    ordersPage --> actor: display("No orders found")
+    deactivate ordersPage
+end
+
+hide footbox
+@enduml

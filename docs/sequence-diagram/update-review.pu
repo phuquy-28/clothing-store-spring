@@ -1,0 +1,90 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+' skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Customer" as actor
+boundary "OrdersPage" as ordersPage
+boundary "ReviewModal" as reviewModal
+control "OrderController" as controller
+control "OrderService" as service
+entity "Review" as review
+control "ReviewRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> ordersPage: clickViewReview(orderId)
+activate ordersPage
+
+ordersPage -> reviewModal: openModal(orderReviewDTO)
+deactivate ordersPage
+activate reviewModal
+
+actor -> reviewModal: updateRating(stars)
+actor -> reviewModal: updateComment(text)
+actor -> reviewModal: clickUpdate()
+
+reviewModal -> controller: updateOrderReview(reviewDTO)
+activate controller
+
+controller -> service: updateOrderReview(reviewDTO)
+activate service
+
+alt valid input
+    service -> review: update()
+    activate review
+    review --> service: return(review)
+    deactivate review
+    service -> repo: save(review)
+    activate repo
+    repo -> db: save()
+    activate db
+    db --> repo: return(savedReview)
+    deactivate db
+    repo --> service: return(savedReview)
+    deactivate repo
+    
+    service --> controller: return(reviewDTO)
+    controller --> reviewModal: return(success)
+    reviewModal --> actor: display("Review updated successfully")
+else invalid input
+    service --> controller: throwException()
+    deactivate service
+    controller --> reviewModal: return(error)
+    deactivate controller
+    reviewModal --> actor: display("Invalid review data")
+end
+
+deactivate reviewModal
+
+hide footbox
+@enduml

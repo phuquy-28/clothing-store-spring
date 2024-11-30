@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.response.ProfileResDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.entity.Profile;
@@ -11,6 +12,7 @@ import com.example.clothingstore.entity.UserRefreshToken;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.mapper.ProfileMapper;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.CartService;
 import com.example.clothingstore.service.UserService;
@@ -32,6 +34,8 @@ public class UserServiceImpl implements UserService {
   private final SecurityUtil securityUtil;
 
   private final CartService cartService;
+
+  private final ProfileMapper profileMapper;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -113,5 +117,12 @@ public class UserServiceImpl implements UserService {
         .lastName(user.getProfile().getLastName() != null ? user.getProfile().getLastName() : null)
         .role(user.getRole().getName() != null ? user.getRole().getName() : null)
         .cartItemsCount(cartItemsCount).build();
+  }
+
+  @Override
+  public ProfileResDTO getProfile() {
+    Profile profile = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)).getProfile();
+    return profileMapper.toProfileResDTO(profile);
   }
 }

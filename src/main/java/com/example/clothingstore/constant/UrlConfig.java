@@ -43,7 +43,7 @@ public class UrlConfig {
 
 	// User controller
 	public static final String USER = "/users";
-	public static final String PROFILE = "/profile";
+	public static final String PROFILE = "/profiles";
 	public static final String EDIT_PROFILE = "/edit-profile";
 	public static final String CHANGE_PASSWORD = "/change-password";
 	public static final String INFO = "/info";
