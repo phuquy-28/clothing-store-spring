@@ -35,7 +35,4 @@ public class ShippingProfileReqDTO {
 
   @NotBlank(message = "province.not.blank")
   private String province;
-
-  @NotBlank(message = "country.not.blank")
-  private String country;
 }

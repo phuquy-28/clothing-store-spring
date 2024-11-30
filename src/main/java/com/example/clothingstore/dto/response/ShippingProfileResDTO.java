@@ -17,13 +17,17 @@ public class ShippingProfileResDTO {
 
   private String address;
 
+  private Long wardId;
+
   private String ward;
+
+  private Long districtId;
 
   private String district;
 
-  private String province;
+  private Long provinceId;
 
-  private String country;
+  private String province;
 
   private boolean isDefault;
 }

@@ -39,8 +39,6 @@ public class ShippingProfile extends AbstractEntity {
 
   private String province;
 
-  private String country;
-
   @ManyToOne
   @JoinColumn(name = "user_id")
   private User user;

@@ -111,7 +111,6 @@ public class ShippingProfileServiceImpl implements ShippingProfileService {
     shippingProfile.setWard(shippingProfileReqDTO.getWard());
     shippingProfile.setDistrict(shippingProfileReqDTO.getDistrict());
     shippingProfile.setProvince(shippingProfileReqDTO.getProvince());
-    shippingProfile.setCountry(shippingProfileReqDTO.getCountry());
 
     ShippingProfile updatedProfile = shippingProfileRepository.save(shippingProfile);
     log.debug("Updated shipping profile: {}", updatedProfile);

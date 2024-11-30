@@ -199,7 +199,6 @@ public class OrderServiceImpl implements OrderService {
     shippingInfo.setWard(profile.getWard());
     shippingInfo.setDistrict(profile.getDistrict());
     shippingInfo.setProvince(profile.getProvince());
-    shippingInfo.setCountry(profile.getCountry());
     return shippingInfo;
   }
 
@@ -503,7 +502,6 @@ public class OrderServiceImpl implements OrderService {
             .ward(shippingProfile.getWard())
             .district(shippingProfile.getDistrict())
             .province(shippingProfile.getProvince())
-            .country(shippingProfile.getCountry())
             .build() : null)
         .lineItems(selectedItems)
         .shippingFee(shippingFee)
