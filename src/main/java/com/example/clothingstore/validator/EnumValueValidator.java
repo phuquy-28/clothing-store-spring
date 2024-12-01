@@ -20,7 +20,7 @@ public class EnumValueValidator implements ConstraintValidator<EnumValue, String
   @Override
   public boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
-      return false;
+      return true;
     }
     return acceptedValues.contains(value.toUpperCase());
   }

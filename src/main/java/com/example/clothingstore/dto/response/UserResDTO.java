@@ -10,6 +10,8 @@ public class UserResDTO {
   
   private Long id;
 
+  private String email;
+
   private String firstName;
 
   private String lastName;
@@ -20,5 +22,6 @@ public class UserResDTO {
 
   private Gender gender;
 
-  private String email;
+  private RoleResDTO role;
+
 }

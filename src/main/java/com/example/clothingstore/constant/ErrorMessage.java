@@ -42,6 +42,7 @@ public final class ErrorMessage {
   public static final String CART_NOT_FOUND = "error.cart.not_found";
   public static final String CART_ITEM_NOT_FOUND = "error.cart_item.not_found";
   public static final String DEFAULT_SHIPPING_PROFILE_NOT_FOUND = "error.default_shipping_profile.not_found";
+  public static final String ROLE_NOT_FOUND = "error.role.not_found";
   
   private ErrorMessage() {
   }

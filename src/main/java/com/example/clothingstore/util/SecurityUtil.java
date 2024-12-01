@@ -119,7 +119,7 @@ public class SecurityUtil {
     } else if (authentication.getPrincipal() instanceof Jwt jwt) {
       return jwt.getSubject();
     } else if (authentication.getPrincipal() instanceof String s) {
-      return s;
+      return "anonymousUser".equals(s) ? null : s;
     }
     return null;
   }

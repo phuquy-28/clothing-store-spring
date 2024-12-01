@@ -25,6 +25,8 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
 import com.example.clothingstore.dto.response.ReviewProductDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
+import com.example.clothingstore.entity.Cart;
+import com.example.clothingstore.entity.CartItem;
 import com.example.clothingstore.entity.Category;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
@@ -36,12 +38,14 @@ import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.repository.CartRepository;
 import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
+import com.example.clothingstore.util.SecurityUtil;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
@@ -63,6 +67,8 @@ public class ProductServiceImpl implements ProductService {
   private final PromotionCalculatorService promotionCalculatorService;
 
   private final ReviewRepository reviewRepository;
+
+  private final CartRepository cartRepository;
 
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
@@ -401,6 +407,7 @@ public class ProductServiceImpl implements ProductService {
                 .color(variant.getColor().name())
                 .size(variant.getSize().name())
                 .quantity(variant.getQuantity())
+                .currentUserCartQuantity(Long.valueOf(calculateVariantQuantity(variant)))
                 .differencePrice(variant.getDifferencePrice())
                 .images(variant.getImages().stream()
                     .map(ProductImage::getPublicUrl)
@@ -408,6 +415,29 @@ public class ProductServiceImpl implements ProductService {
                 .build())
             .collect(Collectors.toList()))
         .build();
+  }
+
+  private Integer calculateVariantQuantity(ProductVariant variant) {
+    String email = SecurityUtil.getCurrentUserLogin().orElse(null);
+    if (email == null || "anonymousUser".equals(email)) {
+        return 0;
+    }
+    
+    List<CartItem> cartItems = cartRepository.findByUserEmail(email)
+        .map(Cart::getCartItems)
+        .orElse(null);
+        
+    if (cartItems == null) {
+        return 0;
+    }
+    
+    return cartItems.stream()
+        .filter(item -> item.getProductVariant() != null 
+            && item.getProductVariant().getId() != null
+            && item.getProductVariant().getId().equals(variant.getId()))
+        .map(CartItem::getQuantity)
+        .findFirst()
+        .orElse(0);
   }
 
   @Override

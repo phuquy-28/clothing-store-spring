@@ -47,6 +47,7 @@ public class UrlConfig {
 	public static final String EDIT_PROFILE = "/edit-profile";
 	public static final String CHANGE_PASSWORD = "/change-password";
 	public static final String INFO = "/info";
+	public static final String ROLES = "/roles";
 
 	// Shipping profile controller
 	public static final String SHIPPING_PROFILE = "/shipping-profiles";

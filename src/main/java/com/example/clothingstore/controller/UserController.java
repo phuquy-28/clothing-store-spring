@@ -1,10 +1,14 @@
 package com.example.clothingstore.controller;
 
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,11 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.RoleResDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
+import com.example.clothingstore.entity.User;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
+import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -56,4 +65,25 @@ public class UserController {
     log.debug("REST request to get user info: {}", email);
     return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo(email));
   }
+
+  @GetMapping(UrlConfig.USER + UrlConfig.ROLES)
+  public ResponseEntity<List<RoleResDTO>> getRoles() {
+    log.debug("REST request to get roles");
+    return ResponseEntity.status(HttpStatus.OK).body(userService.getRoles());
+  }
+
+  @PostMapping(UrlConfig.USER)
+  public ResponseEntity<UserResDTO> createUser(@RequestBody @Valid UserReqDTO userReqDTO) {
+    log.debug("REST request to create user: {}", userReqDTO);
+    return ResponseEntity.status(HttpStatus.OK).body(userService.createUser(userReqDTO));
+  }
+
+  @GetMapping(UrlConfig.USER)
+  public ResponseEntity<ResultPaginationDTO> getUsers(@Filter Specification<User> spec,
+      Pageable pageable) {
+    log.debug("REST request to get users");
+    return ResponseEntity.status(HttpStatus.OK).body(userService.getUsers(spec, pageable));
+  }
+
+  
 }

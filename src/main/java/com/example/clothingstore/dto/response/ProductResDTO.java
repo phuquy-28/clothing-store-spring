@@ -41,6 +41,7 @@ public class ProductResDTO {
     private String color;
     private String size;
     private Integer quantity;
+    private Long currentUserCartQuantity;
     private Double differencePrice;
     private List<String> images;
   }

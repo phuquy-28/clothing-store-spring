@@ -3,24 +3,36 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
+import com.example.clothingstore.dto.response.RoleResDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.entity.Profile;
+import com.example.clothingstore.entity.Role;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.entity.UserRefreshToken;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.mapper.ProfileMapper;
+import com.example.clothingstore.mapper.UserMapper;
+import com.example.clothingstore.repository.RoleRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.CartService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
@@ -36,6 +48,10 @@ public class UserServiceImpl implements UserService {
   private final CartService cartService;
 
   private final ProfileMapper profileMapper;
+
+  private final RoleRepository roleRepository;
+
+  private final UserMapper userMapper;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -76,7 +92,9 @@ public class UserServiceImpl implements UserService {
     profile.setLastName(editProfileReqDTO.getLastName());
     profile.setBirthDate(editProfileReqDTO.getBirthDate());
     profile.setPhoneNumber(editProfileReqDTO.getPhoneNumber());
-    profile.setGender(Gender.valueOf(editProfileReqDTO.getGender().toUpperCase()));
+    profile.setGender(editProfileReqDTO.getGender() != null
+        ? Gender.valueOf(editProfileReqDTO.getGender().toUpperCase())
+        : null);
     userRepository.save(user);
 
     return UserResDTO.builder().id(user.getId()).firstName(profile.getFirstName())
@@ -124,5 +142,53 @@ public class UserServiceImpl implements UserService {
     Profile profile = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)).getProfile();
     return profileMapper.toProfileResDTO(profile);
+  }
+
+  @Override
+  public List<RoleResDTO> getRoles() {
+    return roleRepository.findAll().stream().filter(Role::isActive)
+        .map(role -> RoleResDTO.builder().id(role.getId()).name(role.getName()).build())
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public UserResDTO createUser(UserReqDTO userReqDTO) {
+    Role role = roleRepository.findById(userReqDTO.getRoleId())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ROLE_NOT_FOUND));
+
+    User user = new User();
+    user.setEmail(userReqDTO.getEmail());
+    user.setPassword(passwordEncoder.encode(userReqDTO.getPassword()));
+    user.setRole(role);
+
+    Profile profile = new Profile();
+    profile.setFirstName(userReqDTO.getFirstName());
+    profile.setLastName(userReqDTO.getLastName());
+    profile.setGender(
+        userReqDTO.getGender() != null ? Gender.valueOf(userReqDTO.getGender().toUpperCase())
+            : null);
+    profile.setBirthDate(userReqDTO.getBirthDate() != null ? userReqDTO.getBirthDate() : null);
+    profile.setPhoneNumber(userReqDTO.getPhone() != null ? userReqDTO.getPhone() : null);
+    profile.setUser(user);
+    user.setProfile(profile);
+
+    userRepository.save(user);
+
+    return userMapper.toUserResDTO(user);
+  }
+
+  @Override
+  public ResultPaginationDTO getUsers(Specification<User> spec, Pageable pageable) {
+    Page<User> users = userRepository.findAll(spec, pageable);
+
+    List<UserResDTO> userDTOs = users.getContent().stream().map(userMapper::toUserResDTO)
+        .collect(Collectors.toList());
+        
+    return ResultPaginationDTO.builder().data(userDTOs)
+        .meta(Meta.builder().page(Long.valueOf(pageable.getPageNumber()))
+            .pageSize(Long.valueOf(pageable.getPageSize()))
+            .pages(Long.valueOf(users.getTotalPages()))
+            .total(Long.valueOf(users.getTotalElements())).build())
+        .build();
   }
 }
