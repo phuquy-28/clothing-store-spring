@@ -11,6 +11,8 @@ import lombok.Data;
 
 @Data
 public class UserReqDTO {
+  
+  private Long id;
 
   @NotBlank(message = "email.not.blank")
   @Pattern(regexp = "^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$", message = "email.not.valid")

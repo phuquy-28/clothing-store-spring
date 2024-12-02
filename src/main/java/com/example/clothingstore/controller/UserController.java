@@ -7,7 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -85,5 +87,22 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.OK).body(userService.getUsers(spec, pageable));
   }
 
-  
+  @GetMapping(UrlConfig.USER + UrlConfig.ID)
+  public ResponseEntity<UserResDTO> getUser(@PathVariable Long id) {
+    log.debug("REST request to get user: {}", id);
+    return ResponseEntity.status(HttpStatus.OK).body(userService.getUser(id));
+  }
+
+  @PutMapping(UrlConfig.USER)
+  public ResponseEntity<UserResDTO> updateUser(@RequestBody @Valid UserReqDTO userReqDTO) {
+    log.debug("REST request to update user: {}", userReqDTO);
+    return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userReqDTO));
+  }
+
+  @DeleteMapping(UrlConfig.USER + UrlConfig.ID)
+  public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    log.debug("REST request to delete user: {}", id);
+    userService.deleteUser(id);
+    return ResponseEntity.status(HttpStatus.OK).build();
+  }
 }

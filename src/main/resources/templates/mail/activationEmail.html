@@ -19,7 +19,7 @@
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="text-align: center; padding: 30px 0;">
-              <a th:href="@{${baseUrl} + '/auth/confirm-user?key=' + ${key}}"
+              <a th:href="@{${baseUrl} + '/confirm-user?key=' + ${key}}"
                 style="background-color: #4CAF50; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Kích
                 hoạt tài khoản</a>
             </td>
@@ -28,7 +28,7 @@
         <p style="font-size: 16px;">Nếu nút trên không hoạt động, bạn có thể sao chép và dán liên kết sau vào trình
           duyệt của mình:</p>
         <p style="font-size: 14px; word-break: break-all; background-color: #ffffff; padding: 10px; border-radius: 5px;"
-          th:text="@{${baseUrl} + '/auth/confirm-user?key=' + ${key}}"></p>
+          th:text="@{${baseUrl} + '/confirm-user?key=' + ${key}}"></p>
         <p style="font-size: 16px;">Lưu ý: Liên kết này sẽ hết hạn sau 24 giờ vì lý do bảo mật.</p>
         <p style="font-size: 16px;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ với
           chúng tôi nếu bạn có bất kỳ câu hỏi nào.</p>

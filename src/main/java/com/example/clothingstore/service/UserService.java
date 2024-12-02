@@ -32,4 +32,10 @@ public interface UserService {
   UserResDTO createUser(UserReqDTO userReqDTO);
 
   ResultPaginationDTO getUsers(Specification<User> spec, Pageable pageable);
+
+  UserResDTO updateUser(UserReqDTO userReqDTO);
+
+  void deleteUser(Long id);
+
+  UserResDTO getUser(Long id);
 }

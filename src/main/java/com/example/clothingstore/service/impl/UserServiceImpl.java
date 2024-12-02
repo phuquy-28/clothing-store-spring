@@ -153,12 +153,17 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserResDTO createUser(UserReqDTO userReqDTO) {
+    if (userRepository.findByEmail(userReqDTO.getEmail()).isPresent()) {
+      throw new BadRequestException(ErrorMessage.EMAIL_EXISTED);
+    }
+
     Role role = roleRepository.findById(userReqDTO.getRoleId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ROLE_NOT_FOUND));
 
     User user = new User();
     user.setEmail(userReqDTO.getEmail());
     user.setPassword(passwordEncoder.encode(userReqDTO.getPassword()));
+    user.setActivated(true);
     user.setRole(role);
 
     Profile profile = new Profile();
@@ -190,5 +195,49 @@ public class UserServiceImpl implements UserService {
             .pages(Long.valueOf(users.getTotalPages()))
             .total(Long.valueOf(users.getTotalElements())).build())
         .build();
+  }
+
+  @Override
+  public UserResDTO updateUser(UserReqDTO userReqDTO) {
+    Long userId = userReqDTO.getId() != null ? userReqDTO.getId() : null;
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    Role role = roleRepository.findById(userReqDTO.getRoleId())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ROLE_NOT_FOUND));
+
+    user.setPassword(passwordEncoder.encode(userReqDTO.getPassword()));
+    user.setRole(role);
+    
+    Profile profile = user.getProfile();
+    profile.setFirstName(userReqDTO.getFirstName());
+    profile.setLastName(userReqDTO.getLastName());
+    profile.setGender(
+        userReqDTO.getGender() != null ? Gender.valueOf(userReqDTO.getGender().toUpperCase())
+            : null);
+    profile.setBirthDate(userReqDTO.getBirthDate() != null ? userReqDTO.getBirthDate() : null);
+    profile.setPhoneNumber(userReqDTO.getPhone() != null ? userReqDTO.getPhone() : null);
+    user.setProfile(profile);
+
+    userRepository.save(user);
+
+    return userMapper.toUserResDTO(user);
+  }
+
+  @Override
+  public void deleteUser(Long id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    userRepository.delete(user);
+  }
+
+  @Override
+  public UserResDTO getUser(Long id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    return userMapper.toUserResDTO(user);
   }
 }

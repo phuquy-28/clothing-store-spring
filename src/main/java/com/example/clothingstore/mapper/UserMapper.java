@@ -13,6 +13,8 @@ public interface UserMapper {
   @Mapping(source = "profile.lastName", target = "lastName")
   RegisterResDTO toRegisterResDTO(User user);
 
+  @Mapping(source = "profile.firstName", target = "firstName")
+  @Mapping(source = "profile.lastName", target = "lastName")
   @Mapping(source = "profile.birthDate", target = "birthDate")
   @Mapping(source = "profile.phoneNumber", target = "phoneNumber")
   @Mapping(source = "profile.gender", target = "gender")

@@ -4,6 +4,7 @@ import static com.example.clothingstore.util.SecurityUtil.JWT_ALGORITHM;
 import static com.example.clothingstore.constant.UrlConfig.*;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -32,9 +33,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
 import java.util.Collections;
 import com.example.clothingstore.repository.TokenBlacklistRepository;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import java.util.Arrays;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
@@ -97,6 +102,19 @@ public class SecurityConfiguration {
         NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
 
     jwtDecoder.setJwtValidator(token -> {
+      // Get the current request from RequestContextHolder
+      ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+      if (attributes != null) {
+        HttpServletRequest request = attributes.getRequest();
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+
+        // Check if the request is a public endpoint based on HTTP method
+        if (isPublicEndpoint(path, method)) {
+          return OAuth2TokenValidatorResult.success();
+        }
+      }
+
       // Check if token is blacklisted
       if (tokenBlacklistRepository.findByToken(token.getTokenValue()).isPresent()) {
         throw new JwtValidationException(null,
@@ -109,6 +127,19 @@ public class SecurityConfiguration {
     });
 
     return jwtDecoder;
+  }
+
+  private boolean isPublicEndpoint(String path, String method) {
+    switch (method.toUpperCase()) {
+      case "GET":
+        return Arrays.stream(PUBLIC_GET_ENDPOINTS()).anyMatch(path::startsWith);
+      case "POST":
+        return Arrays.stream(PUBLIC_POST_ENDPOINTS()).anyMatch(path::startsWith);
+      case "PUT":
+        return Arrays.stream(PUBLIC_PUT_ENDPOINTS()).anyMatch(path::startsWith);
+      default:
+        return Arrays.stream(PUBLIC_ENDPOINTS()).anyMatch(path::startsWith);
+    }
   }
 
   @Bean
