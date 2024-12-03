@@ -7,9 +7,9 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
-import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Order;
@@ -30,7 +30,9 @@ public interface OrderService {
 
   OrderReviewReqDTO updateOrderReview(OrderReviewReqDTO orderReviewReqDTO);
 
-  OrderResDTO updateOrderStatus(OrderStatusReqDTO orderStatusReqDTO);
+  OrderItemList updateOrderStatus(OrderStatusReqDTO orderStatusReqDTO);
 
   OrderPreviewDTO previewOrder(OrderPreviewReqDTO orderPreviewReqDTO);
+
+  ResultPaginationDTO getOrders(Specification<Order> spec, Pageable pageable);
 }

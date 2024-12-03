@@ -21,6 +21,8 @@ import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
+import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
@@ -96,10 +98,17 @@ public class OrderController {
     return ResponseEntity.ok(updatedOrderReview);
   }
 
-  // @PutMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.STATUS)
-  // public ResponseEntity<OrderResDTO> updateOrderStatus(
-  // @RequestBody @Valid OrderStatusReqDTO orderStatusReqDTO) {
-  // OrderResDTO updatedOrder = orderService.updateOrderStatus(orderStatusReqDTO);
-  // return ResponseEntity.ok(updatedOrder);
-  // }
+  @PutMapping(UrlConfig.ORDERS + UrlConfig.STATUS)
+  public ResponseEntity<OrderItemList> updateOrderStatus(
+      @RequestBody @Valid OrderStatusReqDTO orderStatusReqDTO) {
+    OrderItemList updatedOrder = orderService.updateOrderStatus(orderStatusReqDTO);
+    return ResponseEntity.ok(updatedOrder);
+  }
+
+  @GetMapping(UrlConfig.ORDERS)
+  public ResponseEntity<ResultPaginationDTO> getOrderItemList(@Filter Specification<Order> spec,
+      Pageable pageable) {
+    log.debug("REST request to get order item list: {}", spec);
+    return ResponseEntity.ok(orderService.getOrders(spec, pageable));
+  }
 }

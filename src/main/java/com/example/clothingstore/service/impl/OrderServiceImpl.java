@@ -18,6 +18,7 @@ import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
 import com.example.clothingstore.dto.response.CartItemDTO;
+import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
@@ -51,6 +52,8 @@ import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.repository.UserRepository;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -383,7 +386,7 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  public OrderResDTO updateOrderStatus(OrderStatusReqDTO orderStatusReqDTO) {
+  public OrderItemList updateOrderStatus(OrderStatusReqDTO orderStatusReqDTO) {
     Order order = orderRepository.findById(orderStatusReqDTO.getOrderId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
@@ -408,7 +411,7 @@ public class OrderServiceImpl implements OrderService {
 
     orderRepository.save(order);
 
-    return mapToOrderResDTO(order);
+    return mapToOrderItemList(order);
   }
 
   @Override
@@ -507,6 +510,42 @@ public class OrderServiceImpl implements OrderService {
         .shippingFee(shippingFee)
         .discount(discount)
         .finalTotal(subtotal + shippingFee - discount)
+        .build();
+  }
+
+    @Override
+  public ResultPaginationDTO getOrders(Specification<Order> spec, Pageable pageable) {
+    
+    Page<Order> orderPage = orderRepository.findAll(spec, pageable);
+
+    List<OrderItemList> orderItemList = orderPage.getContent().stream()
+        .map(this::mapToOrderItemList)
+        .collect(Collectors.toList());
+
+    return ResultPaginationDTO.builder()
+        .meta(ResultPaginationDTO.Meta.builder()
+            .page(Long.valueOf(pageable.getPageNumber()))
+            .pageSize(Long.valueOf(pageable.getPageSize()))
+            .total(orderPage.getTotalElements())
+            .pages(Long.valueOf(orderPage.getTotalPages()))
+            .build())
+        .data(orderItemList)
+        .build();
+  }
+
+  private OrderItemList mapToOrderItemList(Order order) {
+    return OrderItemList.builder()
+        .id(order.getId())
+        .orderCode(order.getCode())
+        .orderDate(LocalDateTime.ofInstant(order.getOrderDate(), ZoneId.systemDefault()))
+        .customerName(order.getUser().getProfile().getFirstName() + " " 
+            + order.getUser().getProfile().getLastName())
+        .total(order.getTotal())
+        .paymentStatus(order.getPaymentStatus())
+        .orderStatus(order.getStatus())
+        .numberOfItems(order.getLineItems().stream().mapToLong(LineItem::getQuantity).sum())
+        .paymentMethod(order.getPaymentMethod())
+        .deliveryMethod(order.getDeliveryMethod())
         .build();
   }
 
