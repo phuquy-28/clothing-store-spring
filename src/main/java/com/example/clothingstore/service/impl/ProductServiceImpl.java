@@ -133,11 +133,12 @@ public class ProductServiceImpl implements ProductService {
     // Add default image to the fist index of product images
     product.getImages().add(0, defaultImage.get());
 
-    product = productRepository.save(product);
-    log.debug("Product created with id: {}", product.getId());
-
-    String slug = createSlug(product.getName()) + "-" + product.getId();
+    // product = productRepository.save(product);
+    
+    String slug = createSlug(product.getName()) + "-" + System.currentTimeMillis();
     product.setSlug(slug);
+
+    log.debug("Product created with id: {}", product.getId());
     log.debug("Slug created: {}", slug);
 
     product = productRepository.save(product);
@@ -228,6 +229,10 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(productReqDTO.getPrice());
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
+
+    // Update slug
+    String slug = createSlug(product.getName()) + "-" + System.currentTimeMillis();
+    product.setSlug(slug);
 
     // Update product images
     updateProductImages(product, productReqDTO.getImages());
