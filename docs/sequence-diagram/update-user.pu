@@ -1,0 +1,109 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Admin" as admin
+boundary "UsersPage" as usersPage
+boundary "EditUserForm" as editForm
+control "UserController" as controller
+control "UserService" as service
+control "UserRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate admin
+
+admin -> usersPage: clickEditUser(userId)
+activate usersPage
+
+usersPage -> controller: getUser(userId)
+activate controller
+
+controller -> service: getUser(userId)
+activate service
+
+service -> repo: findById(userId)
+activate repo
+repo -> db: findById(userId)
+activate db
+db --> repo: return(user)
+deactivate db
+repo --> service: return(user)
+deactivate repo
+
+service --> controller: return(userDTO)
+deactivate service
+
+controller --> usersPage: return(userDTO)
+deactivate controller
+
+usersPage -> editForm: openForm(userDTO)
+deactivate usersPage
+activate editForm
+
+admin -> editForm: updateUserData(name, email, password, role)
+admin -> editForm: clickSave()
+
+editForm -> controller: updateUser(userDTO)
+activate controller
+
+controller -> service: updateUser(userDTO)
+activate service
+
+alt valid input
+    service -> repo: save(user)
+    activate repo
+    repo -> db: save(user)
+    activate db
+    db --> repo: return(updatedUser)
+    deactivate db
+    repo --> service: return(updatedUser)
+    deactivate repo
+    
+    service --> controller: return(success)
+    controller --> editForm: return(success)
+    editForm --> admin: display("Update user successfully")
+    
+    editForm -> usersPage: refreshUserList()
+    activate usersPage
+    usersPage --> admin: display(updatedUserList)
+    deactivate usersPage
+else invalid input
+    service --> controller: throwException()
+    deactivate service
+    controller --> editForm: return(error)
+    deactivate controller
+    editForm --> admin: display("Invalid input")
+end
+
+deactivate editForm
+
+hide footbox
+@enduml

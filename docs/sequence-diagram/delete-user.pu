@@ -1,0 +1,96 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "UsersPage" as usersPage
+boundary "DeleteConfirmModal" as confirmModal
+control "UserController" as controller
+control "UserService" as service
+control "UserRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> usersPage: clickDeleteUser(userId)
+activate usersPage
+
+usersPage -> confirmModal: openModal()
+deactivate usersPage
+activate confirmModal
+
+actor -> confirmModal: clickConfirm()
+
+confirmModal -> controller: deleteUser(userId)
+activate controller
+
+controller -> service: deleteUser(userId)
+activate service
+
+service -> repo: findById(userId)
+activate repo
+repo -> db: findById(userId)
+activate db
+db --> repo: return(user)
+deactivate db
+repo --> service: return(user)
+deactivate repo
+
+alt user exists
+    service -> repo: delete(user)
+    activate repo
+    repo -> db: delete(user)
+    activate db
+    db --> repo: return()
+    deactivate db
+    repo --> service: return()
+    deactivate repo
+    
+    service --> controller: return(success)
+    controller --> confirmModal: return(success)
+    confirmModal --> actor: display("Delete user successfully")
+    
+    confirmModal -> usersPage: refreshUserList()
+    activate usersPage
+    usersPage --> actor: display(updatedUserList)
+    deactivate usersPage
+else user not found
+    service --> controller: throwException("User not found")
+    deactivate service
+    controller --> confirmModal: return(error)
+    deactivate controller
+    confirmModal --> actor: display("Cannot delete user")
+end
+
+deactivate confirmModal
+
+hide footbox
+@enduml

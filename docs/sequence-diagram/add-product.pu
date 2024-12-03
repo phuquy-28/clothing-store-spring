@@ -1,0 +1,83 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "ProductDashboard" as dashboard
+boundary "AddProductForm" as addForm
+control "ProductController" as controller
+control "ProductService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: clickAddProduct()
+activate dashboard
+
+dashboard -> addForm: openAddForm()
+activate addForm
+
+actor -> addForm: inputProductData()
+actor -> addForm: clickSave()
+
+addForm -> controller: createProduct(productDTO)
+activate controller
+
+controller -> service: createProduct(productDTO)
+activate service
+
+alt valid input
+    service -> db: save(product)
+    activate db
+    db --> service: return(savedProduct)
+    deactivate db
+    
+    service --> controller: return(savedProduct)
+    
+    controller --> addForm: return(success)
+    
+    addForm --> actor: display("Add product successfully")
+    addForm --> dashboard: refreshProductList()
+    dashboard --> actor: display(updatedProductList)
+else invalid input
+    service --> controller: throwException("Product already exists or invalid")
+    deactivate service
+    controller --> addForm: return(error)
+    deactivate controller
+    addForm --> actor: display("Cannot add product")
+end
+
+deactivate addForm
+deactivate dashboard
+
+hide footbox
+@enduml

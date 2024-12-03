@@ -1,0 +1,100 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "OrderDashboard" as dashboard
+boundary "StatusUpdateModal" as modal
+control "OrderController" as controller
+control "OrderService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: selectOrder(orderId)
+activate dashboard
+
+dashboard -> controller: getOrderDetails(orderId)
+activate controller
+
+controller -> service: getOrderDetails(orderId)
+activate service
+
+service -> db: findById(orderId)
+activate db
+db --> service: return(orderDetails)
+deactivate db
+
+service --> controller: return(orderDetails)
+deactivate service
+
+controller --> dashboard: return(orderDetails)
+deactivate controller
+
+dashboard -> modal: openStatusUpdateModal(orderDetails)
+activate modal
+
+actor -> modal: selectNewStatus(status)
+actor -> modal: clickUpdate()
+
+modal -> controller: updateOrderStatus(orderId, newStatus)
+activate controller
+
+controller -> service: updateOrderStatus(orderId, newStatus)
+activate service
+
+alt valid status transition
+    service -> db: updateStatus(orderId, newStatus)
+    activate db
+    db --> service: return(updatedOrder)
+    deactivate db
+    
+    service --> controller: return(success)
+    controller --> modal: return(success)
+    modal -> modal: closeModal()
+    modal --> actor: display("Update order status successfully")
+    
+    modal -> dashboard: refreshOrderList()
+    dashboard --> actor: display(updatedOrderList)
+else invalid status transition
+    service --> controller: throwException("Cannot update order status")
+    deactivate service
+    controller --> modal: return(error)
+    deactivate controller
+    modal --> actor: display("Cannot update order status")
+end
+
+deactivate modal
+deactivate dashboard
+
+hide footbox
+@enduml

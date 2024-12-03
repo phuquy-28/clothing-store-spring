@@ -31,7 +31,6 @@ skinparam {
 
 ' Define components
 actor "Actor" as actor
-boundary "ShopPage" as shopPage
 boundary "ProductDetailPage" as detailPage
 control "ProductController" as controller
 control "ProductService" as service
@@ -40,12 +39,9 @@ database "Database" as db
 
 ' Start processing flow
 activate actor
-actor -> shopPage: clickProduct(slug)
-activate shopPage
-
-shopPage -> detailPage: navigate(slug)
-deactivate shopPage
+actor -> detailPage: clickProduct(slug)
 activate detailPage
+
 
 detailPage -> controller: getProductBySlug(slug)
 activate controller

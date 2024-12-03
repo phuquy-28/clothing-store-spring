@@ -1,0 +1,83 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "ProductDashboard" as dashboard
+boundary "EditProductForm" as editForm
+control "ProductController" as controller
+control "ProductService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: selectProductToEdit()
+activate dashboard
+
+dashboard -> editForm: openEditForm(productDTO)
+activate editForm
+
+actor -> editForm: updateProductData()
+actor -> editForm: clickSave()
+
+editForm -> controller: updateProduct(productDTO)
+activate controller
+
+controller -> service: updateProduct(productDTO)
+activate service
+
+alt valid input
+    service -> db: update(product)
+    activate db
+    db --> service: return(updatedProduct)
+    deactivate db
+    
+    service --> controller: return(updatedProduct)
+    
+    controller --> editForm: return(success)
+    
+    editForm --> actor: display("Update product successfully")
+    editForm --> dashboard: refreshProductList()
+    dashboard --> actor: display(updatedProductList)
+else invalid input
+    service --> controller: throwException("Invalid input")
+    deactivate service
+    controller --> editForm: return(error)
+    deactivate controller
+    editForm --> actor: display("Cannot update product")
+end
+
+deactivate editForm
+deactivate dashboard
+
+hide footbox
+@enduml

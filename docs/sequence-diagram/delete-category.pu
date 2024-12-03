@@ -1,0 +1,86 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "CategoryDashboard" as dashboard
+boundary "DeleteConfirmModal" as confirmModal
+control "CategoryController" as controller
+control "CategoryService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: clickDeleteCategory(categoryId)
+activate dashboard
+
+dashboard -> confirmModal: openConfirmModal()
+activate confirmModal
+
+actor -> confirmModal: clickConfirm()
+
+confirmModal -> controller: deleteCategory(categoryId)
+activate controller
+
+controller -> service: deleteCategory(categoryId)
+activate service
+
+service -> db: findById(categoryId)
+activate db
+db --> service: return(category)
+deactivate db
+
+alt category exists
+    service -> db: delete(category)
+    activate db
+    db --> service: return()
+    deactivate db
+    
+    service --> controller: return(success)
+    controller --> confirmModal: return(success)
+    confirmModal --> actor: display("Delete category successfully")
+    
+    confirmModal -> dashboard: refreshCategoryList()
+    dashboard --> actor: display(updatedCategoryList)
+else category not found
+    service --> controller: throwException("Category not found")
+    deactivate service
+    controller --> confirmModal: return(error)
+    deactivate controller
+    confirmModal --> actor: display("Cannot delete category")
+end
+
+deactivate confirmModal
+deactivate dashboard
+
+hide footbox
+@enduml

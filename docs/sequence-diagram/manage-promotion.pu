@@ -1,0 +1,88 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "PromotionDashboard" as dashboard
+control "PromotionController" as controller
+control "PromotionService" as service
+database "PromotionDatabase" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: accessPromotionManagement()
+activate dashboard
+
+dashboard -> controller: getPromotionList()
+activate controller
+
+controller -> service: getPromotions()
+activate service
+
+service -> db: queryPromotions()
+activate db
+db --> service: return(promotionList)
+deactivate db
+
+service --> controller: return(promotionList)
+deactivate service
+
+controller --> dashboard: return(promotionList)
+deactivate controller
+
+dashboard --> actor: display(promotionList)
+
+opt Create New Promotion
+    actor -> dashboard: clickAddPromotion()
+    ref over dashboard
+        // Use case: Thêm khuyến mãi //
+    end ref
+end
+
+opt Update Promotion
+    actor -> dashboard: clickEditPromotion(promotionId)
+    ref over dashboard
+        // Use case: Cập nhật khuyến mãi //
+    end ref
+end
+
+opt Delete Promotion
+    actor -> dashboard: clickDeletePromotion(promotionId)
+    ref over dashboard
+        // Use case: Xoá khuyến mãi //
+    end ref
+end
+
+deactivate dashboard
+
+hide footbox
+@enduml

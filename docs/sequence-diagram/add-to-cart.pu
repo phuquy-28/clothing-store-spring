@@ -51,7 +51,7 @@ alt product in stock
     detailPage -> controller: addToCart(variantId, quantity)
     activate controller
     
-    controller -> service: addToCart(dto)
+    controller -> service: addToCart(variantId, quantity)
     activate service
     
     service -> variantRepo: findById(variantId)
@@ -63,8 +63,9 @@ alt product in stock
     variantRepo --> service: return(variant)
     deactivate variantRepo
     
+    service -> service: updateCart()
+    
     alt sufficient stock
-        service -> service: updateCart()
         service -> cartRepo: update(cart)
         activate cartRepo
         cartRepo -> db: update(cart)

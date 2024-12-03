@@ -16,6 +16,16 @@ public class ProductResDTO {
 
   private Double price;
 
+  private Double minPrice;
+
+  private Double maxPrice;
+
+  private Double priceWithDiscount;
+
+  private Double minPriceWithDiscount;
+
+  private Double maxPriceWithDiscount;
+
   private Long categoryId;
 
   private String categoryName;

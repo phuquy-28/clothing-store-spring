@@ -2,7 +2,6 @@
 
 ' General configuration
 skinparam defaultFontSize 20
-skinparam maxMessageSize 60
 skinparam sequenceMessageAlign center
 
 ' Actor style configuration
@@ -30,28 +29,30 @@ skinparam {
 }
 
 ' Define components
-actor "Actor" as actor
-boundary "HomePage" as homePage
-boundary "AccountPage" as accountPage
+actor "Admin" as admin
+boundary "UsersPage" as usersPage
+boundary "AddUserForm" as addUserForm
 control "UserController" as controller
 control "UserService" as service
 control "UserRepository" as repo
 database "Database" as db
 
 ' Start processing flow
-activate actor
-actor -> homePage: clickAccountIcon()
-activate homePage
+activate admin
 
-homePage -> accountPage: navigate()
-deactivate homePage
-activate accountPage
+admin -> usersPage: clickAddUser()
+activate usersPage
 
-actor -> accountPage: inputProfileData(firstName, lastName, phone)
-accountPage -> controller: editProfile(dto)
+usersPage -> addUserForm: openForm()
+activate addUserForm
+
+admin -> addUserForm: inputUserData(name, email, password, role)
+admin -> addUserForm: clickSave()
+
+addUserForm -> controller: addUser(userDTO)
 activate controller
 
-controller -> service: editProfile(dto)
+controller -> service: addUser(userDTO)
 activate service
 
 alt valid input
@@ -59,31 +60,28 @@ alt valid input
     activate repo
     repo -> db: save(user)
     activate db
-    db --> repo: return(updatedUser)
+    db --> repo: return(savedUser)
     deactivate db
-    repo --> service: return(updatedUser)
+    repo --> service: return(savedUser)
     deactivate repo
     
-    service --> controller: return(dto)
-    controller --> accountPage: return(dto)
-    accountPage --> actor: display("Update successful")
+    service --> controller: return(success)
+    controller --> addUserForm: return(success)
+    addUserForm --> admin: display("Add user successfully")
+    
+    addUserForm -> usersPage: refreshUserList()
+    usersPage --> admin: display(updatedUserList)
 else invalid input
     service --> controller: throwException()
     deactivate service
-    controller --> accountPage: return(error)
+    controller --> addUserForm: return(error)
     deactivate controller
-    accountPage --> actor: display("Invalid input format")
+    addUserForm --> admin: display("Invalid input")
 end
-deactivate service
-deactivate controller
 
-opt Change Password
-    actor -> accountPage: inputPassword(password)
-    
-    ref over accountPage
-        //sd:Đổi mật khẩu//
-    end ref
-end
+deactivate addUserForm
+deactivate usersPage
+
 
 hide footbox
 @enduml

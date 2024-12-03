@@ -42,15 +42,15 @@ activate actor
 actor -> shopPage: selectFilters(criteria)
 activate shopPage
 
-shopPage -> controller: getProducts(specification, pageable)
+shopPage -> controller: getProducts(criteria)
 activate controller
 
-controller -> service: getProducts(specification, pageable)
+controller -> service: getProducts(criteria)
 activate service
 
-service -> repo: getProducts(specification)
+service -> repo: getProducts(criteria)
 activate repo
-repo -> db: findAll(specification)
+repo -> db: findAll(criteria)
 activate db
 db --> repo: return(products)
 deactivate db

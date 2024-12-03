@@ -1,0 +1,82 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "CategoryDashboard" as dashboard
+boundary "AddCategoryForm" as addForm
+control "CategoryController" as controller
+control "CategoryService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: clickAddCategory()
+activate dashboard
+
+dashboard -> addForm: openForm()
+activate addForm
+
+actor -> addForm: inputCategoryData(name, imageUrl)
+actor -> addForm: clickSave()
+
+addForm -> controller: createCategory(categoryDTO)
+activate controller
+
+controller -> service: createCategory(categoryDTO)
+activate service
+
+alt valid input
+    service -> db: save(category)
+    activate db
+    db --> service: return(savedCategory)
+    deactivate db
+    
+    service --> controller: return(savedCategory)
+    controller --> addForm: return(success)
+    addForm --> actor: display("Add category successfully")
+    
+    addForm -> dashboard: refreshCategoryList()
+    dashboard --> actor: display(updatedCategoryList)
+else invalid input
+    service --> controller: throwException("Category name already exists")
+    deactivate service
+    controller --> addForm: return(error)
+    deactivate controller
+    addForm --> actor: display("Cannot add category")
+end
+
+deactivate addForm
+deactivate dashboard
+
+hide footbox
+@enduml

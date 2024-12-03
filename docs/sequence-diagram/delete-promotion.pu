@@ -1,0 +1,86 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "PromotionDashboard" as dashboard
+boundary "DeleteConfirmModal" as confirmModal
+control "PromotionController" as controller
+control "PromotionService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: clickDeletePromotion(promotionId)
+activate dashboard
+
+dashboard -> confirmModal: openConfirmModal()
+activate confirmModal
+
+actor -> confirmModal: clickConfirm()
+
+confirmModal -> controller: deletePromotion(promotionId)
+activate controller
+
+controller -> service: deletePromotion(promotionId)
+activate service
+
+service -> db: findById(promotionId)
+activate db
+db --> service: return(promotion)
+deactivate db
+
+alt promotion exists
+    service -> db: delete(promotion)
+    activate db
+    db --> service: return()
+    deactivate db
+    
+    service --> controller: return(success)
+    controller --> confirmModal: return(success)
+    confirmModal --> actor: display("Delete promotion successfully")
+    
+    confirmModal -> dashboard: refreshPromotionList()
+    dashboard --> actor: display(updatedPromotionList)
+else promotion not found
+    service --> controller: throwException("Promotion not found")
+    deactivate service
+    controller --> confirmModal: return(error)
+    deactivate controller
+    confirmModal --> actor: display("Cannot delete promotion")
+end
+
+deactivate confirmModal
+deactivate dashboard
+
+hide footbox
+@enduml

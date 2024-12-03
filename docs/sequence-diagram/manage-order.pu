@@ -1,0 +1,89 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "OrderDashboard" as dashboard
+control "OrderController" as controller
+control "OrderService" as service
+database "OrderDatabase" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: accessOrderManagement()
+activate dashboard
+
+dashboard -> controller: getOrderList()
+activate controller
+
+controller -> service: getOrders()
+activate service
+
+service -> db: queryOrders()
+activate db
+db --> service: return(orderList)
+deactivate db
+
+service --> controller: return(orderList)
+deactivate service
+
+controller --> dashboard: return(orderList)
+deactivate controller
+
+dashboard --> actor: display(orderList)
+
+opt Update Order Status
+    actor -> dashboard: updateOrderStatus(orderId, newStatus)
+    dashboard -> controller: updateOrderStatus(orderId, newStatus)
+    activate controller
+
+    controller -> service: updateOrderStatus(orderId, newStatus)
+    activate service
+
+    service -> db: updateOrderStatus(orderId, newStatus)
+    activate db
+    db --> service: return(success)
+    deactivate db
+
+    service --> controller: return(success)
+    deactivate service
+
+    controller --> dashboard: return(success)
+    deactivate controller
+
+    dashboard --> actor: display("Order status updated successfully")
+end
+
+deactivate dashboard
+
+hide footbox
+@enduml

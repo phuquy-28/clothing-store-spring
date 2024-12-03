@@ -1,0 +1,82 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "CategoryDashboard" as dashboard
+boundary "EditCategoryForm" as editForm
+control "CategoryController" as controller
+control "CategoryService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: selectCategoryToEdit(categoryId)
+activate dashboard
+
+dashboard -> editForm: openEditForm(categoryId)
+activate editForm
+
+actor -> editForm: updateCategoryData(name, imageUrl)
+actor -> editForm: clickSave()
+
+editForm -> controller: updateCategory(categoryDTO)
+activate controller
+
+controller -> service: updateCategory(categoryDTO)
+activate service
+
+alt valid input
+    service -> db: update(category)
+    activate db
+    db --> service: return(updatedCategory)
+    deactivate db
+    
+    service --> controller: return(updatedCategory)
+    controller --> editForm: return(success)
+    editForm --> actor: display("Update category successfully")
+    
+    editForm -> dashboard: refreshCategoryList()
+    dashboard --> actor: display(updatedCategoryList)
+else invalid input
+    service --> controller: throwException("Category name already exists or invalid")
+    deactivate service
+    controller --> editForm: return(error)
+    deactivate controller
+    editForm --> actor: display("Cannot update category")
+end
+
+deactivate editForm
+deactivate dashboard
+
+hide footbox
+@enduml

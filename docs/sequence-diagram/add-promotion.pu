@@ -1,0 +1,82 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam maxMessageSize 60
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "PromotionDashboard" as dashboard
+boundary "AddPromotionForm" as addForm
+control "PromotionController" as controller
+control "PromotionService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: clickAddPromotion()
+activate dashboard
+
+dashboard -> addForm: openForm()
+activate addForm
+
+actor -> addForm: inputPromotionData(name, discountRate, \nstartDate, endDate, products/categories)
+actor -> addForm: clickSave()
+
+addForm -> controller: createPromotion(promotionDTO)
+activate controller
+
+controller -> service: createPromotion(promotionDTO)
+activate service
+
+alt valid input
+    service -> db: save(promotion)
+    activate db
+    db --> service: return(savedPromotion)
+    deactivate db
+    
+    service --> controller: return(savedPromotion)
+    controller --> addForm: return(success)
+    addForm --> actor: display("Add promotion successfully")
+    
+    addForm --> dashboard: refreshPromotionList()
+    dashboard --> actor: display(updatedPromotionList)
+else invalid input
+    service --> controller: throwException("Invalid promotion data")
+    deactivate service
+    controller --> addForm: return(error)
+    deactivate controller
+    addForm --> actor: display("Cannot add promotion")
+end
+
+deactivate addForm
+deactivate dashboard
+
+hide footbox
+@enduml

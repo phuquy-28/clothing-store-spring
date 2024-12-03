@@ -1,0 +1,87 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "CategoryDashboard" as dashboard
+control "CategoryController" as controller
+control "CategoryService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: accessCategoryManagement()
+activate dashboard
+
+dashboard -> controller: getAllCategories()
+activate controller
+
+controller -> service: getAllCategories()
+activate service
+
+service -> db: findAll()
+activate db
+db --> service: return(categories)
+deactivate db
+
+service --> controller: return(categoryList)
+deactivate service
+
+controller --> dashboard: return(categoryList)
+deactivate controller
+
+dashboard --> actor: display(categoryList)
+
+opt Add New Category
+    actor -> dashboard: clickAddCategory()
+    ref over dashboard
+        // Use case: Thêm danh mục //
+    end ref
+end
+
+opt Update Category
+    actor -> dashboard: clickEditCategory(categoryId)
+    ref over dashboard
+        // Use case: Cập nhật danh mục //
+    end ref
+end
+
+opt Delete Category
+    actor -> dashboard: clickDeleteCategory(categoryId)
+    ref over dashboard
+        // Use case: Xoá danh mục //
+    end ref
+end
+
+deactivate dashboard
+
+hide footbox
+@enduml

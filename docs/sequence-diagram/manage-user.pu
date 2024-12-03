@@ -1,0 +1,97 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Admin" as admin
+boundary "DashboardPage" as dashboardPage
+boundary "UsersPage" as usersPage
+control "UserController" as controller
+control "UserService" as service
+control "UserRepository" as repo
+database "Database" as db
+
+' Start processing flow
+activate admin
+
+admin -> dashboardPage: clickUsersManagement()
+activate dashboardPage
+
+dashboardPage -> usersPage: navigate()
+deactivate dashboardPage
+activate usersPage
+
+usersPage -> controller: getUsers()
+activate controller
+
+controller -> service: getUsers()
+activate service
+
+service -> repo: findAll()
+activate repo
+repo -> db: query()
+activate db
+db --> repo: return(users)
+deactivate db
+repo --> service: return(users)
+deactivate repo
+
+service --> controller: return(userDTOs)
+deactivate service
+
+controller --> usersPage: return(userDTOs)
+deactivate controller
+
+usersPage --> admin: display(users)
+
+opt Add New User
+    admin -> usersPage: clickAddUser()
+    ref over usersPage
+        //Use case: Thêm người dùng//
+    end ref
+end
+
+opt Update User
+    admin -> usersPage: clickEditUser(userId)
+    ref over usersPage
+        //Use case: Sửa người dùng//
+    end ref
+end
+
+opt Delete User
+    admin -> usersPage: clickDeleteUser(userId)
+    ref over usersPage
+        //Use case: Xoá người dùng//
+    end ref
+end
+
+deactivate usersPage
+
+hide footbox
+@enduml

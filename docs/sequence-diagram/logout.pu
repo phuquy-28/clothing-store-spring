@@ -4,8 +4,6 @@
 skinparam defaultFontSize 20
 skinparam maxMessageSize 60
 skinparam sequenceMessageAlign center
-
-' Actor style configuration
 skinparam actorStyle awesome
 
 ' Arrow and border thickness configuration
@@ -17,10 +15,8 @@ skinparam {
     ActivationBorderThickness 2
 }
 
-' Life line color configuration
+' Life line and font style configuration
 skinparam LifeLineBorderColor black
-
-' Font style configuration for components
 skinparam {
     actorFontStyle bold
     boundaryFontStyle bold
@@ -30,61 +26,79 @@ skinparam {
 }
 
 ' Define components
-actor "Actor" as actor
-boundary "Header" as headerComponent
+actor "User" as actor
 boundary "HomePage" as homePage
+boundary "UserMenu" as menu
 control "AuthController" as controller
 control "AuthService" as service
-control "UserService" as userService
 control "SecurityUtil" as securityUtil
-database "Database" as db
+control "TokenRepository" as blacklistDb
+control "UserRepository" as userRepo
+database "Database" as userDb
 
 ' Start processing flow
 activate actor
-actor -> headerComponent: clickLogout()
-activate headerComponent
+actor -> menu: clickLogout()
+activate menu
 
-headerComponent -> controller: logout()
+menu -> controller: logout(refreshToken)
 activate controller
 
-controller -> service: logout()
+controller -> service: logout(refreshToken)
 activate service
 
+' Get current access token
+service -> securityUtil: getCurrentUserJWT()
+activate securityUtil
+securityUtil --> service: return(accessToken)
+deactivate securityUtil
+
+' Add token to blacklist
+service -> blacklistDb: save(accessToken)
+activate blacklistDb
+blacklistDb -> userDb: save(accessToken)
+activate userDb
+userDb --> blacklistDb: return()
+deactivate userDb
+blacklistDb --> service: return()
+deactivate blacklistDb
+
+' Get current user and remove refresh token
 service -> securityUtil: getCurrentUserLogin()
 activate securityUtil
 securityUtil --> service: return(email)
 deactivate securityUtil
 
-service -> userService: getUser(email)
-activate userService
-userService -> db: findByEmail(email)
-activate db
-db --> userService: return(user)
-deactivate db
-userService --> service: return(user)
-deactivate userService
+service -> userRepo: findByEmail(email)
+activate userRepo
+userRepo -> userDb: findByEmail(email)
+activate userDb
+userDb --> userRepo: return(user)
+deactivate userDb
+userRepo --> service: return(user)
+deactivate userRepo
 
-service -> userService: updateRefreshToken(user, null)
-activate userService
-userService -> db: save(user)
-activate db
-db --> userService: return(updatedUser)
-deactivate db
-userService --> service: return(updatedUser)
-deactivate userService
+service -> userRepo: save(userWithoutRefreshToken)
+activate userRepo
+userRepo -> userDb: save(userWithoutRefreshToken)
+activate userDb
+userDb --> userRepo: return()
+deactivate userDb
+userRepo --> service: return()
+deactivate userRepo
 
 service --> controller: return()
 deactivate service
 
 controller -> controller: createInvalidCookie()
-controller --> headerComponent: return(invalidCookie)
+controller --> menu: return(invalidCookie)
 deactivate controller
 
-headerComponent -> homePage: redirect()
+menu --> homePage: navigate()
+deactivate menu
 activate homePage
 homePage --> actor: display(homePage)
 deactivate homePage
-deactivate headerComponent
 
 hide footbox
 @enduml

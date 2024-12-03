@@ -1,0 +1,87 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "ProductDashboard" as dashboard
+control "ProductController" as controller
+control "ProductService" as service
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: accessProductManagement()
+activate dashboard
+
+dashboard -> controller: getProducts()
+activate controller
+
+controller -> service: getProducts()
+activate service
+
+service -> db: findAll()
+activate db
+db --> service: return(products)
+deactivate db
+
+service --> controller: return(productList)
+deactivate service
+
+controller --> dashboard: return(productList)
+deactivate controller
+
+dashboard --> actor: display(productList)
+
+opt Add New Product
+    actor -> dashboard: clickAddProduct()
+    ref over dashboard
+        // Use case: Thêm sản phẩm //
+    end ref
+end
+
+opt Update Product
+    actor -> dashboard: clickEditProduct(productId)
+    ref over dashboard
+        // Use case: Cập nhật sản phẩm //
+    end ref
+end
+
+opt Delete Product
+    actor -> dashboard: clickDeleteProduct(productId)
+    ref over dashboard
+        // Use case: Xoá sản phẩm //
+    end ref
+end
+
+deactivate dashboard
+
+hide footbox
+@enduml
