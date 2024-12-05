@@ -4,14 +4,19 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -159,60 +164,128 @@ public class ProductServiceImpl implements ProductService {
     Specification<Product> finalSpec = specification;
 
     // Lấy các parameters từ request context
-    var request =
-        ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+    var request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
     String averageRatingStr = request.getParameter("averageRating");
     String hasDiscountStr = request.getParameter("hasDiscount");
+    String minPriceStr = request.getParameter("minPrice");
+    String maxPriceStr = request.getParameter("maxPrice");
+    String sizesStr = request.getParameter("sizes");
 
+    // Xử lý specification cho sizes
+    if (sizesStr != null && !sizesStr.isEmpty()) {
+      Set<Size> requestedSizes = Arrays.stream(sizesStr.split(","))
+          .map(s -> Size.valueOf(s.trim().toUpperCase())).collect(Collectors.toSet());
+
+      Specification<Product> sizesSpec = (root, query, cb) -> {
+        query.distinct(true);
+
+        // Tạo subquery để đếm số lượng size match với quantity > 0
+        Subquery<Long> sizeCountSubquery = query.subquery(Long.class);
+        Root<ProductVariant> variantRoot = sizeCountSubquery.from(ProductVariant.class);
+
+        sizeCountSubquery.select(cb.count(variantRoot))
+            .where(cb.and(cb.equal(variantRoot.get("product"), root),
+                variantRoot.get("size").in(requestedSizes),
+                cb.greaterThan(variantRoot.get("quantity"), 0),
+                cb.equal(variantRoot.get("isDeleted"), false)));
+
+        // So sánh số lượng size match với số lượng size yêu cầu
+        return cb.equal(sizeCountSubquery, (long) requestedSizes.size());
+      };
+
+      finalSpec = finalSpec != null ? finalSpec.and(sizesSpec) : sizesSpec;
+    }
+
+    // Xử lý specification cho averageRating
     if (averageRatingStr != null) {
-      double rating = Double.parseDouble(averageRatingStr);
-      Specification<Product> ratingSpec = (root, query, cb) -> {
-        query.distinct(true);
-
-        // Subquery để tính average rating
-        Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
-        Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
-        avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
-            .where(cb.equal(reviewRoot.get("product"), root));
-
-        return cb.greaterThanOrEqualTo(avgRatingSubquery, rating);
-      };
-
-      finalSpec = finalSpec != null ? finalSpec.and(ratingSpec) : ratingSpec;
+        double rating = Double.parseDouble(averageRatingStr);
+        Specification<Product> ratingSpec = (root, query, cb) -> {
+            query.distinct(true);
+            Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
+            Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
+            avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
+                .where(cb.equal(reviewRoot.get("product"), root));
+            return cb.greaterThanOrEqualTo(avgRatingSubquery, rating);
+        };
+        finalSpec = finalSpec != null ? finalSpec.and(ratingSpec) : ratingSpec;
     }
 
+    // Xử lý specification cho hasDiscount
     if ("true".equalsIgnoreCase(hasDiscountStr)) {
-      Instant now = Instant.now();
-      Specification<Product> discountSpec = (root, query, cb) -> {
-        query.distinct(true);
+        Instant now = Instant.now();
+        Specification<Product> discountSpec = (root, query, cb) -> {
+            query.distinct(true);
+            Join<Product, Promotion> productPromotions = root.join("promotions", JoinType.LEFT);
+            Join<Product, Category> category = root.join("category", JoinType.LEFT);
+            Join<Category, Promotion> categoryPromotions = category.join("promotions", JoinType.LEFT);
 
-        // Join với promotions của product
-        Join<Product, Promotion> productPromotions = root.join("promotions", JoinType.LEFT);
-        // Join với category và promotions của category
-        Join<Product, Category> category = root.join("category", JoinType.LEFT);
-        Join<Category, Promotion> categoryPromotions = category.join("promotions", JoinType.LEFT);
-
-        return cb.or(
-            // Check product promotions
-            cb.and(cb.lessThan(productPromotions.get("startDate"), now),
-                cb.greaterThan(productPromotions.get("endDate"), now)),
-            // Check category promotions
-            cb.and(cb.lessThan(categoryPromotions.get("startDate"), now),
-                cb.greaterThan(categoryPromotions.get("endDate"), now)));
-      };
-
-      finalSpec = finalSpec != null ? finalSpec.and(discountSpec) : discountSpec;
+            return cb.or(
+                cb.and(cb.lessThan(productPromotions.get("startDate"), now),
+                    cb.greaterThan(productPromotions.get("endDate"), now)),
+                cb.and(cb.lessThan(categoryPromotions.get("startDate"), now),
+                    cb.greaterThan(categoryPromotions.get("endDate"), now)));
+        };
+        finalSpec = finalSpec != null ? finalSpec.and(discountSpec) : discountSpec;
     }
 
-    Page<Product> products = productRepository.findAll(finalSpec, pageable);
+    // Lấy tất cả products theo specification
+    List<Product> allProducts = productRepository.findAll(finalSpec);
+
+    // Lọc theo price range nếu có
+    if (minPriceStr != null || maxPriceStr != null) {
+        Double minPrice = minPriceStr != null ? Double.parseDouble(minPriceStr) : null;
+        Double maxPrice = maxPriceStr != null ? Double.parseDouble(maxPriceStr) : null;
+
+        allProducts = allProducts.stream()
+            .filter(product -> {
+                Double productMinPriceWithDiscount = promotionCalculatorService.calculateMinPriceWithDiscount(product);
+                boolean meetsMinPrice = minPrice == null || productMinPriceWithDiscount >= minPrice;
+                boolean meetsMaxPrice = maxPrice == null || productMinPriceWithDiscount <= maxPrice;
+                return meetsMinPrice && meetsMaxPrice;
+            })
+            .collect(Collectors.toList());
+    }
+
+    // Sắp xếp sản phẩm
+    Comparator<Product> comparator = null;
+    if (pageable.getSort().isSorted()) {
+        for (Sort.Order order : pageable.getSort()) {
+            Comparator<Product> currentComparator = switch (order.getProperty()) {
+                case "createdAt" -> Comparator.comparing(Product::getCreatedAt);
+                case "minPriceWithDiscount" -> Comparator.comparing(
+                    product -> promotionCalculatorService.calculateMinPriceWithDiscount(product));
+                default -> Comparator.comparing(Product::getCreatedAt);
+            };
+
+            if (order.getDirection() == Sort.Direction.DESC) {
+                currentComparator = currentComparator.reversed();
+            }
+
+            comparator = comparator == null ? currentComparator : comparator.thenComparing(currentComparator);
+        }
+        
+        if (comparator != null) {
+            allProducts.sort(comparator);
+        }
+    }
+
+    // Áp dụng phân trang
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), allProducts.size());
+    List<Product> paginatedProducts = allProducts.subList(start, end);
+
+    // Tạo Page object
+    Page<Product> productPage = new PageImpl<>(paginatedProducts, pageable, allProducts.size());
+
+    // Trả về kết quả
     return ResultPaginationDTO.builder()
         .meta(Meta.builder()
-            .page((long) products.getNumber())
-            .pageSize((long) products.getSize())
-            .pages((long) products.getTotalPages())
-            .total(products.getTotalElements())
+            .page((long) productPage.getNumber())
+            .pageSize((long) productPage.getSize())
+            .pages((long) productPage.getTotalPages())
+            .total(productPage.getTotalElements())
             .build())
-        .data(products.getContent().stream()
+        .data(productPage.getContent().stream()
             .map(this::convertToProductResDTO)
             .collect(Collectors.toList()))
         .build();
