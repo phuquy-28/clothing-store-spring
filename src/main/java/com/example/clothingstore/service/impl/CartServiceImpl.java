@@ -108,7 +108,8 @@ public class CartServiceImpl implements CartService {
       Double discountRate = promotionCalculatorService.calculateDiscountRate(product);
       Double finalPrice = originalPrice * (1 - discountRate);
 
-      return CartItemDTO.builder().cartItemId(cartItem.getId()).productName(product.getName())
+      return CartItemDTO.builder().cartItemId(cartItem.getId()).productId(product.getId())
+          .slug(product.getSlug()).productName(product.getName())
           .productVariant(CartItemDTO.ProductVariantDTO.builder().id(variant.getId())
               .color(variant.getColor().toString()).size(variant.getSize().toString())
               .image(variant.getImages().get(0).getPublicUrl()).build())
