@@ -6,12 +6,11 @@ import com.example.clothingstore.enumeration.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class UserReqDTO {
-  
+
   private Long id;
 
   @NotBlank(message = "email.not.blank")
@@ -19,7 +18,8 @@ public class UserReqDTO {
   private String email;
 
   @NotBlank(message = "password.not.blank")
-  @Size(min = 6, message = "password.not.valid")
+  @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%!])[A-Za-z\\d@#$%!]{8,}$",
+      message = "password.pattern.invalid")
   private String password;
 
   @NotBlank(message = "first.name.not.blank")

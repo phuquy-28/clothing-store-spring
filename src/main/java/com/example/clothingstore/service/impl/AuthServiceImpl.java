@@ -261,9 +261,9 @@ public class AuthServiceImpl implements AuthService {
     User user = userRepository.findByEmailAndActivatedTrue(email)
         .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
 
-    // check if the last password recovery request has expired (3 minutes)
+    // check if the last password recovery request has expired (30 seconds)
     if (user.getResetDate() != null
-        && user.getResetDate().isAfter(Instant.now().minusSeconds(60 * 3))) {
+        && user.getResetDate().isAfter(Instant.now().minusSeconds(30))) {
       throw new EmailInvalidException(ErrorMessage.PASSWORD_RECOVERY_TOO_FREQUENT);
     }
 

@@ -1,6 +1,6 @@
 FROM gradle:8.8-jdk17 AS build
 WORKDIR /app
-COPY build.gradle settings.gradle ./
+COPY build.gradle.kts settings.gradle.kts ./
 COPY src ./src
 RUN gradle clean build -x test --no-daemon
 

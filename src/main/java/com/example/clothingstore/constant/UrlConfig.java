@@ -13,6 +13,10 @@ public class UrlConfig {
 		API_VERSION = "/" + apiVersion;
 	}
 
+  // Health check
+  public static final String ACTUATOR = "/actuator";
+  public static final String HEALTH = "/health";
+
 	// Common
 	public static final String ID = "/{id}";
 
@@ -89,9 +93,9 @@ public class UrlConfig {
 	// Full paths for public GET endpoints
 	public static String[] PUBLIC_GET_ENDPOINTS() {
 		return new String[]{
+			ACTUATOR + HEALTH,
 			API_VERSION + AUTH + ACTIVATE + "/**",
 			API_VERSION + AUTH + SEND_ACTIVATION_EMAIL + "/**",
-			API_VERSION + AUTH + RESET_PASSWORD + "/**",
 			API_VERSION + AUTH + REFRESH,
 			API_VERSION + PRODUCT,
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
@@ -111,6 +115,7 @@ public class UrlConfig {
 			API_VERSION + AUTH + LOGIN,
 			API_VERSION + AUTH + REGISTER,
 			API_VERSION + AUTH + RECOVER_PASSWORD,
+			API_VERSION + AUTH + RESET_PASSWORD + "/**",
 			API_VERSION + ORDERS,
 			API_VERSION + ORDERS + CHECK_OUT
 		};
