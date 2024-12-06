@@ -182,7 +182,9 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public LoginResDTO activateAccount(String key) throws TokenInvalidException {
     if (userRepository.findByActivationKey(key).isPresent()) {
-      User user = userRepository.findByActivationKey(key).get();
+      // Sử dụng method mới với lock
+      User user = userRepository.findByActivationKeyWithLock(key)
+          .orElseThrow(() -> new TokenInvalidException(ErrorMessage.ACTIVATION_TOKEN_INVALID));
       user.setActivated(true);
       user.setActivationKey(null);
       User savedUser = userRepository.save(user);

@@ -53,6 +53,7 @@ import com.example.clothingstore.service.PromotionCalculatorService;
 import com.example.clothingstore.util.SecurityUtil;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
@@ -179,18 +180,21 @@ public class ProductServiceImpl implements ProductService {
       Specification<Product> sizesSpec = (root, query, cb) -> {
         query.distinct(true);
 
-        // Tạo subquery để đếm số lượng size match với quantity > 0
-        Subquery<Long> sizeCountSubquery = query.subquery(Long.class);
-        Root<ProductVariant> variantRoot = sizeCountSubquery.from(ProductVariant.class);
+        // Tạo subquery để kiểm tra từng size
+        List<Predicate> sizePredicates = requestedSizes.stream().map(size -> {
+          Subquery<ProductVariant> variantSubquery = query.subquery(ProductVariant.class);
+          Root<ProductVariant> variantRoot = variantSubquery.from(ProductVariant.class);
 
-        sizeCountSubquery.select(cb.count(variantRoot))
-            .where(cb.and(cb.equal(variantRoot.get("product"), root),
-                variantRoot.get("size").in(requestedSizes),
-                cb.greaterThan(variantRoot.get("quantity"), 0),
-                cb.equal(variantRoot.get("isDeleted"), false)));
+          // Kiểm tra tồn tại ít nhất 1 variant cho mỗi size
+          variantSubquery.select(variantRoot)
+              .where(cb.and(cb.equal(variantRoot.get("product"), root),
+                  cb.equal(variantRoot.get("size"), size)));
 
-        // So sánh số lượng size match với số lượng size yêu cầu
-        return cb.equal(sizeCountSubquery, (long) requestedSizes.size());
+          return cb.exists(variantSubquery);
+        }).collect(Collectors.toList());
+
+        // Kết hợp tất cả các điều kiện với AND
+        return cb.and(sizePredicates.toArray(new Predicate[0]));
       };
 
       finalSpec = finalSpec != null ? finalSpec.and(sizesSpec) : sizesSpec;
