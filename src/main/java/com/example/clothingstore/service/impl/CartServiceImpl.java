@@ -113,8 +113,9 @@ public class CartServiceImpl implements CartService {
           .productVariant(CartItemDTO.ProductVariantDTO.builder().id(variant.getId())
               .color(variant.getColor().toString()).size(variant.getSize().toString())
               .image(variant.getImages().get(0).getPublicUrl()).build())
-          .price(originalPrice).finalPrice(finalPrice).quantity(cartItem.getQuantity())
-          .inStock(variant.getQuantity()).image(product.getImages().get(0).getPublicUrl()).build();
+          .price(originalPrice).discountRate(discountRate).finalPrice(finalPrice)
+          .quantity(cartItem.getQuantity()).inStock(variant.getQuantity())
+          .image(product.getImages().get(0).getPublicUrl()).build();
     }).toList();
   }
 

@@ -18,6 +18,8 @@ public class CartItemDTO {
 
   private Double price;
 
+  private Double discountRate;
+
   private Double finalPrice;
 
   private Integer quantity;
