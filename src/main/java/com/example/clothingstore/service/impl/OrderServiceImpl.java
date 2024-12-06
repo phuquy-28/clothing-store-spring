@@ -482,6 +482,7 @@ public class OrderServiceImpl implements OrderService {
                 .image(variant.getImages().get(0).getPublicUrl())
                 .build())
             .price(originalPrice)
+            .discountRate(discountRate)
             .finalPrice(finalPrice)
             .quantity(cartItem.getQuantity())
             .inStock(variant.getQuantity())
