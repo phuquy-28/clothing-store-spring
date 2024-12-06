@@ -43,6 +43,12 @@ public final class ErrorMessage {
   public static final String CART_ITEM_NOT_FOUND = "error.cart_item.not_found";
   public static final String DEFAULT_SHIPPING_PROFILE_NOT_FOUND = "error.default_shipping_profile.not_found";
   public static final String ROLE_NOT_FOUND = "error.role.not_found";
+  public static final String ORDER_CANNOT_BE_CANCELLED = "error.order.cannot_be_cancelled";
+  public static final String PAYMENT_METHOD_NOT_SUPPORTED = "error.payment_method.not_supported";
+  public static final String PAYMENT_STATUS_NOT_SUPPORTED = "error.payment_status.not_supported";
+  public static final String ORDER_STATUS_NOT_SUPPORTED = "error.order_status.not_supported";
+  public static final String ORDER_EXPIRED = "error.order.expired";
+  public static final String USER_NOT_AUTHORIZED = "error.user.not_authorized";
   
   private ErrorMessage() {
   }

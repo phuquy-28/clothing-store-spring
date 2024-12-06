@@ -35,4 +35,6 @@ public interface OrderService {
   OrderPreviewDTO previewOrder(OrderPreviewReqDTO orderPreviewReqDTO);
 
   ResultPaginationDTO getOrders(Specification<Order> spec, Pageable pageable);
+
+  OrderPaymentDTO continuePayment(Long orderId);
 }

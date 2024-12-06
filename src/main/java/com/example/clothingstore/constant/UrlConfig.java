@@ -65,6 +65,7 @@ public class UrlConfig {
 	public static final String LINE_ITEM = "/line-items";
 	public static final String ORDER_ID = "/{orderId}";
 	public static final String STATUS = "/status";
+  public static final String CONTINUE_PAYMENT = "/continue-payment";
 
 	// Review controller
   public static final String REVIEW = "/reviews";

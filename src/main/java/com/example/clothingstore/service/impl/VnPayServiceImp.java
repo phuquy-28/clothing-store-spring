@@ -14,11 +14,14 @@ import com.example.clothingstore.exception.PaymentException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.service.EmailService;
+import com.example.clothingstore.service.OderCancellationService;
 import com.example.clothingstore.service.VnPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -47,9 +50,13 @@ public class VnPayServiceImp implements VnPayService {
   @Value("${vnpay.returnurl}")
   private String vnp_ReturnUrl;
 
+  private final Logger log = LoggerFactory.getLogger(VnPayServiceImp.class);
+
   private final OrderRepository orderRepository;
 
   private final EmailService emailService;
+
+  private final OderCancellationService oderCancellationService;
 
   @Override
   public String createPaymentUrl(Order order, HttpServletRequest request) {
@@ -65,7 +72,7 @@ public class VnPayServiceImp implements VnPayService {
     String vnp_CurrCode = "VND";
     String vnp_BankCode = "";
 
-    Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+    Calendar cld = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("Asia/Ho_Chi_Minh")));
     SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
     String vnp_CreateDate = formatter.format(cld.getTime());
 
@@ -148,11 +155,11 @@ public class VnPayServiceImp implements VnPayService {
     String signValue = hashAllFields(fields);
 
     if (signValue.equals(vnp_SecureHash)) {
-      if ("00".equals(vnp_ResponseCode)) {
-        // Find order in database
-        Order order = orderRepository.findByCode(vnp_TxnRef)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+      // Find order in database
+      Order order = orderRepository.findByCode(vnp_TxnRef)
+          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
+      if ("00".equals(vnp_ResponseCode)) {
         // Check amount
         long vnpAmount = Long.parseLong(fields.get("vnp_Amount")) / 100;
         if (vnpAmount != Math.round(order.getTotal())) {
@@ -160,8 +167,8 @@ public class VnPayServiceImp implements VnPayService {
         }
 
         // Convert vnp_PayDate to Instant
-        DateTimeFormatter formatter =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+            .withZone(ZoneId.of("Asia/Ho_Chi_Minh"));
         Instant paymentDate = Instant.from(formatter.parse(vnp_PayDate));
 
         // Update order status and payment date
@@ -175,11 +182,20 @@ public class VnPayServiceImp implements VnPayService {
         List<ProductVariant> productVariants = orderRepository
             .findProductVariantsWithImagesByOrderId(order.getId());
         emailService.sendOrderConfirmationEmail(orderWithDetails, productVariants);
-
-        return null;
       } else {
+        log.error("Payment failed for order {}: Response code {}", vnp_TxnRef, vnp_ResponseCode);
+        
+        try {
+          oderCancellationService.cancelOrderAndReturnStock(order.getId());
+          order.setPaymentStatus(PaymentStatus.FAILED);
+          orderRepository.save(order);
+        } catch (Exception e) {
+          log.error("Error while cancelling order and returning stock: {}", e.getMessage());
+        }
+        
         throw new PaymentException(ErrorMessage.PAYMENT_FAILED);
       }
+      return null;
     } else {
       throw new PaymentException(ErrorMessage.INVALID_CHECKSUM);
     }

@@ -63,6 +63,9 @@ import com.example.clothingstore.service.strategy.DeliveryStrategy;
 import com.example.clothingstore.service.strategy.factory.PaymentStrategyFactory;
 import com.example.clothingstore.service.strategy.factory.DeliveryStrategyFactory;
 import com.example.clothingstore.enumeration.DeliveryMethod;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -548,6 +551,47 @@ public class OrderServiceImpl implements OrderService {
         .paymentMethod(order.getPaymentMethod())
         .deliveryMethod(order.getDeliveryMethod())
         .build();
+  }
+
+  @Override
+  public OrderPaymentDTO continuePayment(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    if (order.getPaymentMethod() != PaymentMethod.VNPAY) {
+        throw new BadRequestException(ErrorMessage.PAYMENT_METHOD_NOT_SUPPORTED);
+    }
+
+    if (order.getPaymentStatus() != PaymentStatus.PENDING) {
+        throw new BadRequestException(ErrorMessage.PAYMENT_STATUS_NOT_SUPPORTED);
+    }
+
+    if (order.getStatus() != OrderStatus.PENDING) {
+        throw new BadRequestException(ErrorMessage.ORDER_STATUS_NOT_SUPPORTED);
+    }
+
+    Instant thirtyMinutesAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
+    if (order.getOrderDate().isBefore(thirtyMinutesAgo)) {
+        throw new BadRequestException(ErrorMessage.ORDER_EXPIRED);
+    }
+
+    String currentUserEmail = SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new BadRequestException(ErrorMessage.USER_NOT_LOGGED_IN));
+    if (!order.getUser().getEmail().equals(currentUserEmail)) {
+        throw new BadRequestException(ErrorMessage.USER_NOT_AUTHORIZED);
+    }
+
+    try {
+        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(PaymentMethod.VNPAY);
+        
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+            .getRequest();
+
+        return paymentStrategy.processPayment(order, request);
+    } catch (Exception e) {
+        log.error("Lỗi khi xử lý thanh toán: {}", e.getMessage());
+        throw new BadRequestException(ErrorMessage.TRANSACTION_FAILED);
+    }
   }
 
 }

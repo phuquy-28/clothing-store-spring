@@ -8,9 +8,14 @@ import org.springframework.data.repository.query.Param;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.enumeration.OrderStatus;
+import com.example.clothingstore.enumeration.PaymentMethod;
+import com.example.clothingstore.enumeration.PaymentStatus;
+import java.time.Instant;
 import java.util.List;
 
-public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
+public interface OrderRepository
+    extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
   Optional<Order> findByCode(String code);
 
@@ -35,5 +40,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
       )
       """)
   List<ProductVariant> findProductVariantsWithImagesByOrderId(@Param("orderId") Long orderId);
+
+  List<Order> findByPaymentMethodAndPaymentStatusAndStatusAndOrderDateBefore(
+      PaymentMethod paymentMethod, PaymentStatus paymentStatus, OrderStatus status,
+      Instant thirtyMinutesAgo);
 
 }

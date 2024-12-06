@@ -111,4 +111,10 @@ public class OrderController {
     log.debug("REST request to get order item list: {}", spec);
     return ResponseEntity.ok(orderService.getOrders(spec, pageable));
   }
+
+  @GetMapping(UrlConfig.ORDERS + UrlConfig.CONTINUE_PAYMENT + UrlConfig.ORDER_ID)
+  public ResponseEntity<OrderPaymentDTO> continuePayment(@PathVariable Long orderId) {
+    OrderPaymentDTO result = orderService.continuePayment(orderId);
+    return ResponseEntity.ok(result);
+  }
 }
