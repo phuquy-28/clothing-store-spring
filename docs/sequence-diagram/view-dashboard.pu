@@ -1,0 +1,118 @@
+@startuml
+
+' General configuration
+skinparam defaultFontSize 20
+skinparam sequenceMessageAlign center
+
+' Actor style configuration
+skinparam actorStyle awesome
+
+' Arrow and border thickness configuration
+skinparam {
+    ArrowThickness 2
+    ParticipantBorderThickness 2
+    ActorBorderThickness 2
+    LifeLineBorderThickness 2
+    ActivationBorderThickness 2
+}
+
+' Life line color configuration
+skinparam LifeLineBorderColor black
+
+' Font style configuration for components
+skinparam {
+    actorFontStyle bold
+    boundaryFontStyle bold
+    controlFontStyle bold
+    entityFontStyle bold
+    databaseFontStyle bold
+}
+
+' Define components
+actor "Actor" as actor
+boundary "DashboardPage" as dashboard
+control "DashboardController" as controller
+control "DashboardService" as service
+control "OrderService" as orderService
+control "ProductService" as productService
+control "CustomerService" as customerService
+database "Database" as db
+
+' Start processing flow
+activate actor
+
+actor -> dashboard: accessDashboard()
+activate dashboard
+
+dashboard -> controller: getDashboardData(timeRange)
+activate controller
+
+controller -> service: getDashboardData(timeRange)
+activate service
+
+' Get revenue data
+service -> orderService: getRevenue(timeRange)
+activate orderService
+orderService -> db: calculateRevenue()
+activate db
+db --> orderService: return(revenueData)
+deactivate db
+orderService --> service: return(revenueData)
+deactivate orderService
+
+' Get order statistics
+service -> orderService: getOrderStatistics(timeRange)
+activate orderService
+orderService -> db: getOrderCounts()
+activate db
+db --> orderService: return(orderStats)
+deactivate db
+orderService --> service: return(orderStats)
+deactivate orderService
+
+' Get product statistics
+service -> productService: getProductStatistics(timeRange)
+activate productService
+productService -> db: getProductStats()
+activate db
+db --> productService: return(productStats)
+deactivate db
+productService --> service: return(productStats)
+deactivate productService
+
+' Get customer statistics
+service -> customerService: getCustomerStatistics(timeRange)
+activate customerService
+customerService -> db: getNewCustomers()
+activate db
+db --> customerService: return(customerStats)
+deactivate db
+customerService --> service: return(customerStats)
+deactivate customerService
+
+service --> controller: return(dashboardData)
+deactivate service
+
+controller --> dashboard: return(dashboardData)
+deactivate controller
+
+dashboard --> actor: display(dashboardData)
+
+opt Change Time Range
+    actor -> dashboard: selectTimeRange(newRange)
+    dashboard -> controller: getDashboardData(newRange)
+    activate controller
+    
+    ref over controller
+        // Repeat data fetching process with new time range //
+    end ref
+    
+    controller --> dashboard: return(updatedData)
+    deactivate controller
+    dashboard --> actor: display(updatedData)
+end
+
+deactivate dashboard
+
+hide footbox
+@enduml

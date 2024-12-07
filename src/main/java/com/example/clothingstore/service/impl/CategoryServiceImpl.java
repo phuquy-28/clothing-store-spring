@@ -1,9 +1,11 @@
 package com.example.clothingstore.service.impl;
 
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.CategoryReqDTO;
 import com.example.clothingstore.dto.response.CategoryResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Category;
 import com.example.clothingstore.exception.IdInvalidException;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
@@ -79,11 +82,17 @@ public class CategoryServiceImpl implements CategoryService {
   }
 
   @Override
-  public List<CategoryResDTO> getAllCategories() {
-    List<Category> categories = categoryRepository.findAll();
-    List<CategoryResDTO> categoryResDTOs = new ArrayList<>();
-    categories.forEach(category -> categoryResDTOs.add(categoryMapper.toCategoryResDTO(category)));
-    return categoryResDTOs;
+  public ResultPaginationDTO getAllCategories(Specification<Category> spec, Pageable pageable) {
+    Page<Category> categoryPage = categoryRepository.findAll(spec, pageable);
+
+    List<CategoryResDTO> categoryResDTOs = categoryPage.getContent().stream()
+        .map(categoryMapper::toCategoryResDTO).collect(Collectors.toList());
+
+    ResultPaginationDTO.Meta meta = ResultPaginationDTO.Meta.builder()
+        .page((long) pageable.getPageNumber()).pageSize((long) pageable.getPageSize())
+        .total(categoryPage.getTotalElements()).pages((long) categoryPage.getTotalPages()).build();
+
+    return ResultPaginationDTO.builder().meta(meta).data(categoryResDTOs).build();
   }
 
   @Override

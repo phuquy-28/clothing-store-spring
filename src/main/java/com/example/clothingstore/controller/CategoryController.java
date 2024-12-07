@@ -2,6 +2,8 @@ package com.example.clothingstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.CategoryReqDTO;
 import com.example.clothingstore.dto.response.CategoryResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.entity.Category;
 import com.example.clothingstore.service.CategoryService;
-
+import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -48,9 +52,9 @@ public class CategoryController {
     }
 
     @GetMapping(UrlConfig.CATEGORY)
-    public ResponseEntity<List<CategoryResDTO>> getAllCategories() {
+    public ResponseEntity<ResultPaginationDTO> getAllCategories(@Filter Specification<Category> spec, Pageable pageable) {
         log.debug("REST request to get all categories");
-        List<CategoryResDTO> categories = categoryService.getAllCategories();
+        ResultPaginationDTO categories = categoryService.getAllCategories(spec, pageable);
         return ResponseEntity.ok(categories);
     }
 

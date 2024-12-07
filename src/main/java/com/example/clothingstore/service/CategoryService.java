@@ -1,9 +1,11 @@
 package com.example.clothingstore.service;
 
-import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import com.example.clothingstore.dto.request.CategoryReqDTO;
 import com.example.clothingstore.dto.response.CategoryResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Category;
 
 public interface CategoryService {
@@ -16,7 +18,7 @@ public interface CategoryService {
 
     void deleteCategory(Long id);
 
-    List<CategoryResDTO> getAllCategories();
+    ResultPaginationDTO getAllCategories(Specification<Category> spec, Pageable pageable);
 
     CategoryResDTO convertToCategoryResDTO(Category category);
 
