@@ -273,8 +273,23 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    // Áp dụng phân trang
+    // Kiểm tra và xử lý phân trang
     int start = (int) pageable.getOffset();
+    
+    // Nếu start index vượt quá size của list, trả về trang trống
+    if (start >= allProducts.size()) {
+        return ResultPaginationDTO.builder()
+            .meta(Meta.builder()
+                .page((long) pageable.getPageNumber())
+                .pageSize((long) pageable.getPageSize())
+                .total((long) allProducts.size())
+                .pages((long) Math.ceil((double) allProducts.size() / pageable.getPageSize()))
+                .build())
+            .data(new ArrayList<>())
+            .build();
+    }
+
+    // Tính toán end index, đảm bảo không vượt quá size của list
     int end = Math.min((start + pageable.getPageSize()), allProducts.size());
     List<Product> paginatedProducts = allProducts.subList(start, end);
 
@@ -431,7 +446,7 @@ public class ProductServiceImpl implements ProductService {
         "Ì", "Í", "Ị", "Ỉ", "Ĩ",
         "ì", "í", "ị", "ỉ", "ĩ",
         "Ò", "Ó", "Ọ", "Ỏ", "Õ", "Ô", "Ồ", "Ố", "Ộ", "Ổ", "Ỗ", "Ơ", "Ờ", "Ớ", "Ợ", "Ở", "Ỡ",
-        "ò", "ó", "ọ", "ỏ", "õ", "ô", "ồ", "ố", "ộ", "ổ", "ỗ", "ơ", "ờ", "ớ", "ợ", "ở", "ỡ",
+        "ò", "ó", "ọ", "ỏ", "õ", "ô", "ồ", "��", "ộ", "ổ", "ỗ", "ơ", "ờ", "ớ", "ợ", "ở", "ỡ",
         "Ù", "Ú", "Ụ", "Ủ", "Ũ", "Ư", "Ừ", "Ứ", "Ự", "Ử", "Ữ",
         "ù", "ú", "ụ", "ủ", "ũ", "ư", "ừ", "ứ", "ự", "ử", "ữ",
         "Ỳ", "Ý", "Ỵ", "Ỷ", "Ỹ",
