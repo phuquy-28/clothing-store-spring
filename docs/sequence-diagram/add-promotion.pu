@@ -46,7 +46,7 @@ activate dashboard
 dashboard -> addForm: openForm()
 activate addForm
 
-actor -> addForm: inputPromotionData(name, discountRate, \nstartDate, endDate, products/categories)
+actor -> addForm: inputPromotionData()
 actor -> addForm: clickSave()
 
 addForm -> controller: createPromotion(promotionDTO)
