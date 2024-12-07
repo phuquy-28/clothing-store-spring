@@ -200,7 +200,7 @@ public class OrderServiceImpl implements OrderService {
     Order.ShippingInformation shippingInfo = new Order.ShippingInformation();
     shippingInfo.setFirstName(profile.getFirstName());
     shippingInfo.setLastName(profile.getLastName());
-    shippingInfo.setFullName(String.format("%s %s", profile.getFirstName(), profile.getLastName()));
+    shippingInfo.setFullName(String.format("%s %s", profile.getLastName(), profile.getFirstName()));
     shippingInfo.setPhoneNumber(profile.getPhoneNumber());
     shippingInfo.setAddress(profile.getAddress());
     shippingInfo.setWard(profile.getWard());
