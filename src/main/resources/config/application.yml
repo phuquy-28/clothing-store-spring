@@ -45,6 +45,9 @@ spring:
           starttls:
             enable: true
 
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+
 logging:
   level:
     com:
