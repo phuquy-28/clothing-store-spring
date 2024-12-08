@@ -2,7 +2,6 @@ package com.example.clothingstore.service.impl;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.ErrorMessage;
@@ -23,15 +22,14 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import com.example.clothingstore.util.VnPayUtils;
 
 @Service
@@ -72,12 +70,17 @@ public class VnPayServiceImp implements VnPayService {
     String vnp_CurrCode = "VND";
     String vnp_BankCode = "";
 
-    Calendar cld = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("Asia/Ho_Chi_Minh")));
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-    String vnp_CreateDate = formatter.format(cld.getTime());
+    ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+    Instant now = Instant.now();
+    ZonedDateTime vietnamDateTime = now.atZone(vietnamZone);
+    
+    String vnp_CreateDate = DateTimeFormatter
+        .ofPattern("yyyyMMddHHmmss")
+        .format(vietnamDateTime);
 
-    cld.add(Calendar.MINUTE, 30);
-    String vnp_ExpireDate = formatter.format(cld.getTime());
+    String vnp_ExpireDate = DateTimeFormatter
+        .ofPattern("yyyyMMddHHmmss")
+        .format(vietnamDateTime.plusMinutes(30));
 
     Map<String, String> vnp_Params = new HashMap<>();
     vnp_Params.put("vnp_Version", vnp_Version);
