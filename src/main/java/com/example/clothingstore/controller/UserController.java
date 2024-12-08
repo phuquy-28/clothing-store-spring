@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
@@ -94,9 +95,9 @@ public class UserController {
   }
 
   @PutMapping(UrlConfig.USER)
-  public ResponseEntity<UserResDTO> updateUser(@RequestBody @Valid UserReqDTO userReqDTO) {
-    log.debug("REST request to update user: {}", userReqDTO);
-    return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userReqDTO));
+  public ResponseEntity<UserResDTO> updateUser(@RequestBody @Valid UpdateUserReqDTO updateUserReqDTO) {
+    log.debug("REST request to update user: {}", updateUserReqDTO);
+    return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(updateUserReqDTO));
   }
 
   @DeleteMapping(UrlConfig.USER + UrlConfig.ID)

@@ -3,6 +3,7 @@ package com.example.clothingstore.config;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.Permission;
 import com.example.clothingstore.entity.Role;
+import com.example.clothingstore.entity.ShippingProfile;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.repository.PermissionRepository;
@@ -46,31 +47,91 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     if (countRoles == 0) {
-      // Create role ADMIN
       List<Permission> allPermissions = this.permissionRepository.findAll();
-      Role adminRole = new Role("ADMIN", "Admin has all permissions", true, allPermissions);
-      this.roleRepository.save(adminRole);
-
-      // Create role USER
-      Role userRole = new Role("USER", "User has specific permissions", true, new ArrayList<>());
-      this.roleRepository.save(userRole);
+      
+      List<Role> roles = new ArrayList<>();
+      roles.add(new Role("ADMIN", "Admin has all permissions", true, allPermissions));
+      roles.add(new Role("USER", "User has specific permissions", true, new ArrayList<>()));
+      roles.add(new Role("STAFF", "Staff has specific permissions", true, new ArrayList<>()));
+      roles.add(new Role("MANAGER", "Manager has specific permissions", true, new ArrayList<>()));
+      
+      this.roleRepository.saveAll(roles);
     }
 
     if (countUsers == 0) {
-      // Create user admin
-      User adminUser = new User("admin@gmail.com", this.passwordEncoder.encode("123456"), true);
-
-      // role
       Role adminRole = this.roleRepository.findByName("ADMIN").orElse(null);
-      if (adminRole != null) {
-        adminUser.setRole(adminRole);
-      }
-
-      // create profile
-      Profile profile = new Profile("Admin", "Admin", LocalDate.now(), "0909090909", Gender.MALE, adminUser);
-      adminUser.setProfile(profile);
-
-      this.userRepository.save(adminUser);
+      Role userRole = this.roleRepository.findByName("USER").orElse(null);
+      
+      List<User> users = new ArrayList<>();
+      
+      // Create admin user
+      User adminUser = new User("admin@gmail.com", this.passwordEncoder.encode("123456"), true);
+      adminUser.setRole(adminRole);
+      
+      Profile adminProfile = new Profile(
+          "Admin",
+          "System",
+          String.format("%s %s", "System", "Admin"),
+          LocalDate.of(1990, 1, 1),
+          "0909090909",
+          Gender.MALE,
+          adminUser
+      );
+      adminUser.setProfile(adminProfile);
+      
+      ShippingProfile adminShippingProfile = new ShippingProfile(
+          "Admin",
+          "System",
+          "0909090909",
+          "123 Admin Street",
+          1L,    // wardId
+          "Ward 1",
+          1L,    // districtId
+          "District 1",
+          1L,    // provinceId
+          "Ho Chi Minh City",
+          adminUser
+      );
+      adminUser.setShippingProfiles(List.of(adminShippingProfile));
+      adminUser.setDefaultShippingProfile(adminShippingProfile);
+      
+      users.add(adminUser);
+      
+      // Create normal user
+      User normalUser = new User("phuquy2823@gmail.com", this.passwordEncoder.encode("123456"), true);
+      normalUser.setRole(userRole);
+      
+      Profile userProfile = new Profile(
+          "Normal",
+          "User",
+          String.format("%s %s", "User", "Normal"),
+          LocalDate.of(1995, 6, 15),
+          "0901234567",
+          Gender.FEMALE,
+          normalUser
+      );
+      normalUser.setProfile(userProfile);
+      
+      ShippingProfile userShippingProfile = new ShippingProfile(
+          "Normal",
+          "User",
+          "0901234567",
+          "456 User Street",
+          2L,    // wardId
+          "Ward 2",
+          2L,    // districtId
+          "District 2",
+          1L,    // provinceId
+          "Ho Chi Minh City",
+          normalUser
+      );
+      normalUser.setShippingProfiles(List.of(userShippingProfile));
+      normalUser.setDefaultShippingProfile(userShippingProfile);
+      
+      users.add(normalUser);
+      
+      // Save all users in one batch
+      this.userRepository.saveAll(users);
     }
 
     if (countPermissions > 0 && countRoles > 0 && countUsers > 0) {

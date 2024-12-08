@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
@@ -90,6 +91,7 @@ public class UserServiceImpl implements UserService {
     Profile profile = user.getProfile();
     profile.setFirstName(editProfileReqDTO.getFirstName());
     profile.setLastName(editProfileReqDTO.getLastName());
+    profile.setFullName(String.format("%s %s", editProfileReqDTO.getLastName(), editProfileReqDTO.getFirstName()));
     profile.setBirthDate(editProfileReqDTO.getBirthDate());
     profile.setPhoneNumber(editProfileReqDTO.getPhoneNumber());
     profile.setGender(editProfileReqDTO.getGender() != null
@@ -169,6 +171,7 @@ public class UserServiceImpl implements UserService {
     Profile profile = new Profile();
     profile.setFirstName(userReqDTO.getFirstName());
     profile.setLastName(userReqDTO.getLastName());
+    profile.setFullName(String.format("%s %s", userReqDTO.getLastName(), userReqDTO.getFirstName()));
     profile.setGender(
         userReqDTO.getGender() != null ? Gender.valueOf(userReqDTO.getGender().toUpperCase())
             : null);
@@ -198,26 +201,29 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserResDTO updateUser(UserReqDTO userReqDTO) {
-    Long userId = userReqDTO.getId() != null ? userReqDTO.getId() : null;
+  public UserResDTO updateUser(UpdateUserReqDTO updateUserReqDTO) {
+    Long userId = updateUserReqDTO.getId() != null ? updateUserReqDTO.getId() : null;
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
-    Role role = roleRepository.findById(userReqDTO.getRoleId())
+    Role role = roleRepository.findById(updateUserReqDTO.getRoleId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ROLE_NOT_FOUND));
 
-    user.setPassword(passwordEncoder.encode(userReqDTO.getPassword()));
+    if (updateUserReqDTO.getPassword() != null) {
+      user.setPassword(passwordEncoder.encode(updateUserReqDTO.getPassword()));
+    }
     user.setRole(role);
     
     Profile profile = user.getProfile();
-    profile.setFirstName(userReqDTO.getFirstName());
-    profile.setLastName(userReqDTO.getLastName());
+    profile.setFirstName(updateUserReqDTO.getFirstName());
+    profile.setLastName(updateUserReqDTO.getLastName());
+    profile.setFullName(String.format("%s %s", updateUserReqDTO.getLastName(), updateUserReqDTO.getFirstName()));
     profile.setGender(
-        userReqDTO.getGender() != null ? Gender.valueOf(userReqDTO.getGender().toUpperCase())
+        updateUserReqDTO.getGender() != null ? Gender.valueOf(updateUserReqDTO.getGender().toUpperCase())
             : null);
-    profile.setBirthDate(userReqDTO.getBirthDate() != null ? userReqDTO.getBirthDate() : null);
-    profile.setPhoneNumber(userReqDTO.getPhone() != null ? userReqDTO.getPhone() : null);
+    profile.setBirthDate(updateUserReqDTO.getBirthDate() != null ? updateUserReqDTO.getBirthDate() : null);
+    profile.setPhoneNumber(updateUserReqDTO.getPhone() != null ? updateUserReqDTO.getPhone() : null);
     user.setProfile(profile);
 
     userRepository.save(user);

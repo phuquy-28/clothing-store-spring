@@ -28,6 +28,8 @@ public class Profile extends AbstractEntity {
 
   private String lastName;
 
+  private String fullName;
+
   private LocalDate birthDate;
 
   private String phoneNumber;

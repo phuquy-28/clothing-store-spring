@@ -2,6 +2,7 @@ package com.example.clothingstore.service;
 
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
@@ -33,7 +34,7 @@ public interface UserService {
 
   ResultPaginationDTO getUsers(Specification<User> spec, Pageable pageable);
 
-  UserResDTO updateUser(UserReqDTO userReqDTO);
+  UserResDTO updateUser(UpdateUserReqDTO updateUserReqDTO);
 
   void deleteUser(Long id);
 

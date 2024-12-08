@@ -81,6 +81,9 @@ public class UrlConfig {
   public static final String CART = "/carts";
   public static final String ITEMS = "/items";
 
+  // Dashboard controller
+  public static final String WORKSPACE = "/workspace";
+
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {
 		return new String[]{

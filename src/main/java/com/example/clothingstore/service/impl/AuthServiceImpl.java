@@ -79,12 +79,9 @@ public class AuthServiceImpl implements AuthService {
 
     // firstName and lastName are optional
     Profile profile = new Profile();
-    if (user.getFirstName() != null) {
-      profile.setFirstName(user.getFirstName());
-    }
-    if (user.getLastName() != null) {
-      profile.setLastName(user.getLastName());
-    }
+    profile.setFirstName(user.getFirstName());
+    profile.setLastName(user.getLastName());
+    profile.setFullName(String.format("%s %s", user.getLastName(), user.getFirstName()));
     if (user.getBirthDate() != null) {
       profile.setBirthDate(user.getBirthDate());
     }
@@ -126,6 +123,10 @@ public class AuthServiceImpl implements AuthService {
 
     // Get user information
     User loginUser = userService.handleGetUserByUsername(loginReqDto.getEmail());
+
+    if (!AppConstant.ROLE_USER.equalsIgnoreCase(loginUser.getRole().getName())) {
+      throw new BadCredentialsException(ErrorMessage.USERNAME_OR_PASSWORD_INVALID);
+    }
 
     // Create response
     LoginResDTO loginResDTO = convertUserToResLoginDTO(loginUser);
@@ -305,7 +306,7 @@ public class AuthServiceImpl implements AuthService {
     userRepository.save(user);
   }
 
-  private LoginResDTO convertUserToResLoginDTO(User loginUser) {
+  public static LoginResDTO convertUserToResLoginDTO(User loginUser) {
     LoginResDTO.ResUser resUser = new LoginResDTO.ResUser();
     resUser.setId(loginUser.getId());
     resUser.setEmail(loginUser.getEmail());
