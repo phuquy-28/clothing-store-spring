@@ -84,12 +84,12 @@ public class DatabaseInitializer implements CommandLineRunner {
           "System",
           "0909090909",
           "123 Admin Street",
-          1L,    // wardId
-          "Ward 1",
-          1L,    // districtId
-          "District 1",
-          1L,    // provinceId
-          "Ho Chi Minh City",
+          90737L,    // wardId
+          "Phường Linh Trung",
+          3695L,    // districtId
+          "Thành Phố Thủ Đức",
+          202L,    // provinceId
+          "Hồ Chí Minh",
           adminUser
       );
       adminUser.setShippingProfiles(List.of(adminShippingProfile));
@@ -117,12 +117,12 @@ public class DatabaseInitializer implements CommandLineRunner {
           "User",
           "0901234567",
           "456 User Street",
-          2L,    // wardId
-          "Ward 2",
-          2L,    // districtId
-          "District 2",
-          1L,    // provinceId
-          "Ho Chi Minh City",
+          90737L, // wardId
+          "Phường Linh Trung",
+          3695L, // districtId
+          "Thành Phố Thủ Đức",
+          202L, // provinceId
+          "Hồ Chí Minh",
           normalUser
       );
       normalUser.setShippingProfiles(List.of(userShippingProfile));
