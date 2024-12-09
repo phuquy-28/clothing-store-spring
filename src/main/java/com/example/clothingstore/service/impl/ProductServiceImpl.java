@@ -94,15 +94,13 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(productReqDTO.getPrice());
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
-    product.setColorDefault(Color.valueOf(productReqDTO.getColorDefault().toUpperCase()));
     product.setFeatured(productReqDTO.getIsFeatured());
 
     final Product finalProduct = product;
-    AtomicReference<ProductImage> defaultImage = new AtomicReference<>();
     product.setImages(IntStream.range(0, productReqDTO.getImages().size()).mapToObj(index -> {
         ProductImage productImage = new ProductImage();
         productImage.setPublicUrl(productReqDTO.getImages().get(index));
-        productImage.setImageOrder(index + 1);
+        productImage.setImageOrder(index);
         productImage.setProduct(finalProduct);
         return productImage;
     }).collect(Collectors.toList()));
@@ -118,13 +116,6 @@ public class ProductServiceImpl implements ProductService {
         // Handle variant images
         List<ProductImage> variantImages = IntStream.range(0, variant.getImages().size())
             .mapToObj(index -> {
-                if (productReqDTO.getColorDefault().equals(variant.getColor()) && defaultImage.get() == null) {
-                    ProductImage img = new ProductImage();
-                    img.setPublicUrl(variant.getImages().get(0));
-                    img.setImageOrder(0);
-                    img.setProduct(finalProduct);
-                    defaultImage.set(img);
-                }
                 ProductImage productImage = new ProductImage();
                 productImage.setPublicUrl(variant.getImages().get(index));
                 productImage.setImageOrder(0);
@@ -136,8 +127,6 @@ public class ProductServiceImpl implements ProductService {
         return productVariant;
     }).collect(Collectors.toList())); 
 
-    // Add default image to the fist index of product images
-    product.getImages().add(0, defaultImage.get());
 
     // product = productRepository.save(product);
     

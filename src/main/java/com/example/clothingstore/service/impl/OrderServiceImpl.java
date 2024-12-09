@@ -439,7 +439,7 @@ public class OrderServiceImpl implements OrderService {
             .findFirst()
             .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.SHIPPING_PROFILE_NOT_FOUND));
     } else {
-        shippingProfile = user.getDefaultShippingProfile();
+        shippingProfile = user.getDefaultShippingProfile() != null ? user.getDefaultShippingProfile() : null;
     }
 
     Cart cart = user.getCart();
@@ -501,8 +501,13 @@ public class OrderServiceImpl implements OrderService {
     // Tính phí vận chuyển sử dụng strategy
     DeliveryMethod deliveryMethod = DeliveryMethod.valueOf(orderPreviewReqDTO.getDeliveryMethod());
     DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
-    Double shippingFee =
-        deliveryStrategy.calculateShippingFee(shippingProfile.getDistrictId(), subtotal);
+    Double shippingFee = null;
+    if (shippingProfile != null) {
+      shippingFee = deliveryStrategy.calculateShippingFee(shippingProfile.getDistrictId(), 
+          subtotal + (shippingFee != null ? shippingFee : 0.0) - discount);
+    } else {
+      shippingFee = null;
+    }
 
     // Tạo preview order
     return OrderPreviewDTO.builder()
@@ -519,7 +524,7 @@ public class OrderServiceImpl implements OrderService {
         .lineItems(selectedItems)
         .shippingFee(shippingFee)
         .discount(discount)
-        .finalTotal(subtotal + shippingFee - discount)
+        .finalTotal(subtotal + (shippingFee != null ? shippingFee : 0.0) - discount)
         .build();
   }
 
