@@ -83,27 +83,6 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
     return 0;
   }
 
-  @Override
-  public double calculateShippingFee(Long toDistrictId, double subtotal) {
-    try {
-      // Get service ID first
-      String serviceId = getAvailableServiceId(toDistrictId);
-
-      // Create a temporary order object to pass to the fee calculation
-      Order tempOrder = new Order();
-      tempOrder.setFinalTotal(subtotal);
-      tempOrder.setShippingInformation(new Order.ShippingInformation());
-      tempOrder.getShippingInformation().setDistrictId(toDistrictId);
-
-      // Calculate shipping fee using the service ID
-      return calculateFeeWithServiceId(serviceId, tempOrder);
-
-    } catch (Exception e) {
-      log.error("Error calculating GHN shipping fee: {}", e.getMessage());
-      throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
-    }
-  }
-
   private String getAvailableServiceId(Long toDistrictId) {
     String url = ghnApiUrl + "/shipping-order/available-services";
 
@@ -144,7 +123,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
   }
 
   private double calculateFeeWithServiceId(String serviceId, Order order) {
-    if (order.getFinalTotal() >= shopFreeShippingThreshold) {
+    if (order.getTotal() - order.getDiscount() >= shopFreeShippingThreshold) {
       return 0;
     }
 
@@ -158,7 +137,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
     requestBody.put("service_id", Long.parseLong(serviceId));
     requestBody.put("shop_id", Long.parseLong(ghnShopId));
     requestBody.put("to_district_id", order.getShippingInformation().getDistrictId());
-    requestBody.put("to_ward_code", order.getShippingInformation().getWardId());
+    requestBody.put("to_ward_code", order.getShippingInformation().getWardId().toString());
 
     // Calculate total weight and dimensions of order
     requestBody.put("weight", shopWeight); // 5000g
@@ -168,7 +147,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
 
     // Set COD amount if payment method is COD
     if (order.getPaymentMethod() != null && order.getPaymentMethod() == PaymentMethod.COD) {
-      requestBody.put("cod_amount", order.getFinalTotal());
+      requestBody.put("cod_amount", order.getTotal() - order.getDiscount());
     }
 
     HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);

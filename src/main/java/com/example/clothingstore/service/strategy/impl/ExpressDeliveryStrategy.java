@@ -28,12 +28,4 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
     }
     return 0;
   }
-
-  @Override
-  public double calculateShippingFee(Long districtId, double subtotal) {
-    if (subtotal < freeShippingThreshold) {
-      return 50000;
-    }
-    return 0;
-  }
 }

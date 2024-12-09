@@ -171,8 +171,9 @@ public class OrderServiceImpl implements OrderService {
     // Process delivery
     DeliveryStrategy deliveryStrategy = 
         deliveryStrategyFactory.getStrategy(order.getDeliveryMethod());
+    Double shippingFee = deliveryStrategy.calculateShippingFee(order);
     // deliveryStrategy.processDelivery(order);
-    order.setShippingFee(deliveryStrategy.calculateShippingFee(total));
+    order.setShippingFee(shippingFee);
 
     // Calculate final total
     order.setFinalTotal(total + order.getShippingFee() - discount);
@@ -503,8 +504,13 @@ public class OrderServiceImpl implements OrderService {
     DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
     Double shippingFee = null;
     if (shippingProfile != null) {
-      shippingFee = deliveryStrategy.calculateShippingFee(shippingProfile.getDistrictId(), 
-          subtotal + (shippingFee != null ? shippingFee : 0.0) - discount);
+      // create a temp order to pass to the strategy
+      Order tempOrder = new Order();
+      tempOrder.setTotal(subtotal);
+      tempOrder.setDiscount(discount);
+      tempOrder.setShippingInformation(mapToShippingInformation(shippingProfile));
+      tempOrder.setPaymentMethod(PaymentMethod.valueOf(orderPreviewReqDTO.getPaymentMethod().toUpperCase()));
+      shippingFee = deliveryStrategy.calculateShippingFee(tempOrder);
     } else {
       shippingFee = null;
     }
