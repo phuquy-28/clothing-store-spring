@@ -70,6 +70,9 @@ public class Order extends AbstractEntity {
   @Enumerated(EnumType.STRING)
   private DeliveryMethod deliveryMethod;
 
+  @Column(columnDefinition = "text")
+  private String cancelReason;
+
   @Getter
   @Setter
   @NoArgsConstructor
@@ -86,9 +89,15 @@ public class Order extends AbstractEntity {
 
     private String address;
 
+    private Long wardId;
+
     private String ward;
 
+    private Long districtId;
+
     private String district;
+
+    private Long provinceId;
 
     private String province;
 

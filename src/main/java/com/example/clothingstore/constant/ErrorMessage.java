@@ -49,6 +49,10 @@ public final class ErrorMessage {
   public static final String ORDER_STATUS_NOT_SUPPORTED = "error.order_status.not_supported";
   public static final String ORDER_EXPIRED = "error.order.expired";
   public static final String USER_NOT_AUTHORIZED = "error.user.not_authorized";
+  public static final String DELIVERY_CALCULATION_FAILED = "error.delivery.calculation_failed";
+  public static final String DELIVERY_AREA_NOT_SUPPORTED = "error.delivery.area_not_supported";
+  public static final String DELIVERY_SERVICE_UNAVAILABLE = "error.delivery.service_unavailable";
+  public static final String DELIVERY_FEE_CALCULATION_FAILED = "error.delivery.fee_calculation_failed";
   
   private ErrorMessage() {
   }

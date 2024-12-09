@@ -39,6 +39,8 @@ public class OrderResDTO {
 
   private Boolean isReviewed;
 
+  private String cancelReason;
+
   @Data
   @Builder
   public static class LineItem {

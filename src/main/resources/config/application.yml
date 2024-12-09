@@ -106,3 +106,16 @@ vnpay:
   hashsecret: ${VNPAY_HASHSECRET}
   url: ${VNPAY_URL}
   returnurl: ${VNPAY_RETURNURL}
+
+ghn:
+  api:
+    url: ${GHN_API_URL}
+    token: ${GHN_API_TOKEN}
+  shop:
+    id: ${GHN_SHOP_ID}
+    district: ${GHN_SHOP_DISTRICT_ID}
+    weight: ${GHN_SHOP_WEIGHT}
+    length: ${GHN_SHOP_LENGTH}
+    width: ${GHN_SHOP_WIDTH}
+    height: ${GHN_SHOP_HEIGHT}
+    free-shipping-threshold: ${GHN_SHOP_FREE_SHIPPING_THRESHOLD}

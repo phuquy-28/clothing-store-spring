@@ -22,6 +22,8 @@ public final class AppConstant {
   
   public static final String SIMPLE_DATE_FORMAT = "dd/MM/yyyy";
 
+  public static final String ORDER_CANCEL_REASON = "Quá thời gian thanh toán";
+
   private AppConstant() {
   }
 }

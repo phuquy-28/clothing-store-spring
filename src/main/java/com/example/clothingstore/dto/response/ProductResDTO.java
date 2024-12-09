@@ -36,6 +36,8 @@ public class ProductResDTO {
 
   private Double averageRating;
 
+  private Long numberOfReviews;
+
   private String slug;
 
   private String colorDefault;

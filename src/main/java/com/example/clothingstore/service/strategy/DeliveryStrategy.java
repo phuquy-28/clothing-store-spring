@@ -9,4 +9,6 @@ public interface DeliveryStrategy {
     double calculateShippingFee(Order order);
     
     double calculateShippingFee(double subtotal);
+    
+    double calculateShippingFee(Long districtId, double subtotal);
 }

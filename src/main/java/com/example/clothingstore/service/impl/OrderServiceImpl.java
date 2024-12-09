@@ -203,8 +203,11 @@ public class OrderServiceImpl implements OrderService {
     shippingInfo.setFullName(String.format("%s %s", profile.getLastName(), profile.getFirstName()));
     shippingInfo.setPhoneNumber(profile.getPhoneNumber());
     shippingInfo.setAddress(profile.getAddress());
+    shippingInfo.setWardId(profile.getWardId());
     shippingInfo.setWard(profile.getWard());
+    shippingInfo.setDistrictId(profile.getDistrictId());
     shippingInfo.setDistrict(profile.getDistrict());
+    shippingInfo.setProvinceId(profile.getProvinceId());
     shippingInfo.setProvince(profile.getProvince());
     return shippingInfo;
   }
@@ -271,6 +274,7 @@ public class OrderServiceImpl implements OrderService {
         .paymentMethod(order.getPaymentMethod()).paymentStatus(order.getPaymentStatus())
         .total(order.getTotal()).shippingFee(order.getShippingFee()).discount(order.getDiscount())
         .finalTotal(order.getFinalTotal()).canReview(canReview).isReviewed(isReviewed)
+        .cancelReason(order.getCancelReason())
         .lineItems(
             order.getLineItems().stream().map(this::mapToLineItemDTO).collect(Collectors.toList()))
         .build();
@@ -497,7 +501,8 @@ public class OrderServiceImpl implements OrderService {
     // Tính phí vận chuyển sử dụng strategy
     DeliveryMethod deliveryMethod = DeliveryMethod.valueOf(orderPreviewReqDTO.getDeliveryMethod());
     DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
-    Double shippingFee = deliveryStrategy.calculateShippingFee(subtotal);
+    Double shippingFee =
+        deliveryStrategy.calculateShippingFee(shippingProfile.getDistrictId(), subtotal);
 
     // Tạo preview order
     return OrderPreviewDTO.builder()

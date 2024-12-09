@@ -2,6 +2,7 @@ package com.example.clothingstore.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.ProductVariant;
@@ -36,6 +37,7 @@ public class OderCancallationServiceImpl implements OderCancellationService {
     }
 
     order.setStatus(OrderStatus.CANCELLED);
+    order.setCancelReason(AppConstant.ORDER_CANCEL_REASON);
 
     order.getLineItems().forEach(lineItem -> {
       ProductVariant variant = lineItem.getProductVariant();

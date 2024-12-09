@@ -29,6 +29,7 @@ dependencies {
     implementation("org.springframework:spring-aspects")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+    implementation("org.json:json:20210307")
     implementation(platform("com.google.cloud:libraries-bom:26.31.0"))
     implementation("com.google.cloud:google-cloud-storage")
     implementation("com.turkraft.springfilter:jpa:3.1.7")

@@ -446,7 +446,7 @@ public class ProductServiceImpl implements ProductService {
         "Ì", "Í", "Ị", "Ỉ", "Ĩ",
         "ì", "í", "ị", "ỉ", "ĩ",
         "Ò", "Ó", "Ọ", "Ỏ", "Õ", "Ô", "Ồ", "Ố", "Ộ", "Ổ", "Ỗ", "Ơ", "Ờ", "Ớ", "Ợ", "Ở", "Ỡ",
-        "ò", "ó", "ọ", "ỏ", "õ", "ô", "ồ", "��", "ộ", "ổ", "ỗ", "ơ", "ờ", "ớ", "ợ", "ở", "ỡ",
+        "ò", "ó", "ọ", "ỏ", "õ", "ô", "ồ", "ố", "ộ", "ổ", "ỗ", "ơ", "ờ", "ớ", "ợ", "ở", "ỡ",
         "Ù", "Ú", "Ụ", "Ủ", "Ũ", "Ư", "Ừ", "Ứ", "Ự", "Ử", "Ữ",
         "ù", "ú", "ụ", "ủ", "ũ", "ư", "ừ", "ứ", "ự", "ử", "ữ",
         "Ỳ", "Ý", "Ỵ", "Ỷ", "Ỹ",
@@ -498,6 +498,7 @@ public class ProductServiceImpl implements ProductService {
         .isFeatured(product.isFeatured())
         .discountRate(promotionCalculatorService.calculateDiscountRate(product))
         .averageRating(calculateAverageRating(product) == 0 ? null : calculateAverageRating(product))
+        .numberOfReviews(calculateNumberOfReviews(product))
         .slug(product.getSlug())
         .colorDefault(product.getColorDefault() != null ? product.getColorDefault().name() : null)
         .images(product.getImages().stream()
@@ -635,5 +636,14 @@ public class ProductServiceImpl implements ProductService {
             .filter(dto -> dto != null)
             .collect(Collectors.toList()))
         .build();
+  }
+
+  private Long calculateNumberOfReviews(Product product) {
+    if (product == null || product.getReviews() == null) {
+      return 0L;
+    }
+    return product.getReviews().stream()
+        .map(Review::getId)
+        .count();
   }
 }
