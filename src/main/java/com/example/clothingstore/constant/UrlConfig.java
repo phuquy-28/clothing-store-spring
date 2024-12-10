@@ -83,6 +83,7 @@ public class UrlConfig {
 
   // Dashboard controller
   public static final String WORKSPACE = "/workspace";
+  public static final String DASHBOARD = "/dashboard";
 
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {

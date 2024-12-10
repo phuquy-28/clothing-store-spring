@@ -39,4 +39,6 @@ public interface UserService {
   void deleteUser(Long id);
 
   UserResDTO getUser(Long id);
+
+  Long countActivatedUsers();
 }

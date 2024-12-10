@@ -45,4 +45,7 @@ public interface OrderRepository
       PaymentMethod paymentMethod, PaymentStatus paymentStatus, OrderStatus status,
       Instant thirtyMinutesAgo);
 
+  @Query("SELECT SUM(o.finalTotal) FROM Order o WHERE o.status = :status")
+  Long sumFinalTotalByStatus(@Param("status") OrderStatus status);
+
 }

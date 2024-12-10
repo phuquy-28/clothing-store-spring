@@ -68,4 +68,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
       ) DESC
       """)
   Page<Product> findDiscountedProducts(@Param("now") Instant now, Pageable pageable);
+
+  Long countByIsDeletedFalse();
 }

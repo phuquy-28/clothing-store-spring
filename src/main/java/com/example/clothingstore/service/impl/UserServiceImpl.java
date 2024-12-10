@@ -246,4 +246,9 @@ public class UserServiceImpl implements UserService {
 
     return userMapper.toUserResDTO(user);
   }
+
+  @Override
+  public Long countActivatedUsers() {
+    return userRepository.countByActivatedTrue();
+  }
 }

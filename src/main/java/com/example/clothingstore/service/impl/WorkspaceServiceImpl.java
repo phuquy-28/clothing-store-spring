@@ -9,13 +9,17 @@ import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.exception.BadCredentialsException;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.service.WorkspaceService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import com.example.clothingstore.repository.OrderRepository;
+import com.example.clothingstore.repository.ProductRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
   private final UserService userService;
 
   private final SecurityUtil securityUtil;
+
+  private final OrderRepository orderRepository;
+
+  private final ProductRepository productRepository;
 
   @Override
   public LoginResDTO login(LoginReqDTO loginReqDto) {
@@ -61,6 +69,30 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     return loginResDTO;
+  }
+
+  @Override
+  public DashboardResDTO getDashboard() {
+    log.debug("Request to get dashboard statistics");
+
+    // Get total users (only activated accounts)
+    Long totalUsers = userService.countActivatedUsers();
+    
+    // Get total orders
+    Long totalOrders = orderRepository.count();
+    
+    // Calculate total revenue from completed orders
+    Long totalRevenue = orderRepository.sumFinalTotalByStatus(OrderStatus.DELIVERED);
+    
+    // Get total products (not deleted)
+    Long totalProducts = productRepository.countByIsDeletedFalse();
+
+    return DashboardResDTO.builder()
+        .totalUsers(totalUsers)
+        .totalOrders(totalOrders)
+        .totalRevenue(totalRevenue)
+        .totalProducts(totalProducts)
+        .build();
   }
 
 

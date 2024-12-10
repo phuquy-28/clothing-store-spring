@@ -30,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
   Optional<User> findByResetKey(String key);
 
   Page<User> findAll(Specification<User> spec, Pageable pageable);
+
+  Long countByActivatedTrue();
 }
