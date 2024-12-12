@@ -22,6 +22,7 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
@@ -71,6 +72,12 @@ public class OrderController {
     return ResponseEntity.ok(orderService.getOrdersByUser(spec, pageable));
   }
 
+  @GetMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.ORDER_ID)
+  public ResponseEntity<OrderDetailsDTO> getOrderDetailsUser(@PathVariable Long orderId) {
+    OrderDetailsDTO result = orderService.getOrderDetailsUser(orderId);
+    return ResponseEntity.ok(result);
+  }
+
   // @GetMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.LINE_ITEM +
   // UrlConfig.ORDER_ID)
   // public ResponseEntity<List<OrderReviewDTO>> getLineItemByOrderId(@PathVariable Long orderId) {
@@ -115,6 +122,12 @@ public class OrderController {
   @GetMapping(UrlConfig.ORDERS + UrlConfig.CONTINUE_PAYMENT + UrlConfig.ORDER_ID)
   public ResponseEntity<OrderPaymentDTO> continuePayment(@PathVariable Long orderId) {
     OrderPaymentDTO result = orderService.continuePayment(orderId);
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping(UrlConfig.ORDERS + UrlConfig.ORDER_ID)
+  public ResponseEntity<OrderDetailsDTO> getOrderDetails(@PathVariable Long orderId) {
+    OrderDetailsDTO result = orderService.getOrderDetails(orderId);
     return ResponseEntity.ok(result);
   }
 }

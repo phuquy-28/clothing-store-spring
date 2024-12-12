@@ -18,6 +18,7 @@ import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
 import com.example.clothingstore.dto.response.CartItemDTO;
+import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
@@ -611,4 +612,81 @@ public class OrderServiceImpl implements OrderService {
     }
   }
 
+  @Override
+  public OrderDetailsDTO getOrderDetailsUser(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    // check if the order belongs to the current user
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get());
+    if (!order.getUser().getId().equals(currentUser.getId())) {
+        throw new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND);
+    }
+
+    return mapToOrderDetailsDTO(order);
+  }
+
+  private OrderDetailsDTO mapToOrderDetailsDTO(Order order) {
+    // Check if order can be reviewed
+    boolean canReview = order.getStatus() == OrderStatus.DELIVERED;
+    
+    // Check if order is already reviewed
+    boolean isReviewed = order.getUser() != null && order.getLineItems().stream()
+        .anyMatch(lineItem -> lineItem.getProductVariant().getProduct().getReviews().stream()
+            .anyMatch(review -> review.getUser() != null 
+                && review.getUser().getId().equals(order.getUser().getId())));
+
+    // Map shipping information to ShippingProfileResDTO
+    ShippingProfileResDTO shippingProfile = ShippingProfileResDTO.builder()
+        .firstName(order.getShippingInformation().getFirstName())
+        .lastName(order.getShippingInformation().getLastName())
+        .phoneNumber(order.getShippingInformation().getPhoneNumber())
+        .address(order.getShippingInformation().getAddress())
+        .ward(order.getShippingInformation().getWard())
+        .district(order.getShippingInformation().getDistrict())
+        .province(order.getShippingInformation().getProvince())
+        .build();
+
+    // Map line items
+    List<OrderDetailsDTO.LineItem> lineItems = order.getLineItems().stream()
+        .map(item -> OrderDetailsDTO.LineItem.builder()
+            .id(item.getId())
+            .productName(item.getProductVariant().getProduct().getName())
+            .color(item.getProductVariant().getColor())
+            .size(item.getProductVariant().getSize())
+            .variantImage(item.getProductVariant().getImages().get(0).getPublicUrl())
+            .quantity(item.getQuantity())
+            .unitPrice(item.getUnitPrice())
+            .discount(item.getDiscountAmount())
+            .build())
+        .collect(Collectors.toList());
+
+    // Build and return OrderDetailsDTO
+    return OrderDetailsDTO.builder()
+        .id(order.getId())
+        .code(order.getCode())
+        .orderDate(order.getOrderDate())
+        .status(order.getStatus())
+        .paymentMethod(order.getPaymentMethod())
+        .paymentStatus(order.getPaymentStatus())
+        .paymentDate(order.getPaymentDate())
+        .lineItems(lineItems)
+        .total(order.getTotal())
+        .shippingFee(order.getShippingFee())
+        .discount(order.getDiscount())
+        .finalTotal(order.getFinalTotal())
+        .canReview(canReview)
+        .isReviewed(isReviewed)
+        .cancelReason(order.getCancelReason())
+        .shippingProfile(shippingProfile)
+        .build();
+  }
+
+  @Override
+  public OrderDetailsDTO getOrderDetails(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    return mapToOrderDetailsDTO(order);
+  }
 }

@@ -7,6 +7,7 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
@@ -37,4 +38,8 @@ public interface OrderService {
   ResultPaginationDTO getOrders(Specification<Order> spec, Pageable pageable);
 
   OrderPaymentDTO continuePayment(Long orderId);
+
+  OrderDetailsDTO getOrderDetailsUser(Long orderId);
+
+  OrderDetailsDTO getOrderDetails(Long orderId);
 }
