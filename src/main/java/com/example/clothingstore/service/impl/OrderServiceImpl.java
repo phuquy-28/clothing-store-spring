@@ -44,6 +44,7 @@ import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.CartRepository;
 import com.example.clothingstore.repository.OrderRepository;
+import com.example.clothingstore.service.OderCancellationService;
 import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.PromotionCalculatorService;
 import com.example.clothingstore.service.UserService;
@@ -91,6 +92,8 @@ public class OrderServiceImpl implements OrderService {
   private final PromotionCalculatorService promotionCalculatorService;
 
   private final CartRepository cartRepository;
+
+  private final OderCancellationService oderCancellationService;
 
   @Override
   @Transactional
@@ -590,6 +593,7 @@ public class OrderServiceImpl implements OrderService {
 
     Instant thirtyMinutesAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
     if (order.getOrderDate().isBefore(thirtyMinutesAgo)) {
+        oderCancellationService.cancelOrderAndReturnStock(orderId);
         throw new BadRequestException(ErrorMessage.ORDER_EXPIRED);
     }
 

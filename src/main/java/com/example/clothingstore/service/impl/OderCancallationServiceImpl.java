@@ -7,6 +7,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.enumeration.OrderStatus;
+import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
@@ -37,6 +38,7 @@ public class OderCancallationServiceImpl implements OderCancellationService {
     }
 
     order.setStatus(OrderStatus.CANCELLED);
+    order.setPaymentStatus(PaymentStatus.FAILED);
     order.setCancelReason(AppConstant.ORDER_CANCEL_REASON);
 
     order.getLineItems().forEach(lineItem -> {

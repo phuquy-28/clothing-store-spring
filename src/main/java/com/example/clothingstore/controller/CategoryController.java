@@ -25,7 +25,6 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("${api.version}")

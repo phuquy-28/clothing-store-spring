@@ -65,7 +65,7 @@ public class VnPayServiceImp implements VnPayService {
     String vnp_TxnRef = order.getCode();
     String vnp_OrderInfo = "Thanh toan don hang: " + order.getCode();
     String vnp_OrderType = orderType;
-    String vnp_Amount = String.valueOf(Math.round(order.getTotal() * 100));
+    String vnp_Amount = String.valueOf(Math.round(order.getFinalTotal() * 100));
     String vnp_Locale = "vn";
     String vnp_CurrCode = "VND";
     String vnp_BankCode = "";
@@ -162,10 +162,14 @@ public class VnPayServiceImp implements VnPayService {
       Order order = orderRepository.findByCode(vnp_TxnRef)
           .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
+      if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+        return null;
+      }
+
       if ("00".equals(vnp_ResponseCode)) {
         // Check amount
         long vnpAmount = Long.parseLong(fields.get("vnp_Amount")) / 100;
-        if (vnpAmount != Math.round(order.getTotal())) {
+        if (vnpAmount != Math.round(order.getFinalTotal())) {
           throw new PaymentException(ErrorMessage.INVALID_AMOUNT);
         }
 
