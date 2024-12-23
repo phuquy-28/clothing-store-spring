@@ -48,4 +48,11 @@ public interface OrderRepository
   @Query("SELECT SUM(o.finalTotal) FROM Order o WHERE o.status = :status")
   Long sumFinalTotalByStatus(@Param("status") OrderStatus status);
 
+  @Query("SELECT MONTH(o.orderDate) as month, SUM(o.finalTotal) as revenue " +
+         "FROM Order o " +
+         "WHERE YEAR(o.orderDate) = :year " +
+         "AND o.status = :status " +
+         "GROUP BY MONTH(o.orderDate)")
+  List<Object[]> findRevenueByMonth(@Param("year") Long year, @Param("status") OrderStatus status);
+
 }

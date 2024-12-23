@@ -11,6 +11,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
+import com.example.clothingstore.dto.response.RevenueByMonth;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.exception.BadCredentialsException;
@@ -20,6 +21,11 @@ import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ProductRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -87,13 +93,39 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // Get total products (not deleted)
     Long totalProducts = productRepository.countByIsDeletedFalse();
 
-    return DashboardResDTO.builder()
-        .totalUsers(totalUsers)
-        .totalOrders(totalOrders)
-        .totalRevenue(totalRevenue)
-        .totalProducts(totalProducts)
-        .build();
+    return DashboardResDTO.builder().totalUsers(totalUsers).totalOrders(totalOrders)
+        .totalRevenue(totalRevenue).totalProducts(totalProducts).build();
   }
 
+  @Override
+  public RevenueByMonth getRevenueByMonth(Long year) {
+    log.debug("Request to get revenue by month for year: {}", year);
+
+    if (year == null) {
+      year = (long) LocalDateTime.now().getYear();
+    }
+
+    List<Object[]> results = orderRepository.findRevenueByMonth(year, OrderStatus.DELIVERED);
+
+    List<RevenueByMonth.RevenueByMonthDTO> revenueByMonthDTOs = new ArrayList<>();
+
+    Map<Integer, Double> revenueMap = new HashMap<>();
+    for (Object[] result : results) {
+      int month = ((Number) result[0]).intValue();
+      double revenue = Math.round(((Number) result[1]).doubleValue() * 100.0) / 100.0;
+      revenueMap.put(month, revenue);
+    }
+
+    // Đảm bảo có đủ 12 tháng, tháng nào không có doanh thu thì set = 0
+    for (int month = 1; month <= 12; month++) {
+      double revenue = revenueMap.getOrDefault(month, 0.0);
+      revenueByMonthDTOs
+          .add(RevenueByMonth.RevenueByMonthDTO.builder().month(month).revenue(revenue).build());
+    }
+
+    revenueByMonthDTOs.sort((a, b) -> Integer.compare(a.getMonth(), b.getMonth()));
+
+    return RevenueByMonth.builder().revenueByMonth(revenueByMonthDTOs).build();
+  }
 
 }
