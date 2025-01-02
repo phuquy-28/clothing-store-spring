@@ -96,27 +96,28 @@ public class CartServiceImpl implements CartService {
       return new ArrayList<>();
     }
 
-    return cart.getCartItems().stream().map(cartItem -> {
-      ProductVariant variant = cartItem.getProductVariant();
-      Product product = variant.getProduct();
+    return cart.getCartItems().stream()
+        .filter(cartItem -> !cartItem.getProductVariant().isDeleted()).map(cartItem -> {
+          ProductVariant variant = cartItem.getProductVariant();
+          Product product = variant.getProduct();
 
-      // Tính giá gốc = giá sản phẩm + chênh lệch giá của variant
-      Double originalPrice = product.getPrice()
-          + (variant.getDifferencePrice() != null ? variant.getDifferencePrice() : 0.0);
+          // Tính giá gốc = giá sản phẩm + chênh lệch giá của variant
+          Double originalPrice = product.getPrice()
+              + (variant.getDifferencePrice() != null ? variant.getDifferencePrice() : 0.0);
 
-      // Tính giá khuyến mãi
-      Double discountRate = promotionCalculatorService.calculateDiscountRate(product);
-      Double finalPrice = originalPrice * (1 - discountRate);
+          // Tính giá khuyến mãi
+          Double discountRate = promotionCalculatorService.calculateDiscountRate(product);
+          Double finalPrice = originalPrice * (1 - discountRate);
 
-      return CartItemDTO.builder().cartItemId(cartItem.getId()).productId(product.getId())
-          .slug(product.getSlug()).productName(product.getName())
-          .productVariant(CartItemDTO.ProductVariantDTO.builder().id(variant.getId())
-              .color(variant.getColor().toString()).size(variant.getSize().toString())
-              .image(variant.getImages().get(0).getPublicUrl()).build())
-          .price(originalPrice).discountRate(discountRate).finalPrice(finalPrice)
-          .quantity(cartItem.getQuantity()).inStock(variant.getQuantity())
-          .image(product.getImages().get(0).getPublicUrl()).build();
-    }).toList();
+          return CartItemDTO.builder().cartItemId(cartItem.getId()).productId(product.getId())
+              .slug(product.getSlug()).productName(product.getName())
+              .productVariant(CartItemDTO.ProductVariantDTO.builder().id(variant.getId())
+                  .color(variant.getColor().toString()).size(variant.getSize().toString())
+                  .image(variant.getImages().get(0).getPublicUrl()).build())
+              .price(originalPrice).discountRate(discountRate).finalPrice(finalPrice)
+              .quantity(cartItem.getQuantity()).inStock(variant.getQuantity())
+              .image(product.getImages().get(0).getPublicUrl()).build();
+        }).toList();
   }
 
   @Override
@@ -191,6 +192,7 @@ public class CartServiceImpl implements CartService {
       return 0L;
     }
 
-    return Long.valueOf(cart.getCartItems().size());
+    return Long.valueOf(cart.getCartItems().stream()
+        .filter(cartItem -> !cartItem.getProductVariant().isDeleted()).count());
   }
 }

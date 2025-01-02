@@ -14,17 +14,17 @@ import org.hibernate.Session;
 @Component
 @RequiredArgsConstructor
 public class HibernateFilterAspect {
-
+  private static final String DELETED_FILTER = "deletedFilter";
   private final EntityManager entityManager;
 
   @Before("@annotation(applyDeletedFilter)")
   public void enableFilter(ApplyDeletedFilter applyDeletedFilter) {
     Session session = entityManager.unwrap(Session.class);
     if (applyDeletedFilter.value()) {
-      Filter filter = session.enableFilter("deletedFilter");
+      Filter filter = session.enableFilter(DELETED_FILTER);
       filter.setParameter("isDeleted", false);
     } else {
-      session.disableFilter("deletedFilter");
+      session.disableFilter(DELETED_FILTER);
     }
   }
 
@@ -32,21 +32,21 @@ public class HibernateFilterAspect {
          " && !@annotation(com.example.clothingstore.annotation.ApplyDeletedFilter)")
   public void enableDefaultFilter() {
     Session session = entityManager.unwrap(Session.class);
-    Filter filter = session.enableFilter("deletedFilter");
+    Filter filter = session.enableFilter(DELETED_FILTER);
     filter.setParameter("isDeleted", false);
   }
 
   @After("@annotation(applyDeletedFilter)")
   public void disableFilter(ApplyDeletedFilter applyDeletedFilter) {
     Session session = entityManager.unwrap(Session.class);
-    session.disableFilter("deletedFilter");
+    session.disableFilter(DELETED_FILTER);
   }
 
   @After("execution(* com.example.clothingstore..*(..))" + 
         " && !@annotation(com.example.clothingstore.annotation.ApplyDeletedFilter)")
   public void disableDefaultFilter() {
     Session session = entityManager.unwrap(Session.class);
-    session.disableFilter("deletedFilter");
+    session.disableFilter(DELETED_FILTER);
   }
 }
 

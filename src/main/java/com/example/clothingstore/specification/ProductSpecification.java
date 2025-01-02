@@ -150,6 +150,8 @@ public class ProductSpecification {
 
   public static Specification<Product> minPriceGreaterThanOrEqualTo(Double minPrice) {
     return (root, query, cb) -> {
+      Instant now = Instant.now();
+
       // Subquery để tính giá thấp nhất của variant
       Subquery<Double> minVariantPrice = query.subquery(Double.class);
       Root<ProductVariant> variantRoot = minVariantPrice.from(ProductVariant.class);
@@ -165,13 +167,27 @@ public class ProductSpecification {
       Join<Category, Promotion> categoryPromotionJoin =
           categoryJoin.join("promotions", JoinType.LEFT);
 
+      // Tính max discount rate cho product promotions
+      Expression<Double> productDiscountRate = cb.<Double>selectCase()
+          .when(
+              cb.and(cb.lessThanOrEqualTo(productPromotionJoin.get("startDate"), now),
+                  cb.greaterThanOrEqualTo(productPromotionJoin.get("endDate"), now)),
+              productPromotionJoin.get("discountRate"))
+          .otherwise(0.0);
+
+      // Tính max discount rate cho category promotions
+      Expression<Double> categoryDiscountRate = cb.<Double>selectCase()
+          .when(
+              cb.and(cb.lessThanOrEqualTo(categoryPromotionJoin.get("startDate"), now),
+                  cb.greaterThanOrEqualTo(categoryPromotionJoin.get("endDate"), now)),
+              categoryPromotionJoin.get("discountRate"))
+          .otherwise(0.0);
+
       maxDiscount
-          .select(cb.quot(
-              cb.coalesce(
-                  cb.coalesce(cb.<Double>max(productPromotionJoin.<Double>get("discountRate")),
-                      cb.<Double>max(categoryPromotionJoin.<Double>get("discountRate"))),
-                  0.0),
-              100.0).as(Double.class))
+          .select(cb.quot(cb.coalesce(
+              cb.max(
+                  cb.function("GREATEST", Double.class, productDiscountRate, categoryDiscountRate)),
+              0.0).as(Double.class), cb.literal(100.0)).as(Double.class))
           .where(cb.equal(discountRoot, root)).groupBy(discountRoot);
 
       // Tính giá cuối cùng và so sánh với minPrice
@@ -182,6 +198,8 @@ public class ProductSpecification {
 
   public static Specification<Product> maxPriceLessThanOrEqualTo(Double maxPrice) {
     return (root, query, cb) -> {
+      Instant now = Instant.now();
+
       // Subquery để tính giá cao nhất của variant
       Subquery<Double> maxVariantPrice = query.subquery(Double.class);
       Root<ProductVariant> variantRoot = maxVariantPrice.from(ProductVariant.class);
@@ -197,13 +215,27 @@ public class ProductSpecification {
       Join<Category, Promotion> categoryPromotionJoin =
           categoryJoin.join("promotions", JoinType.LEFT);
 
+      // Tính max discount rate cho product promotions
+      Expression<Double> productDiscountRate = cb.<Double>selectCase()
+          .when(
+              cb.and(cb.lessThanOrEqualTo(productPromotionJoin.get("startDate"), now),
+                  cb.greaterThanOrEqualTo(productPromotionJoin.get("endDate"), now)),
+              productPromotionJoin.get("discountRate"))
+          .otherwise(0.0);
+
+      // Tính max discount rate cho category promotions
+      Expression<Double> categoryDiscountRate = cb.<Double>selectCase()
+          .when(
+              cb.and(cb.lessThanOrEqualTo(categoryPromotionJoin.get("startDate"), now),
+                  cb.greaterThanOrEqualTo(categoryPromotionJoin.get("endDate"), now)),
+              categoryPromotionJoin.get("discountRate"))
+          .otherwise(0.0);
+
       maxDiscount
-          .select(cb.quot(
-              cb.coalesce(
-                  cb.coalesce(cb.<Double>max(productPromotionJoin.<Double>get("discountRate")),
-                      cb.<Double>max(categoryPromotionJoin.<Double>get("discountRate"))),
-                  0.0),
-              100.0).as(Double.class))
+          .select(cb.quot(cb.coalesce(
+              cb.max(
+                  cb.function("GREATEST", Double.class, productDiscountRate, categoryDiscountRate)),
+              0.0).as(Double.class), cb.literal(100.0)).as(Double.class))
           .where(cb.equal(discountRoot, root)).groupBy(discountRoot);
 
       // Tính giá cuối cùng và so sánh với maxPrice
