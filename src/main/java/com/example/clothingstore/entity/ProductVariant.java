@@ -20,9 +20,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.util.List;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "product_variants")
+@Table(name = "product_variants",
+    indexes = {@Index(name = "idx_variant_price_diff", columnList = "differencePrice"),
+        @Index(name = "idx_variant_product_price", columnList = "product_id,differencePrice"),
+        @Index(name = "idx_variant_is_deleted", columnList = "isDeleted")})
 @SQLDelete(sql = "UPDATE product_variants SET is_deleted = 1 WHERE id = ? AND version = ?")
 @Getter
 @Setter

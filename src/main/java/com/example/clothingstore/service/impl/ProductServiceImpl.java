@@ -1,21 +1,16 @@
 package com.example.clothingstore.service.impl;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +26,9 @@ import com.example.clothingstore.dto.response.ReviewProductDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Cart;
 import com.example.clothingstore.entity.CartItem;
-import com.example.clothingstore.entity.Category;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
-import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.entity.Review;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.PaymentStatus;
@@ -49,12 +42,9 @@ import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
+import com.example.clothingstore.specification.ProductSpecification;
 import com.example.clothingstore.util.SecurityUtil;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -147,154 +137,211 @@ public class ProductServiceImpl implements ProductService {
     return convertToProductResDTO(product);
   }
 
+  // @Override
+  // public ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable) {
+  //   // Kết hợp specification từ spring-filter với custom specification
+  //   Specification<Product> finalSpec = specification;
+
+  //   // Lấy các parameters từ request context
+  //   var request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+  //   String averageRatingStr = request.getParameter("averageRating");
+  //   String hasDiscountStr = request.getParameter("hasDiscount");
+  //   String minPriceStr = request.getParameter("minPrice");
+  //   String maxPriceStr = request.getParameter("maxPrice");
+  //   String sizesStr = request.getParameter("sizes");
+
+  //   // Xử lý specification cho sizes
+  //   if (sizesStr != null && !sizesStr.isEmpty()) {
+  //     Set<Size> requestedSizes = Arrays.stream(sizesStr.split(","))
+  //         .map(s -> Size.valueOf(s.trim().toUpperCase())).collect(Collectors.toSet());
+
+  //     Specification<Product> sizesSpec = (root, query, cb) -> {
+  //       query.distinct(true);
+
+  //       // Tạo subquery để kiểm tra từng size
+  //       List<Predicate> sizePredicates = requestedSizes.stream().map(size -> {
+  //         Subquery<ProductVariant> variantSubquery = query.subquery(ProductVariant.class);
+  //         Root<ProductVariant> variantRoot = variantSubquery.from(ProductVariant.class);
+
+  //         // Kiểm tra tồn tại ít nhất 1 variant cho mỗi size
+  //         variantSubquery.select(variantRoot)
+  //             .where(cb.and(cb.equal(variantRoot.get("product"), root),
+  //                 cb.equal(variantRoot.get("size"), size)));
+
+  //         return cb.exists(variantSubquery);
+  //       }).collect(Collectors.toList());
+
+  //       // Kết hợp tất cả các điều kiện với AND
+  //       return cb.and(sizePredicates.toArray(new Predicate[0]));
+  //     };
+
+  //     finalSpec = finalSpec != null ? finalSpec.and(sizesSpec) : sizesSpec;
+  //   }
+
+  //   // Xử lý specification cho averageRating
+  //   if (averageRatingStr != null) {
+  //       double rating = Double.parseDouble(averageRatingStr);
+  //       Specification<Product> ratingSpec = (root, query, cb) -> {
+  //           query.distinct(true);
+  //           Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
+  //           Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
+  //           avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
+  //               .where(cb.equal(reviewRoot.get("product"), root));
+  //           return cb.greaterThanOrEqualTo(avgRatingSubquery, rating);
+  //       };
+  //       finalSpec = finalSpec != null ? finalSpec.and(ratingSpec) : ratingSpec;
+  //   }
+
+  //   // Xử lý specification cho hasDiscount
+  //   if ("true".equalsIgnoreCase(hasDiscountStr)) {
+  //       Instant now = Instant.now();
+  //       Specification<Product> discountSpec = (root, query, cb) -> {
+  //           query.distinct(true);
+  //           Join<Product, Promotion> productPromotions = root.join("promotions", JoinType.LEFT);
+  //           Join<Product, Category> category = root.join("category", JoinType.LEFT);
+  //           Join<Category, Promotion> categoryPromotions = category.join("promotions", JoinType.LEFT);
+
+  //           return cb.or(
+  //               cb.and(cb.lessThan(productPromotions.get("startDate"), now),
+  //                   cb.greaterThan(productPromotions.get("endDate"), now)),
+  //               cb.and(cb.lessThan(categoryPromotions.get("startDate"), now),
+  //                   cb.greaterThan(categoryPromotions.get("endDate"), now)));
+  //       };
+  //       finalSpec = finalSpec != null ? finalSpec.and(discountSpec) : discountSpec;
+  //   }
+
+  //   // Lấy tất cả products theo specification
+  //   List<Product> allProducts = productRepository.findAll(finalSpec);
+
+  //   // Lọc theo price range nếu có
+  //   if (minPriceStr != null || maxPriceStr != null) {
+  //       Double minPrice = minPriceStr != null ? Double.parseDouble(minPriceStr) : null;
+  //       Double maxPrice = maxPriceStr != null ? Double.parseDouble(maxPriceStr) : null;
+
+  //       allProducts = allProducts.stream()
+  //           .filter(product -> {
+  //               Double productMinPriceWithDiscount = promotionCalculatorService.calculateMinPriceWithDiscount(product);
+  //               boolean meetsMinPrice = minPrice == null || productMinPriceWithDiscount >= minPrice;
+  //               boolean meetsMaxPrice = maxPrice == null || productMinPriceWithDiscount <= maxPrice;
+  //               return meetsMinPrice && meetsMaxPrice;
+  //           })
+  //           .collect(Collectors.toList());
+  //   }
+
+  //   // Sắp xếp sản phẩm
+  //   Comparator<Product> comparator = null;
+  //   if (pageable.getSort().isSorted()) {
+  //       for (Sort.Order order : pageable.getSort()) {
+  //           Comparator<Product> currentComparator = switch (order.getProperty()) {
+  //               case "createdAt" -> Comparator.comparing(Product::getCreatedAt);
+  //               case "minPriceWithDiscount" -> Comparator.comparing(
+  //                   product -> promotionCalculatorService.calculateMinPriceWithDiscount(product));
+  //               default -> Comparator.comparing(Product::getCreatedAt);
+  //           };
+
+  //           if (order.getDirection() == Sort.Direction.DESC) {
+  //               currentComparator = currentComparator.reversed();
+  //           }
+
+  //           comparator = comparator == null ? currentComparator : comparator.thenComparing(currentComparator);
+  //       }
+        
+  //       if (comparator != null) {
+  //           allProducts.sort(comparator);
+  //       }
+  //   }
+
+  //   // Kiểm tra và xử lý phân trang
+  //   int start = (int) pageable.getOffset();
+    
+  //   // Nếu start index vượt quá size của list, trả về trang trống
+  //   if (start >= allProducts.size()) {
+  //       return ResultPaginationDTO.builder()
+  //           .meta(Meta.builder()
+  //               .page((long) pageable.getPageNumber())
+  //               .pageSize((long) pageable.getPageSize())
+  //               .total((long) allProducts.size())
+  //               .pages((long) Math.ceil((double) allProducts.size() / pageable.getPageSize()))
+  //               .build())
+  //           .data(new ArrayList<>())
+  //           .build();
+  //   }
+
+  //   // Tính toán end index, đảm bảo không vượt quá size của list
+  //   int end = Math.min((start + pageable.getPageSize()), allProducts.size());
+  //   List<Product> paginatedProducts = allProducts.subList(start, end);
+
+  //   // Tạo Page object
+  //   Page<Product> productPage = new PageImpl<>(paginatedProducts, pageable, allProducts.size());
+
+  //   // Trả về kết quả
+  //   return ResultPaginationDTO.builder()
+  //       .meta(Meta.builder()
+  //           .page((long) productPage.getNumber())
+  //           .pageSize((long) productPage.getSize())
+  //           .pages((long) productPage.getTotalPages())
+  //           .total(productPage.getTotalElements())
+  //           .build())
+  //       .data(productPage.getContent().stream()
+  //           .map(this::convertToProductResDTO)
+  //           .collect(Collectors.toList()))
+  //       .build();
+  // }
+
   @Override
-  public ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable) {
-    // Kết hợp specification từ spring-filter với custom specification
+  public ResultPaginationDTO getProducts(Boolean isBestSeller, Boolean isDiscounted, Integer days,
+      Double averageRating, Boolean hasDiscount, Double minPrice, Double maxPrice, String sizes,
+      String sortField, String sortOrder, Specification<Product> specification, Pageable pageable) {
+
+    log.debug(
+        "isBestSeller: {}, isDiscounted: {}, days: {}, averageRating: {}, hasDiscount: {}, minPrice: {}, maxPrice: {}, sizes: {}, sortField: {}, sortOrder: {}",
+        isBestSeller, isDiscounted, days, averageRating, hasDiscount, minPrice, maxPrice, sizes,
+        sortField, sortOrder);
+
+    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+    boolean hasBestSellerParam = request.getParameterMap().containsKey("isBestSeller");
+    boolean hasDiscountedParam = request.getParameterMap().containsKey("isDiscounted");
+
     Specification<Product> finalSpec = specification;
 
-    // Lấy các parameters từ request context
-    var request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-    String averageRatingStr = request.getParameter("averageRating");
-    String hasDiscountStr = request.getParameter("hasDiscount");
-    String minPriceStr = request.getParameter("minPrice");
-    String maxPriceStr = request.getParameter("maxPrice");
-    String sizesStr = request.getParameter("sizes");
-
-    // Xử lý specification cho sizes
-    if (sizesStr != null && !sizesStr.isEmpty()) {
-      Set<Size> requestedSizes = Arrays.stream(sizesStr.split(","))
-          .map(s -> Size.valueOf(s.trim().toUpperCase())).collect(Collectors.toSet());
-
-      Specification<Product> sizesSpec = (root, query, cb) -> {
-        query.distinct(true);
-
-        // Tạo subquery để kiểm tra từng size
-        List<Predicate> sizePredicates = requestedSizes.stream().map(size -> {
-          Subquery<ProductVariant> variantSubquery = query.subquery(ProductVariant.class);
-          Root<ProductVariant> variantRoot = variantSubquery.from(ProductVariant.class);
-
-          // Kiểm tra tồn tại ít nhất 1 variant cho mỗi size
-          variantSubquery.select(variantRoot)
-              .where(cb.and(cb.equal(variantRoot.get("product"), root),
-                  cb.equal(variantRoot.get("size"), size)));
-
-          return cb.exists(variantSubquery);
-        }).collect(Collectors.toList());
-
-        // Kết hợp tất cả các điều kiện với AND
-        return cb.and(sizePredicates.toArray(new Predicate[0]));
-      };
-
-      finalSpec = finalSpec != null ? finalSpec.and(sizesSpec) : sizesSpec;
+    if (isBestSeller || hasBestSellerParam) {
+      if (days != null) {
+        Instant startDate = Instant.now().minus(days, ChronoUnit.DAYS);
+        finalSpec =
+            finalSpec.and(ProductSpecification.isBestSeller(PaymentStatus.SUCCESS, startDate));
+      } else {
+        finalSpec =
+            finalSpec.and(ProductSpecification.isBestSeller(PaymentStatus.SUCCESS, null));
+      }
     }
 
-    // Xử lý specification cho averageRating
-    if (averageRatingStr != null) {
-        double rating = Double.parseDouble(averageRatingStr);
-        Specification<Product> ratingSpec = (root, query, cb) -> {
-            query.distinct(true);
-            Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
-            Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
-            avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
-                .where(cb.equal(reviewRoot.get("product"), root));
-            return cb.greaterThanOrEqualTo(avgRatingSubquery, rating);
-        };
-        finalSpec = finalSpec != null ? finalSpec.and(ratingSpec) : ratingSpec;
+    if (isDiscounted || hasDiscountedParam) {
+      finalSpec = finalSpec.and(ProductSpecification.isDiscountedWithMaxDiscount(Instant.now()));
     }
 
-    // Xử lý specification cho hasDiscount
-    if ("true".equalsIgnoreCase(hasDiscountStr)) {
-        Instant now = Instant.now();
-        Specification<Product> discountSpec = (root, query, cb) -> {
-            query.distinct(true);
-            Join<Product, Promotion> productPromotions = root.join("promotions", JoinType.LEFT);
-            Join<Product, Category> category = root.join("category", JoinType.LEFT);
-            Join<Category, Promotion> categoryPromotions = category.join("promotions", JoinType.LEFT);
-
-            return cb.or(
-                cb.and(cb.lessThan(productPromotions.get("startDate"), now),
-                    cb.greaterThan(productPromotions.get("endDate"), now)),
-                cb.and(cb.lessThan(categoryPromotions.get("startDate"), now),
-                    cb.greaterThan(categoryPromotions.get("endDate"), now)));
-        };
-        finalSpec = finalSpec != null ? finalSpec.and(discountSpec) : discountSpec;
+    if (sortField != null) {
+      finalSpec = finalSpec.and(ProductSpecification.sortBy(sortField, sortOrder));
     }
 
-    // Lấy tất cả products theo specification
-    List<Product> allProducts = productRepository.findAll(finalSpec);
-
-    // Lọc theo price range nếu có
-    if (minPriceStr != null || maxPriceStr != null) {
-        Double minPrice = minPriceStr != null ? Double.parseDouble(minPriceStr) : null;
-        Double maxPrice = maxPriceStr != null ? Double.parseDouble(maxPriceStr) : null;
-
-        allProducts = allProducts.stream()
-            .filter(product -> {
-                Double productMinPriceWithDiscount = promotionCalculatorService.calculateMinPriceWithDiscount(product);
-                boolean meetsMinPrice = minPrice == null || productMinPriceWithDiscount >= minPrice;
-                boolean meetsMaxPrice = maxPrice == null || productMinPriceWithDiscount <= maxPrice;
-                return meetsMinPrice && meetsMaxPrice;
-            })
-            .collect(Collectors.toList());
+    if (averageRating != null) {
+      finalSpec = finalSpec.and(ProductSpecification.averageRatingGreaterThanOrEqualTo(averageRating));
     }
 
-    // Sắp xếp sản phẩm
-    Comparator<Product> comparator = null;
-    if (pageable.getSort().isSorted()) {
-        for (Sort.Order order : pageable.getSort()) {
-            Comparator<Product> currentComparator = switch (order.getProperty()) {
-                case "createdAt" -> Comparator.comparing(Product::getCreatedAt);
-                case "minPriceWithDiscount" -> Comparator.comparing(
-                    product -> promotionCalculatorService.calculateMinPriceWithDiscount(product));
-                default -> Comparator.comparing(Product::getCreatedAt);
-            };
-
-            if (order.getDirection() == Sort.Direction.DESC) {
-                currentComparator = currentComparator.reversed();
-            }
-
-            comparator = comparator == null ? currentComparator : comparator.thenComparing(currentComparator);
-        }
-        
-        if (comparator != null) {
-            allProducts.sort(comparator);
-        }
+    if (minPrice != null ) {
+      finalSpec = finalSpec.and(ProductSpecification.minPriceGreaterThanOrEqualTo(minPrice));
     }
 
-    // Kiểm tra và xử lý phân trang
-    int start = (int) pageable.getOffset();
-    
-    // Nếu start index vượt quá size của list, trả về trang trống
-    if (start >= allProducts.size()) {
-        return ResultPaginationDTO.builder()
-            .meta(Meta.builder()
-                .page((long) pageable.getPageNumber())
-                .pageSize((long) pageable.getPageSize())
-                .total((long) allProducts.size())
-                .pages((long) Math.ceil((double) allProducts.size() / pageable.getPageSize()))
-                .build())
-            .data(new ArrayList<>())
-            .build();
+    if (maxPrice != null) {
+      finalSpec = finalSpec.and(ProductSpecification.maxPriceLessThanOrEqualTo(maxPrice));
     }
 
-    // Tính toán end index, đảm bảo không vượt quá size của list
-    int end = Math.min((start + pageable.getPageSize()), allProducts.size());
-    List<Product> paginatedProducts = allProducts.subList(start, end);
+    Page<Product> allProducts = productRepository.findAll(finalSpec, pageable);
 
-    // Tạo Page object
-    Page<Product> productPage = new PageImpl<>(paginatedProducts, pageable, allProducts.size());
-
-    // Trả về kết quả
     return ResultPaginationDTO.builder()
-        .meta(Meta.builder()
-            .page((long) productPage.getNumber())
-            .pageSize((long) productPage.getSize())
-            .pages((long) productPage.getTotalPages())
-            .total(productPage.getTotalElements())
-            .build())
-        .data(productPage.getContent().stream()
-            .map(this::convertToProductResDTO)
-            .collect(Collectors.toList()))
+        .meta(Meta.builder().page((long) allProducts.getNumber())
+            .pageSize((long) allProducts.getSize()).pages((long) allProducts.getTotalPages())
+            .total(allProducts.getTotalElements()).build())
+        .data(allProducts.stream().map(this::convertToProductResDTO).collect(Collectors.toList()))
         .build();
   }
 
@@ -531,43 +578,43 @@ public class ProductServiceImpl implements ProductService {
         .orElse(0);
   }
 
-  @Override
-  public ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable) {
-    Page<Product> bestSellers;
+  // @Override
+  // public ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable) {
+  //   Page<Product> bestSellers;
 
-    if (days != null) {
-      LocalDateTime startDate = LocalDateTime.now().minusDays(days);
-      bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS,
-          startDate.toInstant(ZoneOffset.UTC), pageable);
-    } else {
-      bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS, pageable);
-    }
+  //   if (days != null) {
+  //     LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+  //     bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS,
+  //         startDate.toInstant(ZoneOffset.UTC), pageable);
+  //   } else {
+  //     bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS, pageable);
+  //   }
 
-    return ResultPaginationDTO.builder()
-        .meta(ResultPaginationDTO.Meta.builder().page((long) bestSellers.getNumber())
-            .pageSize((long) bestSellers.getSize()).pages((long) bestSellers.getTotalPages())
-            .total(bestSellers.getTotalElements()).build())
-        .data(bestSellers.getContent().stream().map(this::convertToProductResDTO)
-            .collect(Collectors.toList()))
-        .build();
-  }
+  //   return ResultPaginationDTO.builder()
+  //       .meta(ResultPaginationDTO.Meta.builder().page((long) bestSellers.getNumber())
+  //           .pageSize((long) bestSellers.getSize()).pages((long) bestSellers.getTotalPages())
+  //           .total(bestSellers.getTotalElements()).build())
+  //       .data(bestSellers.getContent().stream().map(this::convertToProductResDTO)
+  //           .collect(Collectors.toList()))
+  //       .build();
+  // }
 
-  @Override
-  public ResultPaginationDTO getDiscountedProducts(Pageable pageable) {
-    Page<Product> discountedProducts = productRepository.findDiscountedProducts(Instant.now(), pageable);
+  // @Override
+  // public ResultPaginationDTO getDiscountedProducts(Pageable pageable) {
+  //   Page<Product> discountedProducts = productRepository.findDiscountedProducts(Instant.now(), pageable);
 
-    return ResultPaginationDTO.builder()
-        .meta(Meta.builder()
-            .page((long) discountedProducts.getNumber())
-            .pageSize((long) discountedProducts.getSize())
-            .pages((long) discountedProducts.getTotalPages())
-            .total(discountedProducts.getTotalElements())
-            .build())
-        .data(discountedProducts.getContent().stream()
-            .map(this::convertToProductResDTO)
-            .collect(Collectors.toList()))
-        .build();
-  }
+  //   return ResultPaginationDTO.builder()
+  //       .meta(Meta.builder()
+  //           .page((long) discountedProducts.getNumber())
+  //           .pageSize((long) discountedProducts.getSize())
+  //           .pages((long) discountedProducts.getTotalPages())
+  //           .total(discountedProducts.getTotalElements())
+  //           .build())
+  //       .data(discountedProducts.getContent().stream()
+  //           .map(this::convertToProductResDTO)
+  //           .collect(Collectors.toList()))
+  //       .build();
+  // }
 
   private Double calculateAverageRating(Product product) {
     if (product == null || product.getReviews() == null) {

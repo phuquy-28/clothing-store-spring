@@ -24,7 +24,6 @@ import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.service.ProductService;
 import com.turkraft.springfilter.boot.Filter;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -67,29 +66,47 @@ public class ProductController {
     return ResponseEntity.status(HttpStatus.OK).body(productResDTO);
   }
 
+  // @GetMapping(UrlConfig.PRODUCT)
+  // public ResponseEntity<ResultPaginationDTO> getProducts(
+  //     @RequestParam(required = false) Boolean isBestSeller,
+  //     @RequestParam(required = false) Boolean isDiscounted,
+  //     @RequestParam(required = false) Integer days, @Filter Specification<Product> specification,
+  //     Pageable pageable, HttpServletRequest request) {
+
+  //   boolean hasBestSellerParam = request.getParameterMap().containsKey("isBestSeller");
+  //   boolean hasDiscountedParam = request.getParameterMap().containsKey("isDiscounted");
+
+  //   log.debug(
+  //       "Get products request: hasBestSellerParam={}, hasDiscountedParam={}, days={}, spec={}, pageable={}",
+  //       hasBestSellerParam, hasDiscountedParam, days, specification, pageable);
+
+  //   if (hasBestSellerParam) {
+  //     return ResponseEntity.ok(productService.getBestSellerProducts(days, pageable));
+  //   }
+
+  //   if (hasDiscountedParam) {
+  //     return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
+  //   }
+
+  //   return ResponseEntity.ok(productService.getProducts(specification, pageable));
+  // }
+
   @GetMapping(UrlConfig.PRODUCT)
   public ResponseEntity<ResultPaginationDTO> getProducts(
-      @RequestParam(required = false) Boolean isBestSeller,
-      @RequestParam(required = false) Boolean isDiscounted,
-      @RequestParam(required = false) Integer days, @Filter Specification<Product> specification,
-      Pageable pageable, HttpServletRequest request) {
-
-    boolean hasBestSellerParam = request.getParameterMap().containsKey("isBestSeller");
-    boolean hasDiscountedParam = request.getParameterMap().containsKey("isDiscounted");
-
-    log.debug(
-        "Get products request: hasBestSellerParam={}, hasDiscountedParam={}, days={}, spec={}, pageable={}",
-        hasBestSellerParam, hasDiscountedParam, days, specification, pageable);
-
-    if (hasBestSellerParam) {
-      return ResponseEntity.ok(productService.getBestSellerProducts(days, pageable));
-    }
-
-    if (hasDiscountedParam) {
-      return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
-    }
-
-    return ResponseEntity.ok(productService.getProducts(specification, pageable));
+      @RequestParam(required = false, defaultValue = "false") Boolean isBestSeller,
+      @RequestParam(required = false, defaultValue = "false") Boolean isDiscounted,
+      @RequestParam(required = false) Integer days,
+      @RequestParam(required = false) Double averageRating,
+      @RequestParam(required = false, defaultValue = "false") Boolean hasDiscount,
+      @RequestParam(required = false) Double minPrice,
+      @RequestParam(required = false) Double maxPrice, 
+      @RequestParam(required = false) String sizes,
+      @RequestParam(required = false) String sortField,
+      @RequestParam(required = false, defaultValue = "asc") String sortOrder,
+      @Filter Specification<Product> specification, Pageable pageable) {
+    return ResponseEntity
+        .ok(productService.getProducts(isBestSeller, isDiscounted, days, averageRating, hasDiscount,
+            minPrice, maxPrice, sizes, sortField, sortOrder, specification, pageable));
   }
 
   @PutMapping(UrlConfig.PRODUCT)

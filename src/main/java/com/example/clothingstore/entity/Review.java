@@ -11,9 +11,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews",
+    indexes = {@Index(name = "idx_review_product_rating", columnList = "product_id,rating"),
+        @Index(name = "idx_review_is_deleted", columnList = "isDeleted")})
 @SQLDelete(sql = "UPDATE reviews SET is_deleted = 1 WHERE id = ?")
 @Getter
 @Setter

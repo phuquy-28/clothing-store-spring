@@ -16,7 +16,7 @@ public interface ProductService {
 
   ProductResDTO getProductBySlug(String slug);
 
-  ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable);
+  // ResultPaginationDTO getProducts(Specification<Product> specification, Pageable pageable);
 
   ProductResDTO updateProduct(ProductReqDTO productReqDTO);
 
@@ -24,11 +24,15 @@ public interface ProductService {
 
   ProductResDTO getProductById(Long id);
 
-  ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable);
+  // ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable);
 
   ProductResDTO convertToProductResDTO(Product product);
 
-  ResultPaginationDTO getDiscountedProducts(Pageable pageable);
+  // ResultPaginationDTO getDiscountedProducts(Pageable pageable);
 
   ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable);
+
+  ResultPaginationDTO getProducts(Boolean isBestSeller, Boolean isDiscounted, Integer days,
+      Double averageRating, Boolean hasDiscount, Double minPrice, Double maxPrice, String sizes,
+      String sortField, String sortOrder, Specification<Product> specification, Pageable pageable);
 }

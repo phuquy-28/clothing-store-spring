@@ -19,9 +19,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.util.List;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products",
+    indexes = {@Index(name = "idx_product_featured", columnList = "isFeatured"),
+        @Index(name = "idx_product_created_at", columnList = "createdAt"),
+        @Index(name = "idx_product_price", columnList = "price"),
+        @Index(name = "idx_product_is_deleted", columnList = "isDeleted")})
 @SQLDelete(sql = "UPDATE products SET is_deleted = 1 WHERE id = ?")
 @Getter
 @Setter
