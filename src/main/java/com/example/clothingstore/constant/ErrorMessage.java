@@ -7,6 +7,7 @@ public final class ErrorMessage {
   public static final String REFRESH_TOKEN_INVALID = "error.refresh_token.invalid";
   public static final String EMAIL_INVALID = "error.email.invalid";
   public static final String ACTIVATION_TOKEN_INVALID = "error.activation_token.invalid";
+  public static final String ACTIVATION_CODE_INVALID = "error.activation_code.invalid";
   public static final String RESET_TOKEN_INVALID = "error.reset_token.invalid";
   public static final String PASSWORD_NOT_MATCH = "error.password.not_match";
   public static final String USERNAME_OR_PASSWORD_INVALID = "error.username_or_password.invalid";
@@ -53,6 +54,8 @@ public final class ErrorMessage {
   public static final String DELIVERY_AREA_NOT_SUPPORTED = "error.delivery.area_not_supported";
   public static final String DELIVERY_SERVICE_UNAVAILABLE = "error.delivery.service_unavailable";
   public static final String DELIVERY_FEE_CALCULATION_FAILED = "error.delivery.fee_calculation_failed";
+  public static final String RESET_CODE_INVALID = "error.reset_code.invalid";
+  public static final String RESET_CODE_EXPIRED = "error.reset_code.expired";
   
   private ErrorMessage() {
   }

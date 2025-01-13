@@ -18,4 +18,8 @@ public interface EmailService {
   public void sendRecoverPasswordEmail(User user);
 
   public void sendOrderConfirmationEmail(Order order, List<ProductVariant> productVariants);
+
+  public void sendActivationCodeEmail(User user);
+
+  public void sendResetCodeEmail(User user);
 }

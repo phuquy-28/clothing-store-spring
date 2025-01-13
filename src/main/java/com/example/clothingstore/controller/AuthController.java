@@ -4,9 +4,12 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.dto.request.ReqEmailRecover;
+import com.example.clothingstore.dto.request.ActivateAccountDTO;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.request.LogoutReqDTO;
 import com.example.clothingstore.dto.request.ReqResetPassword;
+import com.example.clothingstore.dto.request.ResetAccountDTO;
+import com.example.clothingstore.dto.request.VerifyResetCodeDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RegisterResDTO;
 import com.example.clothingstore.service.AuthService;
@@ -132,6 +135,49 @@ public class AuthController {
     log.debug("REST request to reset password with key: {}", key);
     authService.resetPassword(key, reqResetPassword.getNewPassword(),
         reqResetPassword.getConfirmPassword());
+    return ResponseEntity.ok().build();
+  }
+
+  @GetMapping(UrlConfig.AUTH + UrlConfig.SEND_ACTIVATION_CODE)
+  public ResponseEntity<Void> sendActivationCode(@RequestParam("email") String email)
+      throws EmailInvalidException {
+    log.debug("REST request to send activation code: {}", email);
+    authService.sendActivationCode(email);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping(UrlConfig.AUTH + UrlConfig.ACTIVATE_CODE)
+  public ResponseEntity<LoginResDTO> activateAccount(
+      @RequestBody @Valid ActivateAccountDTO activateAccountDTO) throws TokenInvalidException {
+    log.debug("REST request to activate account: {}", activateAccountDTO);
+    LoginResDTO res = authService.activateAccount(activateAccountDTO.getEmail(),
+        activateAccountDTO.getActivationCode());
+    return ResponseEntity.ok().body(res);
+  }
+
+  @PostMapping(UrlConfig.AUTH + UrlConfig.RECOVER_PASSWORD_CODE)
+  public ResponseEntity<Void> recoverPasswordCode(@RequestBody @Valid ReqEmailRecover reqEmailRecover)
+      throws EmailInvalidException {
+    log.debug("REST request to recover password: {}", reqEmailRecover);
+    authService.recoverPasswordCode(reqEmailRecover.getEmail());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping(UrlConfig.AUTH + UrlConfig.VERIFY_RESET_CODE)
+  public ResponseEntity<Void> verifyResetCode(
+      @RequestBody @Valid VerifyResetCodeDTO verifyResetCodeDTO) {
+    log.debug("REST request to verify email: {} with reset code: {}", verifyResetCodeDTO.getEmail(),
+        verifyResetCodeDTO.getResetCode());
+    authService.verifyResetCode(verifyResetCodeDTO.getEmail(), verifyResetCodeDTO.getResetCode());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping(UrlConfig.AUTH + UrlConfig.RESET_PASSWORD_CODE)
+  public ResponseEntity<Void> resetPasswordCode(
+      @RequestBody @Valid ResetAccountDTO resetAccountDTO) {
+    log.debug("REST request to reset email: {} with reset code: {}", resetAccountDTO.getEmail(),
+        resetAccountDTO.getResetCode());
+    authService.resetPassword(resetAccountDTO);
     return ResponseEntity.ok().build();
   }
 }

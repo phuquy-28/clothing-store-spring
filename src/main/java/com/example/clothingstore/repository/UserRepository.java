@@ -32,4 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
   Page<User> findAll(Specification<User> spec, Pageable pageable);
 
   Long countByActivatedTrue();
+
+  Optional<User> findByEmailAndActivationCode(String email, String activationCode);
 }

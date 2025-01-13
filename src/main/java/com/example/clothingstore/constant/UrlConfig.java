@@ -33,9 +33,14 @@ public class UrlConfig {
 	public static final String LOGOUT = "/logout";
 	public static final String REFRESH = "/refresh";
 	public static final String SEND_ACTIVATION_EMAIL = "/send-activation-email";
+  public static final String SEND_ACTIVATION_CODE = "/send-activation-code";
 	public static final String ACTIVATE = "/activate";
+  public static final String ACTIVATE_CODE = "/activate-code";
 	public static final String RECOVER_PASSWORD = "/recover-password";
+  public static final String RECOVER_PASSWORD_CODE = "/recover-password-code";
 	public static final String RESET_PASSWORD = "/reset-password";
+  public static final String RESET_PASSWORD_CODE = "/reset-password-code";
+  public static final String VERIFY_RESET_CODE = "/verify-reset-code";
 
 	// Product controller
 	public static final String PRODUCT = "/products";
@@ -102,6 +107,7 @@ public class UrlConfig {
 			ACTUATOR + HEALTH,
 			API_VERSION + AUTH + ACTIVATE + "/**",
 			API_VERSION + AUTH + SEND_ACTIVATION_EMAIL + "/**",
+			API_VERSION + AUTH + SEND_ACTIVATION_CODE + "/**",
 			API_VERSION + AUTH + REFRESH,
 			API_VERSION + PRODUCT,
 			API_VERSION + PRODUCT + PRODUCT_SLUG,
@@ -121,7 +127,11 @@ public class UrlConfig {
 			API_VERSION + AUTH + LOGIN,
 			API_VERSION + AUTH + REGISTER,
 			API_VERSION + AUTH + RECOVER_PASSWORD,
+			API_VERSION + AUTH + RECOVER_PASSWORD_CODE,
 			API_VERSION + AUTH + RESET_PASSWORD + "/**",
+			API_VERSION + AUTH + RESET_PASSWORD_CODE,
+			API_VERSION + AUTH + ACTIVATE_CODE + "/**",
+      API_VERSION + AUTH + VERIFY_RESET_CODE,
 			API_VERSION + ORDERS,
 			// API_VERSION + ORDERS + CHECK_OUT,
       API_VERSION + WORKSPACE + LOGIN

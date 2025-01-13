@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
+import com.example.clothingstore.dto.request.ResetAccountDTO;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.TokenBlacklist;
 import com.example.clothingstore.entity.User;
@@ -20,9 +21,12 @@ import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.RandomUtil;
 import com.example.clothingstore.util.SecurityUtil;
 import com.example.clothingstore.exception.BadCredentialsException;
+import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.EmailInvalidException;
+import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.exception.TokenInvalidException;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +78,9 @@ public class AuthServiceImpl implements AuthService {
     // set default role for new user
     newUser.setRole(roleRepository.findByName(AppConstant.ROLE_USER).orElse(null));
 
-    // generate activation key
+    // generate activation key and activation code
     newUser.setActivationKey(RandomUtil.generateActivationKey());
+    newUser.setActivationCode(RandomUtil.generateActivationCode());
 
     // firstName and lastName are optional
     Profile profile = new Profile();
@@ -328,4 +333,101 @@ public class AuthServiceImpl implements AuthService {
     loginResDTO.setUser(resUser);
     return loginResDTO;
   }
+
+  @Override
+  public void sendActivationCode(String email) {
+    if (userRepository.findByEmailAndActivatedFalse(email).isPresent()) {
+      User user = userRepository.findByEmail(email).get();
+      emailService.sendActivationCodeEmail(user);
+    } else {
+      throw new EmailInvalidException(ErrorMessage.EMAIL_INVALID);
+    }
+  }
+
+  @Override
+  public LoginResDTO activateAccount(String email, String activationCode) {
+    Optional<User> userDb = userRepository.findByEmailAndActivationCode(email, activationCode);
+    if (userDb.isPresent()) {
+      User user = userDb.get();
+      user.setActivated(true);
+      user.setActivationCode(null);
+      User savedUser = userRepository.save(user);
+
+      LoginResDTO loginResDTO = convertUserToResLoginDTO(savedUser);
+
+      if (savedUser.isActivated()) {
+        // Tạo access token
+        String accessToken = securityUtil.createAccessToken(savedUser, loginResDTO);
+        loginResDTO.setAccessToken(accessToken);
+
+        // Tạo refresh token
+        String refreshToken = securityUtil.createRefreshToken(savedUser.getEmail(), loginResDTO);
+        loginResDTO.setRefreshToken(refreshToken);
+
+        userService.updateUserWithRefreshToken(savedUser, refreshToken);
+      }
+
+      log.debug("Activated Information for User: {}", savedUser);
+      return loginResDTO;
+    } else {
+      throw new TokenInvalidException(ErrorMessage.ACTIVATION_CODE_INVALID);
+    }
+  }
+
+  @Override
+  public void recoverPasswordCode(String email) {
+    // check exist user with email
+    User user = userRepository.findByEmailAndActivatedTrue(email)
+        .orElseThrow(() -> new EmailInvalidException(ErrorMessage.EMAIL_INVALID));
+
+    // check if the last password recovery request has expired (30 seconds)
+    if (user.getCodeResetDate() != null
+        && user.getCodeResetDate().isAfter(Instant.now().minusSeconds(30))) {
+      throw new EmailInvalidException(ErrorMessage.PASSWORD_RECOVERY_TOO_FREQUENT);
+    }
+
+    // generate reset key and reset date
+    user.setResetCode(RandomUtil.generateResetCode());
+    user.setCodeResetDate(Instant.now());
+
+    log.debug("Reset password Information for User: {}", user);
+    userRepository.save(user);
+
+    emailService.sendResetCodeEmail(user);
+  }
+
+  @Override
+  public void verifyResetCode(String email, String resetCode) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    if (!user.getResetCode().equals(resetCode)) {
+      throw new BadRequestException(ErrorMessage.RESET_CODE_INVALID);
+    }
+
+    if (user.getCodeResetDate() != null
+        && user.getCodeResetDate().isBefore(Instant.now().minusSeconds(60L * 15))) {
+      throw new BadRequestException(ErrorMessage.RESET_CODE_EXPIRED);
+    }
+  }
+
+  @Override
+  public void resetPassword(ResetAccountDTO resetAccountDTO) {
+    verifyResetCode(resetAccountDTO.getEmail(), resetAccountDTO.getResetCode());
+
+    User user = userRepository.findByEmail(resetAccountDTO.getEmail())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    if (!resetAccountDTO.getNewPassword().equals(resetAccountDTO.getConfirmPassword())) {
+      throw new BadRequestException(ErrorMessage.PASSWORD_NOT_MATCH);
+    }
+
+    user.setPassword(passwordEncoder.encode(resetAccountDTO.getNewPassword()));
+
+    user.setResetCode(null);
+    user.setCodeResetDate(null);
+
+    userRepository.save(user);
+  }
 }
+

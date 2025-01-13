@@ -207,4 +207,22 @@ public class EmailServiceImpl implements EmailService {
     this.sendEmailSync(order.getUser().getEmail(), AppConstant.ORDER_EMAIL_SUBJECT, content, true,
         true);
   }
+
+  @Async
+  @Override
+  public void sendActivationCodeEmail(User user) {
+    log.debug("Sending activation code email to '{}'", user.getEmail());
+    this.sendEmailFromTemplateSync(user.getEmail(), AppConstant.ACTIVATION_CODE_EMAIL_SUBJECT,
+        AppConstant.ACTIVATION_CODE_EMAIL_TEMPLATE, user.getProfile().getFirstName(),
+        user.getActivationCode());
+  }
+
+  @Async
+  @Override
+  public void sendResetCodeEmail(User user) {
+    log.debug("Sending reset code email to '{}'", user.getEmail());
+    this.sendEmailFromTemplateSync(user.getEmail(), AppConstant.RESET_CODE_EMAIL_SUBJECT,
+        AppConstant.RESET_CODE_EMAIL_TEMPLATE, user.getProfile().getFirstName(),
+        user.getResetCode());
+  }
 }

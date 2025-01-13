@@ -48,6 +48,9 @@ public class User extends AbstractEntity {
   @JsonIgnore
   private String activationKey;
 
+  @Size(max = 6)
+  private String activationCode;
+
   @Size(max = 50)
   @Column(name = "reset_key", length = 50)
   @JsonIgnore
@@ -55,6 +58,11 @@ public class User extends AbstractEntity {
 
   @Column(name = "reset_date")
   private Instant resetDate = null;
+
+  @Size(max = 6)
+  private String resetCode;
+
+  private Instant codeResetDate = null;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ShippingProfile> shippingProfiles;

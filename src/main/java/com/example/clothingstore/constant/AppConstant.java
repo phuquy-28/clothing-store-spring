@@ -13,9 +13,13 @@ public final class AppConstant {
 
   public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
   public static final String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
+  public static final String ACTIVATION_CODE_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
+  public static final String RESET_CODE_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
   public static final String RECOVER_PASSWORD_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
   public static final String ORDER_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Order confirmation";
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
+  public static final String ACTIVATION_CODE_EMAIL_TEMPLATE = "mail/activationCodeEmail";
+  public static final String RESET_CODE_EMAIL_TEMPLATE = "mail/recoverPasswordCodeEmail";
   public static final String RECOVER_PASSWORD_EMAIL_TEMPLATE = "mail/recoverPasswordEmail";
   public static final String ORDER_EMAIL_TEMPLATE = "mail/orderEmail";
   public static final String ORDER_CONFIRMATION_EMAIL_TEMPLATE = "mail/orderEmail";
