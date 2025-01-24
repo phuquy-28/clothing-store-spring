@@ -80,6 +80,9 @@ public class User extends AbstractEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Cart cart;
 
+  @OneToMany(mappedBy = "user")
+  private List<Order> orders;
+
   public User(String email, String password, boolean activated) {
     this.email = email;
     this.password = password;

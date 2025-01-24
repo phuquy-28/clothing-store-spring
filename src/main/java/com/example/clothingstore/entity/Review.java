@@ -29,6 +29,8 @@ public class Review extends SoftDeleteEntity {
 
   private Double rating;
 
+  private boolean published = false;
+
   @ManyToOne
   @JoinColumn(name = "user_id")
   private User user;

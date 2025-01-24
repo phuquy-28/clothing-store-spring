@@ -621,6 +621,7 @@ public class ProductServiceImpl implements ProductService {
       return 0.0;
     }
     return product.getReviews().stream()
+        .filter(review -> review.isPublished())
         .mapToDouble(Review::getRating)
         .average()
         .orElse(0.0);
@@ -632,7 +633,7 @@ public class ProductServiceImpl implements ProductService {
       throw new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND);
     }
 
-    Page<Review> reviews = reviewRepository.findByProductSlug(slug, pageable);
+    Page<Review> reviews = reviewRepository.findByProductSlugAndPublishedTrue(slug, pageable);
 
     return ResultPaginationDTO.builder()
         .meta(Meta.builder()
@@ -678,6 +679,7 @@ public class ProductServiceImpl implements ProductService {
       return 0L;
     }
     return product.getReviews().stream()
+        .filter(review -> review.isPublished())
         .map(Review::getId)
         .count();
   }

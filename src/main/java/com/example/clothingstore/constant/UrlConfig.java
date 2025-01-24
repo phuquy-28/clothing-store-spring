@@ -74,6 +74,7 @@ public class UrlConfig {
 
 	// Review controller
   public static final String REVIEW = "/reviews";
+  public static final String PUBLISH = "/publish";
 
 	// Payment controller
 	public static final String PAYMENT = "/payment";
