@@ -23,7 +23,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users")
-@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens", "defaultShippingProfile", "cart", "profile"})
+@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens", "defaultShippingProfile", "cart", "profile", "orders"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractEntity {
@@ -63,6 +63,12 @@ public class User extends AbstractEntity {
   private String resetCode;
 
   private Instant codeResetDate = null;
+
+  private String avatar;
+
+  private String profileCode;
+
+  private Instant profileCodeDate = null;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ShippingProfile> shippingProfiles;

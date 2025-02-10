@@ -19,6 +19,8 @@ public class UrlConfig {
 
 	// Common
 	public static final String ID = "/{id}";
+  public static final String MOBILE = "/mobile";
+  public static final String SEND_OTP = "/send-otp";
 
 	// Public endpoints
 	public static final String ROOT = "/";
@@ -118,7 +120,8 @@ public class UrlConfig {
 			API_VERSION + USER,
       API_VERSION + USER + INFO,
 			API_VERSION + PAYMENT,
-			API_VERSION + PAYMENT + VNPAY_RETURN
+			API_VERSION + PAYMENT + VNPAY_RETURN,
+      API_VERSION + MOBILE + USER + PROFILE + SEND_OTP
 		};
 	}
 

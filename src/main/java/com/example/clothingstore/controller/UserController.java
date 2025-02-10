@@ -14,13 +14,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
+import com.example.clothingstore.dto.response.ProfileResMobileDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.RoleResDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
@@ -95,7 +98,8 @@ public class UserController {
   }
 
   @PutMapping(UrlConfig.USER)
-  public ResponseEntity<UserResDTO> updateUser(@RequestBody @Valid UpdateUserReqDTO updateUserReqDTO) {
+  public ResponseEntity<UserResDTO> updateUser(
+      @RequestBody @Valid UpdateUserReqDTO updateUserReqDTO) {
     log.debug("REST request to update user: {}", updateUserReqDTO);
     return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(updateUserReqDTO));
   }
@@ -105,5 +109,26 @@ public class UserController {
     log.debug("REST request to delete user: {}", id);
     userService.deleteUser(id);
     return ResponseEntity.status(HttpStatus.OK).build();
+  }
+
+  @GetMapping(UrlConfig.MOBILE + UrlConfig.USER + UrlConfig.PROFILE)
+  public ResponseEntity<ProfileResMobileDTO> getProfileMobile() {
+    log.debug("REST request to get profile mobile");
+    return ResponseEntity.status(HttpStatus.OK).body(userService.getProfileMobile());
+  }
+
+  @GetMapping(UrlConfig.MOBILE + UrlConfig.USER + UrlConfig.PROFILE + UrlConfig.SEND_OTP)
+  public ResponseEntity<Void> sendOtpMobile(@RequestParam("email") String email) {
+    log.debug("REST request to send otp mobile");
+    userService.sendProfileOtpMobile(email);
+    return ResponseEntity.status(HttpStatus.OK).build();
+  }
+
+  @PutMapping(UrlConfig.MOBILE + UrlConfig.USER + UrlConfig.PROFILE)
+  public ResponseEntity<ProfileResMobileDTO> updateProfileMobile(
+      @RequestBody @Valid UpdateProfileMobileReqDTO updateProfileMobileReqDTO) {
+    log.debug("REST request to update profile mobile");
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(userService.updateProfileMobile(updateProfileMobileReqDTO));
   }
 }

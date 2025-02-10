@@ -225,4 +225,13 @@ public class EmailServiceImpl implements EmailService {
         AppConstant.RESET_CODE_EMAIL_TEMPLATE, user.getProfile().getFirstName(),
         user.getResetCode());
   }
+
+  @Async
+  @Override
+  public void sendProfileOtpMobile(User user) {
+    log.debug("Sending profile otp mobile to '{}'", user.getEmail());
+    this.sendEmailFromTemplateSync(user.getEmail(), AppConstant.PROFILE_OTP_MOBILE_EMAIL_SUBJECT,
+        AppConstant.PROFILE_OTP_MOBILE_EMAIL_TEMPLATE, user.getProfile().getFirstName(),
+        user.getProfileCode());
+  }
 }

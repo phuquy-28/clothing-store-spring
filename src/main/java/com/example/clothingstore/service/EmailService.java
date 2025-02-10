@@ -22,4 +22,6 @@ public interface EmailService {
   public void sendActivationCodeEmail(User user);
 
   public void sendResetCodeEmail(User user);
+
+  public void sendProfileOtpMobile(User user);
 }

@@ -2,11 +2,13 @@ package com.example.clothingstore.service;
 
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.UserInfoDTO;
 import com.example.clothingstore.dto.response.UserResDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
+import com.example.clothingstore.dto.response.ProfileResMobileDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.RoleResDTO;
 import com.example.clothingstore.entity.User;
@@ -41,4 +43,10 @@ public interface UserService {
   UserResDTO getUser(Long id);
 
   Long countActivatedUsers();
+
+  ProfileResMobileDTO getProfileMobile();
+
+  void sendProfileOtpMobile(String email);
+
+  ProfileResMobileDTO updateProfileMobile(UpdateProfileMobileReqDTO updateProfileMobileReqDTO);
 }

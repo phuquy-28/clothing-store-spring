@@ -56,6 +56,8 @@ public final class ErrorMessage {
   public static final String DELIVERY_FEE_CALCULATION_FAILED = "error.delivery.fee_calculation_failed";
   public static final String RESET_CODE_INVALID = "error.reset_code.invalid";
   public static final String RESET_CODE_EXPIRED = "error.reset_code.expired";
+  public static final String OTP_NOT_SENT = "error.otp.not_sent";
+  public static final String OTP_INVALID = "error.otp.invalid";
   
   private ErrorMessage() {
   }

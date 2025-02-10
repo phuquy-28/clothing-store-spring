@@ -4,19 +4,19 @@ import java.security.SecureRandom;
 import org.apache.commons.lang3.RandomStringUtils;
 
 public final class RandomUtil {
-  private static final int ACTIVATION_KEY_LENGTH = 50;
-  private static final int ACTIVATION_CODE_LENGTH = 6;
+  private static final int KEY_LENGTH = 50;
+  private static final int CODE_LENGTH = 6;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
   private RandomUtil() {}
 
   public static String generateRandomAlphanumericString() {
-    return RandomStringUtils.random(ACTIVATION_KEY_LENGTH, 0, 0, true, true, (char[]) null,
+    return RandomStringUtils.random(KEY_LENGTH, 0, 0, true, true, (char[]) null,
         SECURE_RANDOM);
   }
 
   public static String generateRandomNumericString() {
-    return RandomStringUtils.random(ACTIVATION_CODE_LENGTH, 0, 0, false, true, (char[]) null,
+    return RandomStringUtils.random(CODE_LENGTH, 0, 0, false, true, (char[]) null,
         SECURE_RANDOM);
   }
 
@@ -37,6 +37,10 @@ public final class RandomUtil {
   }
 
   public static String generateResetCode() {
+    return generateRandomNumericString();
+  }
+
+  public static String generateProfileCode() {
     return generateRandomNumericString();
   }
 

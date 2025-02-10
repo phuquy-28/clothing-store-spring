@@ -3,9 +3,11 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
+import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
 import com.example.clothingstore.dto.request.UserReqDTO;
 import com.example.clothingstore.dto.response.ProfileResDTO;
+import com.example.clothingstore.dto.response.ProfileResMobileDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
 import com.example.clothingstore.dto.response.RoleResDTO;
@@ -23,7 +25,9 @@ import com.example.clothingstore.mapper.UserMapper;
 import com.example.clothingstore.repository.RoleRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.CartService;
+import com.example.clothingstore.service.EmailService;
 import com.example.clothingstore.service.UserService;
+import com.example.clothingstore.util.RandomUtil;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +35,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,6 +59,8 @@ public class UserServiceImpl implements UserService {
   private final RoleRepository roleRepository;
 
   private final UserMapper userMapper;
+
+  private final EmailService emailService;
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
@@ -250,5 +258,66 @@ public class UserServiceImpl implements UserService {
   @Override
   public Long countActivatedUsers() {
     return userRepository.countByActivatedTrue();
+  }
+
+  @Override
+  public ProfileResMobileDTO getProfileMobile() {
+    Profile profile = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)).getProfile();
+    return profileMapper.toProfileResMobileDTO(profile);
+  }
+
+  @Override
+  public void sendProfileOtpMobile(String email) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    Instant now = Instant.now();
+    if (user.getProfileCodeDate() != null
+        && Duration.between(user.getProfileCodeDate(), now).toSeconds() < 30) {
+      throw new BadRequestException(ErrorMessage.OTP_NOT_SENT);
+    }
+
+    String otp = RandomUtil.generateProfileCode();
+    user.setProfileCode(otp);
+    user.setProfileCodeDate(now);
+    userRepository.save(user);
+
+    emailService.sendProfileOtpMobile(user);
+  }
+
+  @Override
+  public ProfileResMobileDTO updateProfileMobile(
+      UpdateProfileMobileReqDTO updateProfileMobileReqDTO) {
+    User user = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    if (updateProfileMobileReqDTO.getOtp() == null || updateProfileMobileReqDTO.getOtp().isEmpty()) {
+      Profile profile = user.getProfile();
+      profile.setFirstName(updateProfileMobileReqDTO.getFirstName());
+      profile.setLastName(updateProfileMobileReqDTO.getLastName());
+      profile.setGender(Gender.valueOf(updateProfileMobileReqDTO.getGender().toUpperCase()));
+      if (updateProfileMobileReqDTO.getBirthDate() != null)
+        profile.setBirthDate(updateProfileMobileReqDTO.getBirthDate());
+      userRepository.save(user);
+    } else {
+      if (!updateProfileMobileReqDTO.getOtp().equals(user.getProfileCode())) {
+        throw new BadRequestException(ErrorMessage.OTP_INVALID);
+      }
+
+      Profile profile = user.getProfile();
+      profile.setFirstName(updateProfileMobileReqDTO.getFirstName());
+      profile.setLastName(updateProfileMobileReqDTO.getLastName());
+      profile.setGender(Gender.valueOf(updateProfileMobileReqDTO.getGender().toUpperCase()));
+      if (updateProfileMobileReqDTO.getBirthDate() != null)
+        profile.setBirthDate(updateProfileMobileReqDTO.getBirthDate());
+      profile.setPhoneNumber(updateProfileMobileReqDTO.getPhoneNumber());
+      user.setEmail(updateProfileMobileReqDTO.getEmail());
+      user.setProfileCode(null);
+      user.setProfileCodeDate(null);
+      userRepository.save(user);
+    }
+
+    return profileMapper.toProfileResMobileDTO(user.getProfile());
   }
 }
