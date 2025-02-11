@@ -75,6 +75,7 @@ public class DatabaseInitializer implements CommandLineRunner {
           LocalDate.of(1990, 1, 1),
           "0909090909",
           Gender.MALE,
+          "https://res.cloudinary.com/db9vcatme/image/upload/v1739239313/default_hmodfn.png",
           adminUser
       );
       adminUser.setProfile(adminProfile);
@@ -108,6 +109,7 @@ public class DatabaseInitializer implements CommandLineRunner {
           LocalDate.of(1995, 6, 15),
           "0901234567",
           Gender.FEMALE,
+          "https://res.cloudinary.com/db9vcatme/image/upload/v1739239313/default_hmodfn.png",
           normalUser
       );
       normalUser.setProfile(userProfile);

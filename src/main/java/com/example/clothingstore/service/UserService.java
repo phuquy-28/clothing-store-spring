@@ -1,5 +1,6 @@
 package com.example.clothingstore.service;
 
+import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
@@ -49,4 +50,6 @@ public interface UserService {
   void sendProfileOtpMobile(String email);
 
   ProfileResMobileDTO updateProfileMobile(UpdateProfileMobileReqDTO updateProfileMobileReqDTO);
+
+  ProfileResMobileDTO updateAvatar(AvatarReqDTO avatarReqDTO);
 }

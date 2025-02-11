@@ -64,8 +64,6 @@ public class User extends AbstractEntity {
 
   private Instant codeResetDate = null;
 
-  private String avatar;
-
   private String profileCode;
 
   private Instant profileCodeDate = null;

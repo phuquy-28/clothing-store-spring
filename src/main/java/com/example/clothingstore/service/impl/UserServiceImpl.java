@@ -1,6 +1,7 @@
 package com.example.clothingstore.service.impl;
 
 import com.example.clothingstore.constant.ErrorMessage;
+import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
@@ -317,6 +318,17 @@ public class UserServiceImpl implements UserService {
       user.setProfileCodeDate(null);
       userRepository.save(user);
     }
+
+    return profileMapper.toProfileResMobileDTO(user.getProfile());
+  }
+
+  @Override
+  public ProfileResMobileDTO updateAvatar(AvatarReqDTO avatarReqDTO) {
+    User user = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+        
+    user.getProfile().setAvatar(avatarReqDTO.getAvatar());
+    userRepository.save(user);
 
     return profileMapper.toProfileResMobileDTO(user.getProfile());
   }

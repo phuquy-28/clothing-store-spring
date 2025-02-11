@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
@@ -130,5 +131,12 @@ public class UserController {
     log.debug("REST request to update profile mobile");
     return ResponseEntity.status(HttpStatus.OK)
         .body(userService.updateProfileMobile(updateProfileMobileReqDTO));
+  }
+
+  @PutMapping(UrlConfig.USER + UrlConfig.PROFILE + UrlConfig.AVATAR)
+  public ResponseEntity<ProfileResMobileDTO> updateAvatar(
+      @RequestBody @Valid AvatarReqDTO avatarReqDTO) {
+    log.debug("REST request to update avatar");
+    return ResponseEntity.status(HttpStatus.OK).body(userService.updateAvatar(avatarReqDTO));
   }
 }

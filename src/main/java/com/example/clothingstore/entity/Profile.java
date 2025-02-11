@@ -37,6 +37,8 @@ public class Profile extends AbstractEntity {
   @Enumerated(EnumType.STRING)
   private Gender gender;
 
+  private String avatar;
+
   @OneToOne
   @JoinColumn(name = "user_id")
   private User user;
