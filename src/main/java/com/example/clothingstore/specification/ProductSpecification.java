@@ -143,7 +143,9 @@ public class ProductSpecification {
       Subquery<Double> avgRatingSubquery = query.subquery(Double.class);
       Root<Review> reviewRoot = avgRatingSubquery.from(Review.class);
       avgRatingSubquery.select(cb.avg(reviewRoot.get("rating")))
-          .where(cb.equal(reviewRoot.get("product"), root));
+          .where(cb.and(cb.equal(reviewRoot.get("product"), root),
+              cb.equal(reviewRoot.get("isDeleted"), false),
+              cb.equal(reviewRoot.get("published"), true)));
       return cb.greaterThanOrEqualTo(avgRatingSubquery, averageRating);
     };
   }
