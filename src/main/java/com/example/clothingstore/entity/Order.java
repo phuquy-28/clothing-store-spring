@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.ToString;
 import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
 import com.example.clothingstore.enumeration.DeliveryMethod;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
@@ -54,6 +55,8 @@ public class Order extends AbstractEntity {
 
   private Double discount;
 
+  private Double pointDiscount;
+
   private Double finalTotal;
 
   @Enumerated(EnumType.STRING)
@@ -72,6 +75,15 @@ public class Order extends AbstractEntity {
 
   @Column(columnDefinition = "text")
   private String cancelReason;
+
+  @Column(name = "points_used")
+  private Long pointsUsed = 0L;
+
+  @Column(name = "points_earned")
+  private Long pointsEarned = 0L;
+
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<PointHistory> pointHistories = new ArrayList<>();
 
   @Getter
   @Setter

@@ -26,4 +26,6 @@ public class OrderReqDTO {
 
   @EnumValue(enumClass = DeliveryMethod.class, message = "deliveryMethod.invalid")
   private String deliveryMethod;
+
+  private Boolean isUsePoint = false;
 }

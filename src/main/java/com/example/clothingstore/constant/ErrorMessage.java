@@ -46,6 +46,8 @@ public final class ErrorMessage {
   public static final String CART_NOT_FOUND = "error.cart.not_found";
   public static final String CART_ITEM_NOT_FOUND = "error.cart_item.not_found";
   public static final String LINE_ITEM_NOT_FOUND = "error.line_item.not_found";
+  public static final String ORDER_CAN_ONLY_BE_RETURNED = "error.order.can_only_be_returned";
+  public static final String ORDER_CAN_NOT_BE_RETURNED = "error.order.can_not_be_returned";
 
   // Payment Related Errors
   public static final String PAYMENT_FAILED = "error.payment.failed";

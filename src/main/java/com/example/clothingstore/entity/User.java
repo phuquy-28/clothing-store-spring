@@ -87,6 +87,9 @@ public class User extends AbstractEntity {
   @OneToMany(mappedBy = "user")
   private List<Order> orders;
 
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Point point;
+
   public User(String email, String password, boolean activated) {
     this.email = email;
     this.password = password;

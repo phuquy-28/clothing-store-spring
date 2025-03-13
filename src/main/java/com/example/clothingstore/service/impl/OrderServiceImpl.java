@@ -68,6 +68,12 @@ import com.example.clothingstore.enumeration.DeliveryMethod;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.temporal.ChronoUnit;
+import com.example.clothingstore.service.PointService;
+import com.example.clothingstore.entity.Point;
+import com.example.clothingstore.entity.PointHistory;
+import com.example.clothingstore.enumeration.PointActionType;
+import com.example.clothingstore.repository.PointRepository;
+import com.example.clothingstore.repository.PointHistoryRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +100,12 @@ public class OrderServiceImpl implements OrderService {
   private final CartRepository cartRepository;
 
   private final OderCancellationService oderCancellationService;
+
+  private final PointService pointService;
+
+  private final PointRepository pointRepository;
+
+  private final PointHistoryRepository pointHistoryRepository;
 
   @Override
   @Transactional
@@ -155,11 +167,45 @@ public class OrderServiceImpl implements OrderService {
         productVariantRepository.save(variant);
     }
 
+    // Tính khuyến mãi từ điểm thưởng nếu có
+    Double pointDiscount = 0.0;
+    Long pointsToUse = 0L;
+    PointHistory pointHistory = null;
+    String orderCode = generateOrderCode();
+
+    if (orderReqDTO.getIsUsePoint()) {
+        Point userPoint = user.getPoint();
+        if (userPoint != null && userPoint.getCurrentPoints() > 0) {
+            // Tính số tiền tối đa có thể giảm từ điểm
+            Long availablePoints = userPoint.getCurrentPoints();
+            pointDiscount = Math.min(total - discount, pointService.calculateAmountFromPoints(availablePoints));
+            
+            // Tính số điểm cần dùng dựa trên số tiền tối đa có thể giảm
+            pointsToUse = pointService.calculatePointsFromAmount(pointDiscount);
+
+            // Cập nhật số điểm của người dùng
+            userPoint.setCurrentPoints(userPoint.getCurrentPoints() - pointsToUse);
+            pointRepository.save(userPoint);
+
+            // Ghi lại lịch sử sử dụng điểm
+            pointHistory = new PointHistory();
+            pointHistory.setUser(user);
+            pointHistory.setPoints(-pointsToUse);
+            pointHistory.setActionType(PointActionType.USED);
+            pointHistory.setDescription(String.format("Sử dụng %d điểm để giảm giá %.0f VND cho đơn hàng %s", 
+                pointsToUse, pointDiscount, orderCode));
+            pointHistoryRepository.save(pointHistory);
+
+            log.debug("Người dùng {} đã sử dụng {} điểm để giảm giá {} VND cho đơn hàng", 
+                user.getEmail(), pointsToUse, pointDiscount);
+        }
+    }
+
     // Tạo order
     Order order = new Order();
     order.setUser(user);
     order.setOrderDate(Instant.now());
-    order.setCode(generateOrderCode());
+    order.setCode(orderCode);
     order.setNote(orderReqDTO.getNote());
     order.setPaymentMethod(PaymentMethod.valueOf(orderReqDTO.getPaymentMethod().toUpperCase()));
     order.setDeliveryMethod(DeliveryMethod.valueOf(orderReqDTO.getDeliveryMethod().toUpperCase()));
@@ -167,6 +213,11 @@ public class OrderServiceImpl implements OrderService {
     order.setLineItems(lineItems);
     order.setTotal(total);
     order.setDiscount(discount);
+    order.setPointsUsed(pointsToUse > 0 ? pointsToUse : null);  // Lưu số điểm đã sử dụng
+    order.setPointDiscount(pointDiscount > 0 ? pointDiscount : null);  // Lưu số tiền giảm giá từ điểm
+    if (pointHistory != null) {
+      order.getPointHistories().add(pointHistory);
+    }
 
     // Set initial status
     order.setStatus(OrderStatus.PENDING);
@@ -179,8 +230,9 @@ public class OrderServiceImpl implements OrderService {
     // deliveryStrategy.processDelivery(order);
     order.setShippingFee(shippingFee);
 
-    // Calculate final total
-    order.setFinalTotal(total + order.getShippingFee() - discount);
+    // Calculate final total (bao gồm cả giảm giá từ điểm)
+    double finalTotal = total + order.getShippingFee() - discount - pointDiscount;
+    order.setFinalTotal(finalTotal >= 0 ? finalTotal : 0);
 
     // Set bi-directional relationship
     lineItems.forEach(lineItem -> lineItem.setOrder(order));
@@ -403,8 +455,21 @@ public class OrderServiceImpl implements OrderService {
     Order order = orderRepository.findById(orderStatusReqDTO.getOrderId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
+    OrderStatus oldStatus = order.getStatus();
     OrderStatus newStatus = OrderStatus.valueOf(orderStatusReqDTO.getStatus().toUpperCase());
 
+    // Kiểm tra logic chuyển trạng thái
+    if (oldStatus == OrderStatus.DELIVERED) {
+      // Nếu đơn hàng đã ở trạng thái DELIVERED, chỉ cho phép chuyển sang RETURNED
+      if (newStatus != OrderStatus.RETURNED) {
+        throw new BadRequestException(ErrorMessage.ORDER_CAN_ONLY_BE_RETURNED);
+      }
+    } else if (newStatus == OrderStatus.RETURNED) {
+      // Nếu đơn hàng chưa giao (chưa DELIVERED), không cho phép chuyển sang RETURNED
+      throw new BadRequestException(ErrorMessage.ORDER_CAN_NOT_BE_RETURNED);
+    }
+
+    // Kiểm tra thanh toán VNPAY
     if (order.getPaymentMethod() == PaymentMethod.VNPAY
         && order.getPaymentStatus() != PaymentStatus.SUCCESS) {
       throw new BadRequestException(ErrorMessage.PRE_PAYMENT_NOT_SUCCESS);
@@ -420,6 +485,14 @@ public class OrderServiceImpl implements OrderService {
       } else {
         order.setPaymentStatus(PaymentStatus.PENDING);
       }
+    }
+
+    // Xử lý điểm thưởng
+    if (newStatus == OrderStatus.DELIVERED && oldStatus != OrderStatus.DELIVERED) {
+      pointService.addPointsFromOrder(order);
+    } else if ((newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.RETURNED)
+        && oldStatus == OrderStatus.DELIVERED) {
+      pointService.refundPointsFromOrder(order);
     }
 
     orderRepository.save(order);
@@ -503,7 +576,18 @@ public class OrderServiceImpl implements OrderService {
             .build());
     }
 
-    // Tính phí vận chuyển sử dụng strategy
+    // Tính khuyến mãi từ điểm thưởng nếu có
+    Double pointDiscount = 0.0;
+
+    if (orderPreviewReqDTO.getIsUsePoint()) {
+      // Lấy số điểm hiện có của user
+      Long availablePoints = user.getPoint() == null ? 0L : user.getPoint().getCurrentPoints();
+
+      // Tính số tiền tối đa có thể giảm từ điểm
+      pointDiscount = Math.min(subtotal, pointService.calculateAmountFromPoints(availablePoints));
+    }
+
+    // Tính phí vận chuyển
     DeliveryMethod deliveryMethod = DeliveryMethod.valueOf(orderPreviewReqDTO.getDeliveryMethod());
     DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
     Double shippingFee = null;
@@ -534,7 +618,9 @@ public class OrderServiceImpl implements OrderService {
         .lineItems(selectedItems)
         .shippingFee(shippingFee)
         .discount(discount)
-        .finalTotal(subtotal + (shippingFee != null ? shippingFee : 0.0) - discount)
+        .pointDiscount(pointDiscount)
+        .finalTotal(subtotal + (shippingFee != null ? shippingFee : 0.0) - discount - pointDiscount)
+        .points(user.getPoint() == null ? 0L : user.getPoint().getCurrentPoints())
         .build();
   }
 

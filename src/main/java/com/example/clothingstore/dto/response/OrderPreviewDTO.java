@@ -17,4 +17,8 @@ public class OrderPreviewDTO {
   private Double shippingFee;
 
   private Double discount;
+
+  private Double pointDiscount;
+
+  private Long points;
 }
