@@ -4,6 +4,7 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.dto.request.ResetAccountDTO;
+import com.example.clothingstore.entity.Point;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.TokenBlacklist;
 import com.example.clothingstore.entity.User;
@@ -97,6 +98,13 @@ public class AuthServiceImpl implements AuthService {
 
     newUser.setProfile(profile);
     profile.setUser(newUser);
+
+    // create point for new user
+    Point point = new Point();
+    newUser.setPoint(point);
+    point.setCurrentPoints(0L);
+    point.setUser(newUser);
+    newUser.setPoint(point);
 
     User savedUser = userRepository.save(newUser);
 

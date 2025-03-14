@@ -90,6 +90,10 @@ public class UrlConfig {
   public static final String CART = "/carts";
   public static final String ITEMS = "/items";
 
+  // Point controller
+  public static final String POINT = "/points";
+  public static final String USER_POINT = "/user";
+
   // Dashboard controller
   public static final String WORKSPACE = "/workspace";
   public static final String DASHBOARD = "/dashboard";

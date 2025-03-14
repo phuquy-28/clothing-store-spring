@@ -78,6 +78,10 @@ public final class ErrorMessage {
   public static final String PRODUCT_PROMOTION_NOT_FOUND = "error.product.not_found";
   public static final String CATEGORY_PROMOTION_NOT_FOUND = "error.category.not_found";
 
+  // Point Related Errors
+  public static final String POINT_ACTION_TYPE_INVALID = "error.point_action_type.invalid";
+  public static final String POINT_NOT_ENOUGH = "error.point.not_enough";
+
   // OTP Related Errors
   public static final String OTP_NOT_SENT = "error.otp.not_sent";
   public static final String OTP_INVALID = "error.otp.invalid";
