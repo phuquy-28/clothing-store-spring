@@ -42,4 +42,9 @@ public class Review extends SoftDeleteEntity {
   @OneToOne
   @JoinColumn(name = "line_item_id")
   private LineItem lineItem;
+
+  private Long pointsEarned = 0L;
+
+  @OneToOne(mappedBy = "review")
+  private PointHistory pointHistory;
 }

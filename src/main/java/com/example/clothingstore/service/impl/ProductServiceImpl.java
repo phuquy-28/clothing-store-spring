@@ -1,5 +1,6 @@
 package com.example.clothingstore.service.impl;
 
+import com.example.clothingstore.annotation.EnableSoftDeleteFilter;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -131,6 +132,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
+  @EnableSoftDeleteFilter
   public ProductResDTO getProductBySlug(String slug) {
     Product product = productRepository.findBySlug(slug)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND));
@@ -289,6 +291,7 @@ public class ProductServiceImpl implements ProductService {
   // }
 
   @Override
+ @EnableSoftDeleteFilter
   public ResultPaginationDTO getProducts(Boolean isBestSeller, Boolean isDiscounted, Integer days,
       Double averageRating, Boolean hasDiscount, Double minPrice, Double maxPrice, String sizes,
       String sortField, String sortOrder, Specification<Product> specification, Pageable pageable) {
@@ -464,6 +467,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
+  @EnableSoftDeleteFilter
   public ProductResDTO getProductById(Long id) {
     Product product = productRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND));
@@ -534,6 +538,7 @@ public class ProductServiceImpl implements ProductService {
         .discountRate(promotionCalculatorService.calculateDiscountRate(product))
         .averageRating(calculateAverageRating(product) == 0 ? null : calculateAverageRating(product))
         .numberOfReviews(calculateNumberOfReviews(product))
+        .numberOfSold(calculateNumberOfSold(product))
         .slug(product.getSlug())
         .colorDefault(product.getColorDefault() != null ? product.getColorDefault().name() : null)
         .images(product.getImages().stream()
@@ -578,56 +583,15 @@ public class ProductServiceImpl implements ProductService {
         .orElse(0);
   }
 
-  // @Override
-  // public ResultPaginationDTO getBestSellerProducts(Integer days, Pageable pageable) {
-  //   Page<Product> bestSellers;
-
-  //   if (days != null) {
-  //     LocalDateTime startDate = LocalDateTime.now().minusDays(days);
-  //     bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS,
-  //         startDate.toInstant(ZoneOffset.UTC), pageable);
-  //   } else {
-  //     bestSellers = productRepository.findBestSellerProducts(PaymentStatus.SUCCESS, pageable);
-  //   }
-
-  //   return ResultPaginationDTO.builder()
-  //       .meta(ResultPaginationDTO.Meta.builder().page((long) bestSellers.getNumber())
-  //           .pageSize((long) bestSellers.getSize()).pages((long) bestSellers.getTotalPages())
-  //           .total(bestSellers.getTotalElements()).build())
-  //       .data(bestSellers.getContent().stream().map(this::convertToProductResDTO)
-  //           .collect(Collectors.toList()))
-  //       .build();
-  // }
-
-  // @Override
-  // public ResultPaginationDTO getDiscountedProducts(Pageable pageable) {
-  //   Page<Product> discountedProducts = productRepository.findDiscountedProducts(Instant.now(), pageable);
-
-  //   return ResultPaginationDTO.builder()
-  //       .meta(Meta.builder()
-  //           .page((long) discountedProducts.getNumber())
-  //           .pageSize((long) discountedProducts.getSize())
-  //           .pages((long) discountedProducts.getTotalPages())
-  //           .total(discountedProducts.getTotalElements())
-  //           .build())
-  //       .data(discountedProducts.getContent().stream()
-  //           .map(this::convertToProductResDTO)
-  //           .collect(Collectors.toList()))
-  //       .build();
-  // }
-
   private Double calculateAverageRating(Product product) {
-    if (product == null || product.getReviews() == null) {
+    if (product == null) {
       return 0.0;
     }
-    return product.getReviews().stream()
-        .filter(review -> review.isPublished())
-        .mapToDouble(Review::getRating)
-        .average()
-        .orElse(0.0);
+    return reviewRepository.calculateAverageRatingByProductId(product.getId());
   }
 
   @Override
+  @EnableSoftDeleteFilter
   public ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable) {
     if (slug == null) {
       throw new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND);
@@ -675,12 +639,17 @@ public class ProductServiceImpl implements ProductService {
   }
 
   private Long calculateNumberOfReviews(Product product) {
-    if (product == null || product.getReviews() == null) {
+    if (product == null) {
       return 0L;
     }
-    return product.getReviews().stream()
-        .filter(review -> review.isPublished())
-        .map(Review::getId)
-        .count();
+    return reviewRepository.countPublishedReviewsByProductId(product.getId());
   }
+
+  private Long calculateNumberOfSold(Product product) {
+    if (product == null) {
+      return 0L;
+    }
+    return productRepository.countSoldQuantityByProductId(product.getId(), PaymentStatus.SUCCESS);
+  }
+
 }

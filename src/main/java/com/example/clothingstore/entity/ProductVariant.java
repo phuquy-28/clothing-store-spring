@@ -1,5 +1,6 @@
 package com.example.clothingstore.entity;
 
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -50,6 +51,7 @@ public class ProductVariant extends SoftDeleteEntity {
   private Double differencePrice;
 
   @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Filter(name = "deletedFilter", condition = "is_deleted = :isDeleted")
   private List<ProductImage> images;
 
   @Version

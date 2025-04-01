@@ -36,4 +36,7 @@ public class PointHistory extends AbstractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", referencedColumnName = "id")
     private Order order;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    private Review review;
 } 

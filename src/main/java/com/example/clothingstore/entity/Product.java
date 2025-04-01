@@ -1,5 +1,6 @@
 package com.example.clothingstore.entity;
 
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.SQLDelete;
 import com.example.clothingstore.enumeration.Color;
 import jakarta.persistence.CascadeType;
@@ -55,12 +56,15 @@ public class Product extends SoftDeleteEntity {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("image_order ASC")
+  @Filter(name = "deletedFilter", condition = "is_deleted = :isDeleted")
   private List<ProductImage> images;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Filter(name = "deletedFilter", condition = "is_deleted = :isDeleted")
   private List<ProductVariant> variants;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Filter(name = "deletedFilter", condition = "is_deleted = :isDeleted")
   private List<Review> reviews;
 
   @ManyToMany(mappedBy = "products")

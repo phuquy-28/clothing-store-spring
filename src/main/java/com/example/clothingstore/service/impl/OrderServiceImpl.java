@@ -181,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
             pointDiscount = Math.min(total - discount, pointService.calculateAmountFromPoints(availablePoints));
             
             // Tính số điểm cần dùng dựa trên số tiền tối đa có thể giảm
-            pointsToUse = pointService.calculatePointsFromAmount(pointDiscount);
+            pointsToUse = pointDiscount.longValue(); // POINT_REDEMPTION_RATE = 1
 
             // Cập nhật số điểm của người dùng
             userPoint.setCurrentPoints(userPoint.getCurrentPoints() - pointsToUse);
@@ -395,6 +395,7 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
+  @Transactional
   public OrderReviewReqDTO createOrderReview(OrderReviewReqDTO orderReviewReqDTO) {
     Order order = orderRepository.findById(orderReviewReqDTO.getOrderId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
@@ -421,6 +422,10 @@ public class OrderServiceImpl implements OrderService {
     review.setRating(reviewItem.getRating().doubleValue());
     review.setDescription(reviewItem.getDescription());
     review.setLineItem(lineItem);
+    reviewRepository.save(review);
+
+    pointService.addPointsFromOrderReview(review);
+
     reviewRepository.save(review);
 
     return orderReviewReqDTO;

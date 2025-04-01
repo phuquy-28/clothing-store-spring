@@ -38,6 +38,8 @@ public class ProductResDTO {
 
   private Long numberOfReviews;
 
+  private Long numberOfSold;
+
   private String slug;
 
   private String colorDefault;

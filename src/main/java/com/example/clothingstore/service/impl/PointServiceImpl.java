@@ -1,5 +1,6 @@
 package com.example.clothingstore.service.impl;
 
+import com.example.clothingstore.entity.Review;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -39,9 +40,11 @@ import com.example.clothingstore.exception.BadRequestException;
 @RequiredArgsConstructor
 public class PointServiceImpl implements PointService {
 
-  private static final Double POINT_EARNING_RATE = 10000.0;
+  private static final Double POINT_EARNING_RATE = 100.0;
 
-  private static final Double POINT_REDEMPTION_RATE = 100.0;
+  private static final Double POINT_REDEMPTION_RATE = 1.0;
+
+  private static final Long POINT_REVIEWS = 200L;
 
   private final Logger log = LoggerFactory.getLogger(PointServiceImpl.class);
 
@@ -78,12 +81,7 @@ public class PointServiceImpl implements PointService {
     }
 
     // Tính số điểm được cộng từ tổng tiền đơn hàng
-    Double orderSubtotal = order.getTotal() - order.getDiscount();
-    if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
-      orderSubtotal -= calculateAmountFromPoints(order.getPointsUsed());
-    }
-
-    Long pointsToAdd = calculatePointsFromAmount(orderSubtotal);
+    Long pointsToAdd = calculatePointsFromAmount(order.getFinalTotal());
 
     // Cập nhật điểm cho người dùng
     point.setCurrentPoints(point.getCurrentPoints() + pointsToAdd);
@@ -305,6 +303,46 @@ public class PointServiceImpl implements PointService {
 
     // Trả về DTO
     return convertToPointHistoryDTO(pointHistory);
+  }
+
+  @Override
+  public void addPointsFromOrderReview(Review review) {
+    User user = review.getUser();
+    Point point = user.getPoint();
+    if (point == null) {
+      point = new Point();
+      point.setCurrentPoints(0L);
+      point.setTotalAccumulatedPoints(0L);
+      // Thiết lập mối quan hệ hai chiều
+      point.setUser(user);
+      user.setPoint(point);
+      // Lưu point trước
+      pointRepository.save(point);
+    }
+
+    // Cập nhật điểm cho người dùng
+    point.setCurrentPoints(point.getCurrentPoints() + POINT_REVIEWS);
+    point.setTotalAccumulatedPoints(point.getTotalAccumulatedPoints() + POINT_REVIEWS);
+
+    // Lưu point thay vì lưu user
+    pointRepository.save(point);
+
+    // Lưu lịch sử cộng điểm
+    PointHistory pointHistory = new PointHistory();
+    pointHistory.setPoints(POINT_REVIEWS);
+    pointHistory.setActionType(PointActionType.EARNED);
+    pointHistory.setDescription(String.format("Cộng %d điểm từ review #%d", POINT_REVIEWS,
+        review.getId()));
+    pointHistory.setUser(user);
+    pointHistory.setReview(review);
+    pointHistoryRepository.save(pointHistory);
+
+    // Cập nhật số điểm đã cộng vào review
+    review.setPointsEarned(POINT_REVIEWS);
+    review.setPointHistory(pointHistory);
+
+    log.debug("Đã cộng {} điểm cho người dùng {} từ review #{}", review.getPointsEarned(),
+        user.getEmail(), review.getId());
   }
 
   private List<PointHistoryDTO> convertToPointHistoryDTOs(List<PointHistory> pointHistories) {

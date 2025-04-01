@@ -1,5 +1,6 @@
 package com.example.clothingstore.service;
 
+import com.example.clothingstore.entity.Review;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import com.example.clothingstore.dto.request.PointHistoryReqDTO;
@@ -24,5 +25,7 @@ public interface PointService {
   ResultPaginationDTO getPoints(Specification<Point> spec, Pageable pageable);
 
   PointHistoryDTO addPointHistory(PointHistoryReqDTO pointHistoryReqDTO);
+
+  void addPointsFromOrderReview(Review review);
 
 }
