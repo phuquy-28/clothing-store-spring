@@ -13,4 +13,6 @@ public class OrderStatusReqDTO {
 
   @EnumValue(enumClass = OrderStatus.class, message = "order.status.invalid")
   private String status;
+
+  private String reason;
 }

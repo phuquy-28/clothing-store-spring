@@ -487,6 +487,9 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentStatus(PaymentStatus.SUCCESS);
       } else if (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.RETURNED) {
         order.setPaymentStatus(PaymentStatus.FAILED);
+        if (orderStatusReqDTO.getReason() != null && !orderStatusReqDTO.getReason().isEmpty()) {
+          order.setCancelReason(orderStatusReqDTO.getReason());
+        }
       } else {
         order.setPaymentStatus(PaymentStatus.PENDING);
       }
@@ -769,6 +772,7 @@ public class OrderServiceImpl implements OrderService {
         .total(order.getTotal())
         .shippingFee(order.getShippingFee())
         .discount(order.getDiscount())
+        .pointDiscount(order.getPointDiscount())
         .finalTotal(order.getFinalTotal())
         .canReview(canReview)
         .isReviewed(isReviewed)

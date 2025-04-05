@@ -36,6 +36,8 @@ public class OrderDetailsDTO {
 
   private Double discount;
 
+  private Double pointDiscount;
+
   private Double finalTotal;
 
   private Boolean canReview;
