@@ -24,6 +24,8 @@ public class OrderReviewDTO {
 
   private String lastName;
 
+  private String avatar;
+
   private Instant createdAt;
 
   private Double rating;

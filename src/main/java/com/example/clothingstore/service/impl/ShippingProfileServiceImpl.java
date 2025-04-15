@@ -108,8 +108,11 @@ public class ShippingProfileServiceImpl implements ShippingProfileService {
     shippingProfile.setLastName(shippingProfileReqDTO.getLastName());
     shippingProfile.setPhoneNumber(shippingProfileReqDTO.getPhoneNumber());
     shippingProfile.setAddress(shippingProfileReqDTO.getAddress());
+    shippingProfile.setWardId(shippingProfileReqDTO.getWardId());
     shippingProfile.setWard(shippingProfileReqDTO.getWard());
+    shippingProfile.setDistrictId(shippingProfileReqDTO.getDistrictId());
     shippingProfile.setDistrict(shippingProfileReqDTO.getDistrict());
+    shippingProfile.setProvinceId(shippingProfileReqDTO.getProvinceId());
     shippingProfile.setProvince(shippingProfileReqDTO.getProvince());
 
     ShippingProfile updatedProfile = shippingProfileRepository.save(shippingProfile);

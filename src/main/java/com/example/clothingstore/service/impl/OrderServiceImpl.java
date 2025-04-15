@@ -319,10 +319,9 @@ public class OrderServiceImpl implements OrderService {
   private OrderResDTO mapToOrderResDTO(Order order) {
     boolean canReview = order.getStatus() == OrderStatus.DELIVERED;
 
-    boolean isReviewed = order.getUser() != null && order.getLineItems().stream()
+    boolean isReviewed = order.getLineItems().stream()
         .anyMatch(lineItem -> lineItem.getProductVariant().getProduct().getReviews().stream()
-            .anyMatch(review -> review.getUser() != null
-                && review.getUser().getId().equals(order.getUser().getId())));
+            .anyMatch(review -> review.getLineItem().getId().equals(lineItem.getId())));
 
     canReview = canReview && !isReviewed;
 
@@ -361,6 +360,7 @@ public class OrderServiceImpl implements OrderService {
             .variantImage(lineItem.getProductVariant().getImages().get(0).getPublicUrl())
             .firstName(lineItem.getReview() != null ? lineItem.getReview().getUser().getProfile().getFirstName() : null)
             .lastName(lineItem.getReview() != null ? lineItem.getReview().getUser().getProfile().getLastName() : null)
+            .avatar(lineItem.getReview() != null ? lineItem.getReview().getUser().getProfile().getAvatar() : null)
             .createdAt(lineItem.getReview() != null ? lineItem.getReview().getCreatedAt() : null)
             .rating(lineItem.getReview() != null ? lineItem.getReview().getRating() : null)
             .description(lineItem.getReview() != null ? lineItem.getReview().getDescription() : null)
