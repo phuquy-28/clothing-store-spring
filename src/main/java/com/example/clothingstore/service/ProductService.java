@@ -30,7 +30,7 @@ public interface ProductService {
 
   // ResultPaginationDTO getDiscountedProducts(Pageable pageable);
 
-  ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable);
+  ResultPaginationDTO getReviewsByProductSlug(String slug, Integer rating, Pageable pageable);
 
   ResultPaginationDTO getProducts(Boolean isBestSeller, Boolean isDiscounted, Integer days,
       Double averageRating, Boolean hasDiscount, Double minPrice, Double maxPrice, String sizes,

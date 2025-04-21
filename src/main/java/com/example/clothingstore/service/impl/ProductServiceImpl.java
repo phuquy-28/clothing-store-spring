@@ -44,6 +44,7 @@ import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
 import com.example.clothingstore.specification.ProductSpecification;
+import com.example.clothingstore.specification.ReviewSpecification;
 import com.example.clothingstore.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -592,50 +593,52 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   @EnableSoftDeleteFilter
-  public ResultPaginationDTO getReviewsByProductSlug(String slug, Pageable pageable) {
+  public ResultPaginationDTO getReviewsByProductSlug(String slug, Integer rating,
+      Pageable pageable) {
     if (slug == null) {
       throw new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND);
     }
 
-    Page<Review> reviews = reviewRepository.findByProductSlugAndPublishedTrue(slug, pageable);
+    Specification<Review> specification = Specification
+        .where(ReviewSpecification.hasProductSlug(slug)).and(ReviewSpecification.isPublished())
+        .and(ReviewSpecification.isNotDeleted()).and(ReviewSpecification.hasRating(rating));
+
+    Page<Review> reviews = reviewRepository.findAll(specification, pageable);
 
     return ResultPaginationDTO.builder()
-        .meta(Meta.builder()
-            .page((long) reviews.getNumber())
-            .pageSize((long) reviews.getSize())
-            .pages((long) reviews.getTotalPages())
-            .total(reviews.getTotalElements())
-            .build())
-        .data(reviews.getContent().stream()
-            .map(review -> {
-              if (review == null) {
-                return null;
-              }
+        .meta(Meta.builder().page((long) reviews.getNumber()).pageSize((long) reviews.getSize())
+            .pages((long) reviews.getTotalPages()).total(reviews.getTotalElements()).build())
+        .data(reviews.getContent().stream().map(review -> {
+          if (review == null) {
+            return null;
+          }
 
-              ReviewProductDTO.BoughtVariantDTO variantDTO = null;
-              if (review.getLineItem() != null && 
-                  review.getLineItem().getProductVariant() != null) {
-                var variant = review.getLineItem().getProductVariant();
-                variantDTO = ReviewProductDTO.BoughtVariantDTO.builder()
-                    .variantId(variant.getId())
-                    .color(variant.getColor() != null ? variant.getColor().name() : null)
-                    .size(variant.getSize() != null ? variant.getSize().name() : null)
-                    .build();
-              }
+          ReviewProductDTO.BoughtVariantDTO variantDTO = null;
+          if (review.getLineItem() != null && review.getLineItem().getProductVariant() != null) {
+            var variant = review.getLineItem().getProductVariant();
+            variantDTO = ReviewProductDTO.BoughtVariantDTO.builder().variantId(variant.getId())
+                .color(variant.getColor() != null ? variant.getColor().name() : null)
+                .size(variant.getSize() != null ? variant.getSize().name() : null).build();
+          }
 
-              return ReviewProductDTO.builder()
-                  .reviewId(review.getId())
-                  .rating(review.getRating())
-                  .description(review.getDescription())
-                  .createdAt(review.getCreatedAt() != null ? 
-                      review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime() : null)
-                  .variant(variantDTO)
-                  .description(review.getDescription())
-                  .build();
-            })
-            .filter(dto -> dto != null)
-            .collect(Collectors.toList()))
-        .build();
+          // Extract user information
+          String firstName = null;
+          String lastName = null;
+          String avatar = null;
+          if (review.getUser() != null) {
+            firstName = review.getUser().getProfile().getFirstName();
+            lastName = review.getUser().getProfile().getLastName();
+            avatar = review.getUser().getProfile().getAvatar();
+          }
+
+          return ReviewProductDTO.builder().reviewId(review.getId()).firstName(firstName)
+              .lastName(lastName).avatar(avatar).rating(review.getRating())
+              .description(review.getDescription())
+              .createdAt(review.getCreatedAt() != null
+                  ? review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime()
+                  : null)
+              .variant(variantDTO).description(review.getDescription()).build();
+        }).filter(dto -> dto != null).collect(Collectors.toList())).build();
   }
 
   private Long calculateNumberOfReviews(Product product) {

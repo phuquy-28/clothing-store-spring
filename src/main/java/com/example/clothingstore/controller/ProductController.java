@@ -126,9 +126,10 @@ public class ProductController {
 
   @GetMapping(UrlConfig.PRODUCT + UrlConfig.PRODUCT_SLUG + UrlConfig.REVIEW)
   public ResponseEntity<ResultPaginationDTO> getReviewsByProductSlug(@PathVariable String slug,
-      Pageable pageable) {
+      @RequestParam(required = false) Integer rating, Pageable pageable) {
     log.debug("Get reviews by product slug request: {}", slug);
-    ResultPaginationDTO resultPaginationDTO = productService.getReviewsByProductSlug(slug, pageable);
+    ResultPaginationDTO resultPaginationDTO =
+        productService.getReviewsByProductSlug(slug, rating, pageable);
     return ResponseEntity.status(HttpStatus.OK).body(resultPaginationDTO);
   }
 }
