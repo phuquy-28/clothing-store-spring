@@ -22,12 +22,16 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.request.OrderStatisticsSummaryReq;
 import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
+import com.example.clothingstore.dto.response.OrderStatisticsSummaryRes;
+import com.example.clothingstore.dto.response.MonthlySpendingChartRes;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.service.OrderService;
@@ -128,6 +132,32 @@ public class OrderController {
   @GetMapping(UrlConfig.ORDERS + UrlConfig.ORDER_ID)
   public ResponseEntity<OrderDetailsDTO> getOrderDetails(@PathVariable Long orderId) {
     OrderDetailsDTO result = orderService.getOrderDetails(orderId);
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.STATISTICS)
+  public ResponseEntity<OrderStatisticsSummaryRes> getUserOrderStatistics(
+      @RequestBody @Valid OrderStatisticsSummaryReq request) {
+    log.debug("REST request to get user order statistics: {}", request);
+    OrderStatisticsSummaryRes result = orderService.getUserOrderStatistics(request);
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.STATISTICS + UrlConfig.CHART
+      + UrlConfig.LINE)
+  public ResponseEntity<MonthlySpendingChartRes> getUserOrderMonthlyChart(
+      @RequestBody @Valid OrderStatisticsSummaryReq request) {
+    log.debug("REST request to get user order monthly chart data: {}", request);
+    MonthlySpendingChartRes result = orderService.getUserOrderMonthlyChart(request);
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.STATISTICS + UrlConfig.CHART
+      + UrlConfig.BAR)
+  public ResponseEntity<StatusSpendingChartRes> getUserOrderStatusChart(
+      @RequestBody @Valid OrderStatisticsSummaryReq request) {
+    log.debug("REST request to get user order status chart data: {}", request);
+    StatusSpendingChartRes result = orderService.getUserOrderStatusChart(request);
     return ResponseEntity.ok(result);
   }
 }

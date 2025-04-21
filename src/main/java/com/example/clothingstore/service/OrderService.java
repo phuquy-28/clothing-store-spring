@@ -7,12 +7,16 @@ import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
+import com.example.clothingstore.dto.request.OrderStatisticsSummaryReq;
+import com.example.clothingstore.dto.response.MonthlySpendingChartRes;
 import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.OrderItemList;
 import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
+import com.example.clothingstore.dto.response.OrderStatisticsSummaryRes;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,4 +46,10 @@ public interface OrderService {
   OrderDetailsDTO getOrderDetailsUser(Long orderId);
 
   OrderDetailsDTO getOrderDetails(Long orderId);
+
+  OrderStatisticsSummaryRes getUserOrderStatistics(OrderStatisticsSummaryReq request);
+
+  MonthlySpendingChartRes getUserOrderMonthlyChart(OrderStatisticsSummaryReq request);
+
+  StatusSpendingChartRes getUserOrderStatusChart(OrderStatisticsSummaryReq request);
 }

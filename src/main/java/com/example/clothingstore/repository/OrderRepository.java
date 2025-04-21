@@ -45,14 +45,91 @@ public interface OrderRepository
       PaymentMethod paymentMethod, PaymentStatus paymentStatus, OrderStatus status,
       Instant thirtyMinutesAgo);
 
-  @Query("SELECT SUM(o.finalTotal) FROM Order o WHERE o.status = :status")
+  @Query("""
+      SELECT SUM(o.finalTotal) FROM Order o 
+      WHERE o.status = :status
+      """)
   Long sumFinalTotalByStatus(@Param("status") OrderStatus status);
 
-  @Query("SELECT MONTH(o.orderDate) as month, SUM(o.finalTotal) as revenue " +
-         "FROM Order o " +
-         "WHERE YEAR(o.orderDate) = :year " +
-         "AND o.status = :status " +
-         "GROUP BY MONTH(o.orderDate)")
+  @Query("""
+      SELECT MONTH(o.orderDate) as month, SUM(o.finalTotal) as revenue 
+      FROM Order o 
+      WHERE YEAR(o.orderDate) = :year 
+      AND o.status = :status 
+      GROUP BY MONTH(o.orderDate)
+      """)
   List<Object[]> findRevenueByMonth(@Param("year") Long year, @Param("status") OrderStatus status);
 
+  @Query("""
+      SELECT o FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate
+      """)
+  List<Order> findOrdersByUserAndDateRange(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT COUNT(o) FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate
+      """)
+  int countOrdersByUserAndDateRange(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT SUM(o.finalTotal) FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate
+      """)
+  Double sumOrderTotalByUserAndDateRange(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT o.status, COUNT(o), SUM(o.finalTotal) FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate 
+      GROUP BY o.status
+      """)
+  List<Object[]> getOrderStatsByStatusForUserAndDateRange(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate), 
+      SUM(o.finalTotal), COUNT(o) 
+      FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate 
+      GROUP BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+      ORDER BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+      """)
+  List<Object[]> getMonthlySummaryForUser(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT o.status, SUM(o.finalTotal)
+      FROM Order o 
+      WHERE o.user.id = :userId 
+      AND o.orderDate >= :startDate 
+      AND o.orderDate < :endDate 
+      GROUP BY o.status
+      """)
+  List<Object[]> getSpendingByStatusForUser(
+      @Param("userId") Long userId, 
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
 }

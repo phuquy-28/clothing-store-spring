@@ -76,6 +76,10 @@ public class UrlConfig {
 	public static final String ORDER_CODE = "/{orderCode}";
 	public static final String STATUS = "/status";
   public static final String CONTINUE_PAYMENT = "/continue-payment";
+	public static final String STATISTICS = "/statistics";
+  public static final String CHART = "/chart";
+  public static final String BAR = "/bar";
+  public static final String LINE = "/line";
 
 	// Review controller
   public static final String REVIEW = "/reviews";

@@ -16,6 +16,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
+import com.example.clothingstore.dto.request.OrderStatisticsSummaryReq;
 import com.example.clothingstore.dto.request.OrderStatusReqDTO;
 import com.example.clothingstore.dto.response.CartItemDTO;
 import com.example.clothingstore.dto.response.OrderDetailsDTO;
@@ -24,6 +25,7 @@ import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
+import com.example.clothingstore.dto.response.OrderStatisticsSummaryRes;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ShippingProfileResDTO;
 import com.example.clothingstore.entity.Cart;
@@ -75,6 +77,8 @@ import com.example.clothingstore.enumeration.PointActionType;
 import com.example.clothingstore.repository.PointRepository;
 import com.example.clothingstore.repository.PointHistoryRepository;
 import com.example.clothingstore.service.NotificationService;
+import com.example.clothingstore.dto.response.MonthlySpendingChartRes;
+import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 
 @Service
 @RequiredArgsConstructor
@@ -797,5 +801,197 @@ public class OrderServiceImpl implements OrderService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
 
     return mapToOrderDetailsDTO(order);
+  }
+
+  @Override
+  public OrderStatisticsSummaryRes getUserOrderStatistics(OrderStatisticsSummaryReq request) {
+    
+    // Get the current user
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)));
+        
+    // Convert LocalDate to Instant with start of day and end of day
+    Instant startDateInstant = request.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant endDateInstant = request.getEndDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    
+    // Get order statistics using repository methods
+    Double totalAmount = orderRepository.sumOrderTotalByUserAndDateRange(
+        currentUser.getId(), startDateInstant, endDateInstant);
+    
+    int totalOrderCount = orderRepository.countOrdersByUserAndDateRange(
+        currentUser.getId(), startDateInstant, endDateInstant);
+    
+    // Get status breakdown from database
+    List<Object[]> statusStats = orderRepository.getOrderStatsByStatusForUserAndDateRange(
+        currentUser.getId(), startDateInstant, endDateInstant);
+    
+    // Initialize status objects with default values
+    OrderStatisticsSummaryRes.Status pendingStatus = OrderStatisticsSummaryRes.Status.builder()
+        .count(0)
+        .amount(0.0)
+        .build();
+    
+    OrderStatisticsSummaryRes.Status processingStatus = OrderStatisticsSummaryRes.Status.builder()
+        .count(0)
+        .amount(0.0)
+        .build();
+    
+    OrderStatisticsSummaryRes.Status shippingStatus = OrderStatisticsSummaryRes.Status.builder()
+        .count(0)
+        .amount(0.0)
+        .build();
+    
+    OrderStatisticsSummaryRes.Status deliveredStatus = OrderStatisticsSummaryRes.Status.builder()
+        .count(0)
+        .amount(0.0)
+        .build();
+    
+    // Map database results to status objects
+    for (Object[] stat : statusStats) {
+        OrderStatus status = (OrderStatus) stat[0];
+        Integer count = ((Long) stat[1]).intValue();
+        Double amount = (Double) stat[2];
+        
+        switch (status) {
+            case PENDING:
+                pendingStatus = OrderStatisticsSummaryRes.Status.builder()
+                    .count(count)
+                    .amount(amount)
+                    .build();
+                break;
+            case PROCESSING:
+                processingStatus = OrderStatisticsSummaryRes.Status.builder()
+                    .count(count)
+                    .amount(amount)
+                    .build();
+                break;
+            case SHIPPING:
+                shippingStatus = OrderStatisticsSummaryRes.Status.builder()
+                    .count(count)
+                    .amount(amount)
+                    .build();
+                break;
+            case DELIVERED:
+                deliveredStatus = OrderStatisticsSummaryRes.Status.builder()
+                    .count(count)
+                    .amount(amount)
+                    .build();
+                break;
+            default:
+                // Ignore other statuses
+                break;
+        }
+    }
+    
+    // Build status breakdown response
+    OrderStatisticsSummaryRes.StatusBreakdown statusBreakdown = 
+        OrderStatisticsSummaryRes.StatusBreakdown.builder()
+            .pending(pendingStatus)
+            .processing(processingStatus)
+            .shipping(shippingStatus)
+            .delivered(deliveredStatus)
+            .build();
+    
+    // Build and return final response
+    return OrderStatisticsSummaryRes.builder()
+        .totalAmount(totalAmount != null ? totalAmount : 0.0)
+        .totalOrderCount(totalOrderCount)
+        .statusBreakdown(statusBreakdown)
+        .build();
+  }
+
+  @Override
+  public MonthlySpendingChartRes getUserOrderMonthlyChart(OrderStatisticsSummaryReq request) {
+    // Get the current user
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)));
+
+    // Convert LocalDate to Instant with start of day and end of day
+    Instant startDateInstant =
+        request.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant endDateInstant =
+        request.getEndDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+    // Get monthly summary data directly from repository
+    List<Object[]> monthlySummary = orderRepository.getMonthlySummaryForUser(currentUser.getId(),
+        startDateInstant, endDateInstant);
+
+    // Process the results into chart format
+    List<String> labels = new ArrayList<>();
+    List<Double> values = new ArrayList<>();
+    List<Integer> counts = new ArrayList<>();
+
+    for (Object[] row : monthlySummary) {
+      Integer year = (Integer) row[0];
+      Integer month = (Integer) row[1];
+      Double amount = (Double) row[2];
+      Long count = (Long) row[3];
+
+      // Format label as "MM/YY"
+      String label = String.format("%d/%02d", month, year % 100);
+      labels.add(label);
+
+      values.add(amount != null ? amount : 0.0);
+      counts.add(count != null ? count.intValue() : 0);
+    }
+
+    // Return the chart data
+    return MonthlySpendingChartRes.builder().labels(labels).values(values).counts(counts).build();
+  }
+
+  @Override
+  public StatusSpendingChartRes getUserOrderStatusChart(OrderStatisticsSummaryReq request) {
+    // Get the current user
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)));
+        
+    // Convert LocalDate to Instant with start of day and end of day
+    Instant startDateInstant = request.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant endDateInstant = request.getEndDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    
+    // Get spending data by status directly from repository
+    List<Object[]> statusSpending = orderRepository.getSpendingByStatusForUser(
+        currentUser.getId(), startDateInstant, endDateInstant);
+    
+    // Initialize amounts for each status
+    Long pendingAmount = 0L;
+    Long processingAmount = 0L;
+    Long shippingAmount = 0L;
+    Long deliveredAmount = 0L;
+    
+    // Process the results
+    for (Object[] row : statusSpending) {
+        OrderStatus status = (OrderStatus) row[0];
+        Double amount = (Double) row[1];
+        
+        // Convert to long to match the DTO field type
+        Long longAmount = amount != null ? amount.longValue() : 0L;
+        
+        switch (status) {
+            case PENDING:
+                pendingAmount = longAmount;
+                break;
+            case PROCESSING:
+                processingAmount = longAmount;
+                break;
+            case SHIPPING:
+                shippingAmount = longAmount;
+                break;
+            case DELIVERED:
+                deliveredAmount = longAmount;
+                break;
+            default:
+                // Ignore other statuses
+                break;
+        }
+    }
+    
+    // Return the status spending data
+    return StatusSpendingChartRes.builder()
+        .pending(pendingAmount)
+        .processing(processingAmount)
+        .shipping(shippingAmount)
+        .delivered(deliveredAmount)
+        .build();
   }
 }
