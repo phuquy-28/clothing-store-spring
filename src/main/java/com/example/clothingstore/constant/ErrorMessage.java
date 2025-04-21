@@ -91,5 +91,8 @@ public final class ErrorMessage {
   public static final String INVALID_FILE_TYPE = "error.file.invalid_type";
   public static final String SYSTEM_BUSY = "error.system.busy";
 
+  // Notification Related Errors
+  public static final String NOTIFICATION_NOT_FOUND = "error.notification.not_found";
+
   private ErrorMessage() {}
 }

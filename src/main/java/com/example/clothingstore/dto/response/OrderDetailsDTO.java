@@ -3,6 +3,7 @@ package com.example.clothingstore.dto.response;
 import java.time.Instant;
 import java.util.List;
 import com.example.clothingstore.enumeration.Color;
+import com.example.clothingstore.enumeration.DeliveryMethod;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
@@ -27,6 +28,8 @@ public class OrderDetailsDTO {
   private PaymentStatus paymentStatus;
 
   private Instant paymentDate;
+
+  private DeliveryMethod deliveryMethod;
 
   private List<LineItem> lineItems;
 

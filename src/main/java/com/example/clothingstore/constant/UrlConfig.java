@@ -49,7 +49,8 @@ public class UrlConfig {
 	public static final String PRODUCT_ID = "/ids";
 	public static final String UPLOAD_IMAGES = "/upload-images";
 	public static final String PRODUCT_SLUG = "/{slug}";
-	// Category controller
+	
+  // Category controller
 	public static final String CATEGORY = "/categories";
 
 	// User controller
@@ -72,6 +73,7 @@ public class UrlConfig {
 	public static final String USER_ORDERS = "/user";
 	public static final String LINE_ITEM = "/line-items";
 	public static final String ORDER_ID = "/{orderId}";
+	public static final String ORDER_CODE = "/{orderCode}";
 	public static final String STATUS = "/status";
   public static final String CONTINUE_PAYMENT = "/continue-payment";
 
@@ -99,6 +101,13 @@ public class UrlConfig {
   public static final String DASHBOARD = "/dashboard";
   public static final String REVENUE_BY_MONTH = "/revenue-by-month";
 
+  // Notification controller
+  public static final String NOTIFICATION = "/notifications";
+  public static final String UNREAD_COUNT = "/unread-count";
+  public static final String MARK_READ = "/mark-read";
+  public static final String PROMOTION_NOTIFICATION = "/notifications/promotion";
+  public static final String WS = "/ws/**";
+
 	// Full paths for public endpoints
 	public static String[] PUBLIC_ENDPOINTS() {
 		return new String[]{
@@ -108,6 +117,12 @@ public class UrlConfig {
 			SWAGGER_UI_HTML
 		};
 	}
+
+  public static String[] PUBLIC_WS_ENDPOINTS() {
+    return new String[]{
+      WS,
+    };
+  }
 
 	// Full paths for public GET endpoints
 	public static String[] PUBLIC_GET_ENDPOINTS() {

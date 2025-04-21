@@ -5,6 +5,8 @@ import com.example.clothingstore.constant.AuthoritiesConstant;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.LoginResDTO.UserInsideToken;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.repository.UserRepository;
 import com.nimbusds.jose.util.Base64;
 import java.time.Duration;
 import java.time.Instant;
@@ -48,9 +50,12 @@ public class SecurityUtil {
   private long refreshTokenExpiration;
 
   private final JwtEncoder jwtEncoder;
+  
+  private final UserRepository userRepository;
 
-  public SecurityUtil(JwtEncoder jwtEncoder) {
+  public SecurityUtil(JwtEncoder jwtEncoder, UserRepository userRepository) {
     this.jwtEncoder = jwtEncoder;
+    this.userRepository = userRepository;
   }
 
   public String createAccessToken(User user, LoginResDTO loginResDTO) {
@@ -172,5 +177,10 @@ public class SecurityUtil {
     userInsideToken.setFirstName(loginResDTO.getUser().getFirstName());
     userInsideToken.setLastName(loginResDTO.getUser().getLastName());
     return userInsideToken;
+  }
+
+  public User getCurrentUser() {
+    return getCurrentUserLogin().flatMap(userRepository::findByEmail)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 }

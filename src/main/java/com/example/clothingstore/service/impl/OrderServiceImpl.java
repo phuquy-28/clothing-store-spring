@@ -74,6 +74,7 @@ import com.example.clothingstore.entity.PointHistory;
 import com.example.clothingstore.enumeration.PointActionType;
 import com.example.clothingstore.repository.PointRepository;
 import com.example.clothingstore.repository.PointHistoryRepository;
+import com.example.clothingstore.service.NotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +107,8 @@ public class OrderServiceImpl implements OrderService {
   private final PointRepository pointRepository;
 
   private final PointHistoryRepository pointHistoryRepository;
+
+  private final NotificationService notificationService;
 
   @Override
   @Transactional
@@ -242,7 +245,9 @@ public class OrderServiceImpl implements OrderService {
     OrderPaymentDTO paymentResult = paymentStrategy.processPayment(order, request);
 
     // Save order
-    orderRepository.save(order);
+    Order savedOrder = orderRepository.save(order);
+
+    paymentResult.setOrderId(savedOrder.getId());
 
     // Clear cart items that were ordered
     orderReqDTO.getCartItemIds().forEach(cartItemId -> {
@@ -505,6 +510,9 @@ public class OrderServiceImpl implements OrderService {
 
     orderRepository.save(order);
 
+    // Create and send notification
+    notificationService.createOrderStatusNotification(order);
+
     return mapToOrderItemList(order);
   }
 
@@ -632,7 +640,7 @@ public class OrderServiceImpl implements OrderService {
         .build();
   }
 
-    @Override
+  @Override
   public ResultPaginationDTO getOrders(Specification<Order> spec, Pageable pageable) {
     
     Page<Order> orderPage = orderRepository.findAll(spec, pageable);
@@ -729,10 +737,11 @@ public class OrderServiceImpl implements OrderService {
     boolean canReview = order.getStatus() == OrderStatus.DELIVERED;
     
     // Check if order is already reviewed
-    boolean isReviewed = order.getUser() != null && order.getLineItems().stream()
+    boolean isReviewed = order.getLineItems().stream()
         .anyMatch(lineItem -> lineItem.getProductVariant().getProduct().getReviews().stream()
-            .anyMatch(review -> review.getUser() != null 
-                && review.getUser().getId().equals(order.getUser().getId())));
+            .anyMatch(review -> review.getLineItem().getId().equals(lineItem.getId())));
+
+    canReview = canReview && !isReviewed;
 
     // Map shipping information to ShippingProfileResDTO
     ShippingProfileResDTO shippingProfile = ShippingProfileResDTO.builder()
@@ -768,6 +777,7 @@ public class OrderServiceImpl implements OrderService {
         .paymentMethod(order.getPaymentMethod())
         .paymentStatus(order.getPaymentStatus())
         .paymentDate(order.getPaymentDate())
+        .deliveryMethod(order.getDeliveryMethod())
         .lineItems(lineItems)
         .total(order.getTotal())
         .shippingFee(order.getShippingFee())

@@ -10,6 +10,8 @@ import lombok.Data;
 @Builder
 public class OrderPaymentDTO {
 
+  private Long orderId;
+
   private String code;
 
   private OrderStatus status;

@@ -71,12 +71,13 @@ public class SecurityConfiguration {
   public SecurityFilterChain filterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
       CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
-    http.csrf(c -> c.disable()).cors(Customizer.withDefaults())
-        .authorizeHttpRequests(authz -> authz.requestMatchers(PUBLIC_ENDPOINTS()).permitAll()
-            .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
-            .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
-            .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll().anyRequest()
-            .authenticated())
+    http.csrf(c -> c.disable()).cors(Customizer.withDefaults()).authorizeHttpRequests(authz -> authz
+        // WebSocket endpoints
+        .requestMatchers(PUBLIC_WS_ENDPOINTS()).permitAll().requestMatchers(PUBLIC_ENDPOINTS())
+        .permitAll().requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
+        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
+        .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll().anyRequest()
+        .authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
             .authenticationEntryPoint(customAuthenticationEntryPoint)
             .accessDeniedHandler(customAccessDeniedHandler))
@@ -130,6 +131,11 @@ public class SecurityConfiguration {
   }
 
   private boolean isPublicEndpoint(String path, String method) {
+    // WebSocket endpoints are always considered public
+    if (path.startsWith("/ws")) {
+      return true;
+    }
+
     switch (method.toUpperCase()) {
       case "GET":
         return Arrays.stream(PUBLIC_GET_ENDPOINTS()).anyMatch(path::startsWith);
