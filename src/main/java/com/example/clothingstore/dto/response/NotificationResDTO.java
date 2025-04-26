@@ -3,7 +3,7 @@ package com.example.clothingstore.dto.response;
 import com.example.clothingstore.enumeration.NotificationType;
 import lombok.Builder;
 import lombok.Data;
-
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,8 +16,9 @@ public class NotificationResDTO {
   private NotificationType type;
   private boolean read;
   private LocalDateTime notificationDate;
-  private Long referenceId;
-  private String imageUrl;
+  private String referenceIds;
+  private Instant startPromotionDate;
+  private Instant endPromotionDate;
 
   @Data
   @Builder
@@ -33,8 +34,8 @@ public class NotificationResDTO {
     private String title;
     private String content;
     private NotificationType type;
-    private Long referenceId;
-    private String imageUrl;
-    private List<ProductResDTO> promotionProducts;
+    private String referenceIds;
+    private Instant startPromotionDate;
+    private Instant endPromotionDate;
   }
 }

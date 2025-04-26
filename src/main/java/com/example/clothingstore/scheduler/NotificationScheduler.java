@@ -15,10 +15,10 @@ public class NotificationScheduler {
   private final NotificationService notificationService;
 
   /**
-   * Process scheduled notifications every minute This scheduler checks for any scheduled
-   * notifications that need to be sent
+   * Process scheduled notifications every hour. This scheduler checks for any scheduled
+   * notifications that need to be sent and creates user notifications for them.
    */
-  @Scheduled(cron = "0 * * * * ?") // Run every minute
+  @Scheduled(cron = "0 0 * * * ?") // Run every hour
   public void processScheduledNotifications() {
     log.debug("Running scheduled task to process pending notifications");
     notificationService.processScheduledNotifications();

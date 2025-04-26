@@ -4,6 +4,7 @@ import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
+import java.util.HashSet;
 import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
@@ -26,6 +27,10 @@ public interface NotificationService {
   void sendNotificationToUser(User user, NotificationResDTO notification);
 
   void sendBroadcastNotification(NotificationResDTO.PromotionNotificationDTO notification);
+
+  // Create notifications for all users from a broadcast message
+  void createNotificationsForAllUsers(NotificationResDTO.PromotionNotificationDTO notification,
+      HashSet<Long> referenceIds);
 
   // Process scheduled notifications
   void processScheduledNotifications();

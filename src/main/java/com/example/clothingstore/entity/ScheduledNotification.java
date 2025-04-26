@@ -11,20 +11,16 @@ import lombok.ToString;
 import java.time.Instant;
 
 @Entity
-@Table(name = "notifications",
-    indexes = {@Index(name = "idx_notification_user", columnList = "user_id"),
-        @Index(name = "idx_notification_type", columnList = "type"),
-        @Index(name = "idx_notification_read", columnList = "is_read")})
+@Table(name = "scheduled_notifications",
+    indexes = {@Index(name = "idx_scheduled_notification_type", columnList = "type"),
+        @Index(name = "idx_scheduled_notification_sent", columnList = "is_sent"),
+        @Index(name = "idx_scheduled_notification_date", columnList = "scheduled_date")})
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class Notification extends AbstractEntity {
-
-  @ManyToOne
-  @JoinColumn(name = "user_id")
-  private User user;
+public class ScheduledNotification extends AbstractEntity {
 
   @Column(nullable = false)
   private String title;
@@ -36,14 +32,14 @@ public class Notification extends AbstractEntity {
   @Column(name = "type")
   private NotificationType type;
 
-  @Column(name = "is_read", nullable = false)
-  private boolean read = false;
-
-  @Column(nullable = false)
-  private Instant notificationDate;
-
   @Column(name = "reference_ids")
   private String referenceIds;
+
+  @Column(name = "scheduled_date", nullable = false)
+  private Instant scheduledDate;
+
+  @Column(name = "is_sent", nullable = false)
+  private boolean sent = false;
 
   private Instant startPromotionDate;
 

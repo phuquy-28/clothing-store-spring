@@ -3,22 +3,23 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
-import com.example.clothingstore.dto.response.ProductResDTO;
 import com.example.clothingstore.entity.Notification;
 import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.Promotion;
+import com.example.clothingstore.entity.ScheduledNotification;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.NotificationType;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.NotificationRepository;
 import com.example.clothingstore.repository.PromotionRepository;
+import com.example.clothingstore.repository.ScheduledNotificationRepository;
+import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.NotificationService;
-import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,10 +40,11 @@ public class NotificationServiceImpl implements NotificationService {
   private final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
   private final NotificationRepository notificationRepository;
+  private final ScheduledNotificationRepository scheduledNotificationRepository;
   private final PromotionRepository promotionRepository;
-  private final ProductService productService;
   private final SimpMessagingTemplate messagingTemplate;
   private final SecurityUtil securityUtil;
+  private final UserRepository userRepository;
 
   @Override
   @Transactional
@@ -59,7 +62,7 @@ public class NotificationServiceImpl implements NotificationService {
     notification.setTitle(title);
     notification.setContent(content);
     notification.setType(NotificationType.ORDER_STATUS_UPDATED);
-    notification.setReferenceId(order.getId());
+    notification.setReferenceIds(order.getId().toString());
     notification.setNotificationDate(Instant.now());
     notification = notificationRepository.save(notification);
 
@@ -79,45 +82,54 @@ public class NotificationServiceImpl implements NotificationService {
     Promotion promotion = promotionRepository.findById(dto.getPromotionId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PROMOTION_NOT_FOUND));
 
-    // Create broadcast notification
-    Notification notification = new Notification();
-    notification.setTitle(dto.getTitle());
-    notification.setContent(dto.getContent());
-    notification.setType(NotificationType.PROMOTION_NOTIFICATION);
-    notification.setReferenceId(promotion.getId());
-    notification.setImageUrl(dto.getImageUrl());
-    notification.setBroadcast(true);
-    notification.setNotificationDate(Instant.now());
+    // Get product IDs (if available)
+    HashSet<Long> productIds =
+        new HashSet<>(promotion.getProducts().stream().map(Product::getId).toList());
+    promotion.getCategories().forEach(category -> productIds
+        .addAll(category.getProducts().stream().map(Product::getId).toList()));
 
-    // Set scheduled date if provided
+    // If scheduled, create a scheduled notification
     if (dto.getScheduledDate() != null) {
-      notification.setScheduledDate(dto.getScheduledDate().toInstant(ZoneOffset.UTC));
-      notification.setSent(false);
+      ScheduledNotification scheduledNotification = new ScheduledNotification();
+      scheduledNotification.setTitle(dto.getTitle());
+      scheduledNotification.setContent(dto.getContent());
+      scheduledNotification.setType(NotificationType.PROMOTION_NOTIFICATION);
+      scheduledNotification.setReferenceIds(promotion.getId().toString());
+      scheduledNotification.setScheduledDate(dto.getScheduledDate().toInstant(ZoneOffset.UTC));
+      scheduledNotification.setSent(false);
+      scheduledNotification.setStartPromotionDate(promotion.getStartDate());
+      scheduledNotification.setEndPromotionDate(promotion.getEndDate());
+
+      ScheduledNotification savedScheduledNotification =
+          scheduledNotificationRepository.save(scheduledNotification);
+
+      // Create DTO with promotion products
+      NotificationResDTO.PromotionNotificationDTO notificationDTO =
+          createPromotionNotificationDTO(savedScheduledNotification, promotion);
+
+      return notificationDTO;
     } else {
-      notification.setSent(true);
-    }
+      // If not scheduled, create and broadcast immediately
+      NotificationResDTO.PromotionNotificationDTO notificationDTO =
+          createPromotionNotificationDTO(null, promotion);
 
-    notification = notificationRepository.save(notification);
+      // Create notifications for all users
+      createNotificationsForAllUsers(notificationDTO, productIds);
 
-    // Create DTO with promotion products
-    NotificationResDTO.PromotionNotificationDTO notificationDTO =
-        createPromotionNotificationDTO(notification, promotion);
-
-    // If not scheduled, broadcast immediately
-    if (dto.getScheduledDate() == null) {
+      // Send broadcast notification
       sendBroadcastNotification(notificationDTO);
-    }
 
-    return notificationDTO;
+      return notificationDTO;
+    }
   }
 
   @Override
   public NotificationResDTO.NotificationListDTO getUserNotifications(Pageable pageable) {
     User currentUser = securityUtil.getCurrentUser();
-    Page<Notification> notificationsPage =
-        notificationRepository.findByUserOrderByNotificationDateDesc(currentUser, pageable);
+    List<Notification> notificationsPage =
+        notificationRepository.findByUserOrderByNotificationDateDesc(currentUser);
 
-    List<NotificationResDTO> notifications = notificationsPage.getContent().stream()
+    List<NotificationResDTO> notifications = notificationsPage.stream()
         .map(this::convertToNotificationDTO).collect(Collectors.toList());
 
     long unreadCount = notificationRepository.countByUserAndReadFalse(currentUser);
@@ -167,26 +179,63 @@ public class NotificationServiceImpl implements NotificationService {
 
   @Override
   @Transactional
+  public void createNotificationsForAllUsers(
+      NotificationResDTO.PromotionNotificationDTO notification, HashSet<Long> productIds) {
+    // Convert product IDs to comma-separated string
+    String referenceIds = productIds != null && !productIds.isEmpty()
+        ? String.join(",", productIds.stream().map(String::valueOf).collect(Collectors.toList()))
+        : null;
+
+    List<Notification> userNotifications = userRepository.findAll().stream().map(user -> {
+      Notification userNotification = new Notification();
+      userNotification.setUser(user);
+      userNotification.setTitle(notification.getTitle());
+      userNotification.setContent(notification.getContent());
+      userNotification.setType(notification.getType());
+      userNotification.setReferenceIds(referenceIds);
+      userNotification.setNotificationDate(Instant.now());
+      userNotification.setRead(false);
+      userNotification.setStartPromotionDate(notification.getStartPromotionDate());
+      userNotification.setEndPromotionDate(notification.getEndPromotionDate());
+      return userNotification;
+    }).collect(Collectors.toList());
+
+    notificationRepository.saveAll(userNotifications);
+    log.debug("Created notifications for {} users", userNotifications.size());
+  }
+
+  @Override
+  @Transactional
   public void processScheduledNotifications() {
     Instant now = Instant.now();
-    List<Notification> pendingNotifications =
-        notificationRepository.findPendingBroadcastNotifications(now);
+    List<ScheduledNotification> pendingNotifications =
+        scheduledNotificationRepository.findPendingScheduledNotifications(now);
 
-    for (Notification notification : pendingNotifications) {
-      if (notification.getType() == NotificationType.PROMOTION_NOTIFICATION) {
+    for (ScheduledNotification scheduledNotification : pendingNotifications) {
+      if (scheduledNotification.getType() == NotificationType.PROMOTION_NOTIFICATION) {
         // Find the promotion
-        promotionRepository.findById(notification.getReferenceId()).ifPresent(promotion -> {
-          // Create DTO
-          NotificationResDTO.PromotionNotificationDTO notificationDTO =
-              createPromotionNotificationDTO(notification, promotion);
+        promotionRepository.findById(Long.parseLong(scheduledNotification.getReferenceIds()))
+            .ifPresent(promotion -> {
+              // Get product IDs (if available)
+              HashSet<Long> productIds =
+                  new HashSet<>(promotion.getProducts().stream().map(Product::getId).toList());
+              promotion.getCategories().forEach(category -> productIds
+                  .addAll(category.getProducts().stream().map(Product::getId).toList()));
 
-          // Send broadcast
-          sendBroadcastNotification(notificationDTO);
+              // Create DTO
+              NotificationResDTO.PromotionNotificationDTO notificationDTO =
+                  createPromotionNotificationDTO(scheduledNotification, promotion);
 
-          // Mark as sent
-          notification.setSent(true);
-          notificationRepository.save(notification);
-        });
+              // Create notifications for all users
+              createNotificationsForAllUsers(notificationDTO, productIds);
+
+              // Send broadcast
+              sendBroadcastNotification(notificationDTO);
+
+              // Mark as sent
+              scheduledNotification.setSent(true);
+              scheduledNotificationRepository.save(scheduledNotification);
+            });
       }
     }
   }
@@ -197,17 +246,33 @@ public class NotificationServiceImpl implements NotificationService {
         .content(notification.getContent()).type(notification.getType()).read(notification.isRead())
         .notificationDate(
             LocalDateTime.ofInstant(notification.getNotificationDate(), ZoneId.systemDefault()))
-        .referenceId(notification.getReferenceId()).imageUrl(notification.getImageUrl()).build();
+        .referenceIds(notification.getReferenceIds())
+        .startPromotionDate(
+            notification.getStartPromotionDate() != null ? notification.getStartPromotionDate()
+                : null)
+        .endPromotionDate(
+            notification.getEndPromotionDate() != null ? notification.getEndPromotionDate() : null)
+        .build();
   }
 
   private NotificationResDTO.PromotionNotificationDTO createPromotionNotificationDTO(
-      Notification notification, Promotion promotion) {
-    List<ProductResDTO> promotionProducts = promotion.getProducts().stream()
-        .map(productService::convertToProductResDTO).collect(Collectors.toList());
+      Object notification, Promotion promotion) {
+    // Build the notification DTO
+    NotificationResDTO.PromotionNotificationDTO.PromotionNotificationDTOBuilder builder =
+        NotificationResDTO.PromotionNotificationDTO.builder();
 
-    return NotificationResDTO.PromotionNotificationDTO.builder().id(notification.getId())
-        .title(notification.getTitle()).content(notification.getContent())
-        .type(notification.getType()).referenceId(notification.getReferenceId())
-        .imageUrl(notification.getImageUrl()).promotionProducts(promotionProducts).build();
+    if (notification instanceof ScheduledNotification) {
+      ScheduledNotification notif = (ScheduledNotification) notification;
+      builder.id(notif.getId()).title(notif.getTitle()).content(notif.getContent())
+          .type(notif.getType()).referenceIds(notif.getReferenceIds())
+          .startPromotionDate(promotion.getStartDate()).endPromotionDate(promotion.getEndDate());
+    } else {
+      // For newly created notifications without saved entity yet
+      builder.title(promotion.getName()).content(promotion.getDescription())
+          .type(NotificationType.PROMOTION_NOTIFICATION).referenceIds(promotion.getId().toString())
+          .startPromotionDate(promotion.getStartDate()).endPromotionDate(promotion.getEndDate());
+    }
+
+    return builder.build();
   }
 }
