@@ -129,8 +129,8 @@ public class NotificationServiceImpl implements NotificationService {
     List<Notification> notificationsPage =
         notificationRepository.findByUserOrderByNotificationDateDesc(currentUser);
 
-    List<NotificationResDTO> notifications = notificationsPage.stream()
-        .map(this::convertToNotificationDTO).collect(Collectors.toList());
+    List<NotificationResDTO> notifications =
+        notificationsPage.stream().map(this::convertToNotificationDTO).collect(Collectors.toList());
 
     long unreadCount = notificationRepository.countByUserAndReadFalse(currentUser);
 
@@ -274,5 +274,18 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     return builder.build();
+  }
+
+  @Override
+  public void markAllNotificationAsRead() {
+    User currentUser = securityUtil.getCurrentUser();
+    List<Notification> unreadNotifications =
+        notificationRepository.findByUserAndReadFalse(currentUser);
+
+    unreadNotifications.forEach(notification -> notification.setRead(true));
+    notificationRepository.saveAll(unreadNotifications);
+
+    log.debug("Marked {} notifications as read for user {}", unreadNotifications.size(),
+        currentUser.getEmail());
   }
 }

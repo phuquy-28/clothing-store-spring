@@ -23,6 +23,8 @@ public interface NotificationService {
   // Mark notifications as read
   NotificationResDTO markNotificationAsRead(Long notificationId);
 
+  void markAllNotificationAsRead();
+
   // Send notifications via WebSocket
   void sendNotificationToUser(User user, NotificationResDTO notification);
 

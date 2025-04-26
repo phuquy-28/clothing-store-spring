@@ -109,6 +109,7 @@ public class UrlConfig {
   public static final String NOTIFICATION = "/notifications";
   public static final String UNREAD_COUNT = "/unread-count";
   public static final String MARK_READ = "/mark-read";
+  public static final String MARK_READ_ALL = "/mark-read-all";
   public static final String PROMOTION_NOTIFICATION = "/notifications/promotion";
   public static final String WS = "/ws/**";
 

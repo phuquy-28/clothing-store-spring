@@ -40,6 +40,13 @@ public class NotificationController {
     return ResponseEntity.ok(notificationService.markNotificationAsRead(notificationId));
   }
 
+  @PostMapping(UrlConfig.NOTIFICATION + UrlConfig.MARK_READ_ALL)
+  public ResponseEntity<Void> markAllNotificationAsRead() {
+    log.debug("REST request to mark all notifications as read");
+    notificationService.markAllNotificationAsRead();
+    return ResponseEntity.ok().build();
+  }
+
   @PostMapping(UrlConfig.PROMOTION_NOTIFICATION)
   public ResponseEntity<NotificationResDTO.PromotionNotificationDTO> createPromotionNotification(
       @Valid @RequestBody NotificationReqDTO.CreatePromotionNotificationDTO dto) {
