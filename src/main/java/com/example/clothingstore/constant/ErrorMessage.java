@@ -82,6 +82,11 @@ public final class ErrorMessage {
   public static final String POINT_ACTION_TYPE_INVALID = "error.point_action_type.invalid";
   public static final String POINT_NOT_ENOUGH = "error.point.not_enough";
 
+  // Return request Errors
+  public static final String RETURN_REQUEST_EXISTS = "error.return.request.already.exists";
+  public static final String BANK_INFORMATION_REQUIRED = "error.bank.information.required";
+  public static final String RETURN_REQUEST_NOT_FOUND = "error.return.request.not.found";
+
   // OTP Related Errors
   public static final String OTP_NOT_SENT = "error.otp.not_sent";
   public static final String OTP_INVALID = "error.otp.invalid";

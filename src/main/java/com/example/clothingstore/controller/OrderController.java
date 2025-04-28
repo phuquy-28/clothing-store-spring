@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.clothingstore.annotation.ApiMessage;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.OrderCancelReqDTO;
 import com.example.clothingstore.dto.request.OrderPreviewReqDTO;
 import com.example.clothingstore.dto.request.OrderReqDTO;
 import com.example.clothingstore.dto.request.OrderReviewReqDTO;
@@ -34,6 +36,7 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.service.OderCancellationService;
 import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
@@ -50,6 +53,8 @@ public class OrderController {
   private final OrderService orderService;
 
   private final UserService userService;
+
+  private final OderCancellationService oderCancellationService;
 
   @PostMapping(UrlConfig.ORDERS + UrlConfig.PREVIEW)
   public ResponseEntity<OrderPreviewDTO> previewOrder(
@@ -107,6 +112,15 @@ public class OrderController {
       @RequestBody @Valid OrderReviewReqDTO orderReviewReqDTO) {
     OrderReviewReqDTO updatedOrderReview = orderService.updateOrderReview(orderReviewReqDTO);
     return ResponseEntity.ok(updatedOrderReview);
+  }
+
+  @PutMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.CANCEL)
+  @ApiMessage("Order cancelled successfully")
+  public ResponseEntity<Void> cancelOrder(@RequestBody @Valid OrderCancelReqDTO orderCancelReqDTO) {
+    log.debug("REST request to cancel order: {}", orderCancelReqDTO);
+    oderCancellationService.userCancelOrder(orderCancelReqDTO.getOrderId(),
+        orderCancelReqDTO.getReason());
+    return ResponseEntity.ok().build();
   }
 
   @PutMapping(UrlConfig.ORDERS + UrlConfig.STATUS)

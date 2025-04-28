@@ -72,6 +72,25 @@ public class CloudStorageServiceImpl implements CloudStorageService {
     return response;
   }
 
+  @Override
+  public UploadImageResDTO createSignedUrlWithDirectory(UploadImageReqDTO uploadImageReqDTO,
+      String directory) {
+    String fileName = uploadImageReqDTO.getFileName();
+    String fileExtension = getFileExtension(fileName);
+
+    if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+      throw new InvalidFileTypeException(ErrorMessage.INVALID_FILE_TYPE);
+    }
+
+    // Append directory to file name
+    String fileNameWithDirectory =
+        directory.endsWith("/") ? directory + fileName : directory + "/" + fileName;
+
+    UploadImageResDTO response = new UploadImageResDTO();
+    response.setSignedUrl(generateSignedUrl(fileNameWithDirectory));
+    return response;
+  }
+
   private String getFileExtension(String fileName) {
     if (fileName == null || fileName.lastIndexOf(".") == -1) {
       return "";

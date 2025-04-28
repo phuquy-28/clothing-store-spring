@@ -13,6 +13,7 @@ import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.service.OderCancellationService;
+import com.example.clothingstore.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,43 @@ public class OderCancallationServiceImpl implements OderCancellationService {
     orderRepository.save(order);
 
     log.debug("Cancelled order with ID: {} and returned stock", orderId);
+  }
+
+  @Override
+  @Transactional
+  public void userCancelOrder(Long orderId, String reason) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    // Verify that the current user is the owner of the order
+    String currentUserEmail = SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new BadRequestException(ErrorMessage.USER_NOT_LOGGED_IN));
+
+    if (!order.getUser().getEmail().equals(currentUserEmail)) {
+      throw new BadRequestException(ErrorMessage.USER_NOT_AUTHORIZED);
+    }
+
+    // Check if the order can be cancelled by the user (only PENDING status)
+    if (order.getStatus() != OrderStatus.PENDING) {
+      throw new BadRequestException(ErrorMessage.ORDER_CANNOT_BE_CANCELLED);
+    }
+
+    order.setStatus(OrderStatus.CANCELLED);
+    order.setPaymentStatus(PaymentStatus.FAILED);
+    order.setCancelReason(reason != null && !reason.isBlank() ? reason : "Cancelled by user");
+
+    // Return stock to inventory
+    order.getLineItems().forEach(lineItem -> {
+      ProductVariant variant = lineItem.getProductVariant();
+      if (variant != null) {
+        variant.setQuantity(variant.getQuantity() + lineItem.getQuantity().intValue());
+        productVariantRepository.save(variant);
+      }
+    });
+
+    orderRepository.save(order);
+
+    log.debug("User cancelled order with ID: {}", orderId);
   }
 
   private boolean canCancelOrder(Order order) {

@@ -80,10 +80,17 @@ public class UrlConfig {
   public static final String CHART = "/chart";
   public static final String BAR = "/bar";
   public static final String LINE = "/line";
+  public static final String CANCEL = "/cancel";
 
 	// Review controller
   public static final String REVIEW = "/reviews";
   public static final String PUBLISH = "/publish";
+
+  // Return request controller
+  public static final String RETURN_REQUESTS = "/return-requests";
+  public static final String PROCESS = "/process";
+  public static final String ADMIN = "/admin";
+  public static final String RETURN_REQUESTS_USER = "/user";
 
 	// Payment controller
 	public static final String PAYMENT = "/payment";

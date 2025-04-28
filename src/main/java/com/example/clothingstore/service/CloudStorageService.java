@@ -7,4 +7,7 @@ public interface CloudStorageService {
 
   UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO);
 
+  UploadImageResDTO createSignedUrlWithDirectory(UploadImageReqDTO uploadImageReqDTO,
+      String directory);
+
 }
