@@ -15,6 +15,7 @@ import com.example.clothingstore.dto.response.OrderPaymentDTO;
 import com.example.clothingstore.dto.response.OrderPreviewDTO;
 import com.example.clothingstore.dto.response.OrderReviewDTO;
 import com.example.clothingstore.dto.response.OrderStatisticsSummaryRes;
+import com.example.clothingstore.dto.response.OrderStatusHistoryDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
@@ -52,4 +53,8 @@ public interface OrderService {
   MonthlySpendingChartRes getUserOrderMonthlyChart(OrderStatisticsSummaryReq request);
 
   StatusSpendingChartRes getUserOrderStatusChart(OrderStatisticsSummaryReq request);
+
+  List<OrderStatusHistoryDTO> getOrderStatusHistory(Long orderId);
+
+  List<OrderStatusHistoryDTO> getOrderStatusHistoryForUser(Long orderId);
 }

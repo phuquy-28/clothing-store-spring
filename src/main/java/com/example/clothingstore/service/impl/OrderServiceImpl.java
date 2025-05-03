@@ -40,6 +40,7 @@ import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
+import com.example.clothingstore.exception.AccessDeniedException;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.OrderCreationException;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
@@ -79,6 +80,9 @@ import com.example.clothingstore.repository.PointHistoryRepository;
 import com.example.clothingstore.service.NotificationService;
 import com.example.clothingstore.dto.response.MonthlySpendingChartRes;
 import com.example.clothingstore.dto.response.StatusSpendingChartRes;
+import com.example.clothingstore.dto.response.OrderStatusHistoryDTO;
+import com.example.clothingstore.entity.OrderStatusHistory;
+import com.example.clothingstore.repository.OrderStatusHistoryRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -113,6 +117,8 @@ public class OrderServiceImpl implements OrderService {
   private final PointHistoryRepository pointHistoryRepository;
 
   private final NotificationService notificationService;
+
+  private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
   @Override
   @Transactional
@@ -489,6 +495,21 @@ public class OrderServiceImpl implements OrderService {
       throw new BadRequestException(ErrorMessage.PRE_PAYMENT_NOT_SUCCESS);
     }
 
+    // Lưu lịch sử trạng thái
+    OrderStatusHistory statusHistory = new OrderStatusHistory();
+    statusHistory.setOrder(order);
+    statusHistory.setPreviousStatus(oldStatus);
+    statusHistory.setNewStatus(newStatus);
+    statusHistory.setUpdateTimestamp(Instant.now());
+    // Lấy thông tin người cập nhật nếu có
+    String username = SecurityUtil.getCurrentUserLogin().orElse("system");
+    statusHistory.setUpdatedBy(username);
+    statusHistory.setNote(orderStatusReqDTO.getReason());
+    
+    // Thêm vào danh sách lịch sử của đơn hàng
+    order.getStatusHistories().add(statusHistory);
+    
+    // Cập nhật trạng thái đơn hàng
     order.setStatus(newStatus);
 
     if (order.getPaymentMethod() == PaymentMethod.COD) {
@@ -993,5 +1014,43 @@ public class OrderServiceImpl implements OrderService {
         .shipping(shippingAmount)
         .delivered(deliveredAmount)
         .build();
+  }
+
+  @Override
+  public List<OrderStatusHistoryDTO> getOrderStatusHistory(Long orderId) {
+    orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    List<OrderStatusHistory> histories =
+        orderStatusHistoryRepository.findOrderStatusHistoriesByOrderId(orderId);
+
+    return histories.stream().map(this::mapToOrderStatusHistoryDTO).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<OrderStatusHistoryDTO> getOrderStatusHistoryForUser(Long orderId) {
+    // Lấy user hiện tại
+    User currentUser =
+        userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().get());
+
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
+
+    // Kiểm tra quyền truy cập
+    if (!order.getUser().getId().equals(currentUser.getId())) {
+      throw new AccessDeniedException(ErrorMessage.ORDER_NOT_FOUND);
+    }
+
+    List<OrderStatusHistory> histories = orderStatusHistoryRepository
+        .findOrderStatusHistoriesByOrderIdAndUserId(orderId, currentUser.getId());
+
+    return histories.stream().map(this::mapToOrderStatusHistoryDTO).collect(Collectors.toList());
+  }
+
+  private OrderStatusHistoryDTO mapToOrderStatusHistoryDTO(OrderStatusHistory history) {
+    return OrderStatusHistoryDTO.builder().id(history.getId()).orderId(history.getOrder().getId())
+        .previousStatus(history.getPreviousStatus()).newStatus(history.getNewStatus())
+        .updateTimestamp(history.getUpdateTimestamp()).updatedBy(history.getUpdatedBy())
+        .note(history.getNote()).build();
   }
 }

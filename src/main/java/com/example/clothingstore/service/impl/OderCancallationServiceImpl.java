@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.OrderStatusHistory;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentStatus;
@@ -17,6 +18,7 @@ import com.example.clothingstore.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -38,9 +40,21 @@ public class OderCancallationServiceImpl implements OderCancellationService {
       throw new BadRequestException(ErrorMessage.ORDER_CANNOT_BE_CANCELLED);
     }
 
+    OrderStatus previousStatus = order.getStatus();
+
     order.setStatus(OrderStatus.CANCELLED);
     order.setPaymentStatus(PaymentStatus.FAILED);
     order.setCancelReason(AppConstant.ORDER_CANCEL_REASON);
+
+    // Lưu lịch sử trạng thái
+    OrderStatusHistory statusHistory = new OrderStatusHistory();
+    statusHistory.setOrder(order);
+    statusHistory.setPreviousStatus(previousStatus);
+    statusHistory.setNewStatus(OrderStatus.CANCELLED);
+    statusHistory.setUpdateTimestamp(Instant.now());
+    statusHistory.setUpdatedBy("system");
+    statusHistory.setNote(AppConstant.ORDER_CANCEL_REASON);
+    order.getStatusHistories().add(statusHistory);
 
     order.getLineItems().forEach(lineItem -> {
       ProductVariant variant = lineItem.getProductVariant();
@@ -74,9 +88,22 @@ public class OderCancallationServiceImpl implements OderCancellationService {
       throw new BadRequestException(ErrorMessage.ORDER_CANNOT_BE_CANCELLED);
     }
 
+    OrderStatus previousStatus = order.getStatus();
+
     order.setStatus(OrderStatus.CANCELLED);
     order.setPaymentStatus(PaymentStatus.FAILED);
-    order.setCancelReason(reason != null && !reason.isBlank() ? reason : "Cancelled by user");
+    String cancelReason = reason != null && !reason.isBlank() ? reason : "Cancelled by user";
+    order.setCancelReason(cancelReason);
+
+    // Lưu lịch sử trạng thái
+    OrderStatusHistory statusHistory = new OrderStatusHistory();
+    statusHistory.setOrder(order);
+    statusHistory.setPreviousStatus(previousStatus);
+    statusHistory.setNewStatus(OrderStatus.CANCELLED);
+    statusHistory.setUpdateTimestamp(Instant.now());
+    statusHistory.setUpdatedBy(currentUserEmail);
+    statusHistory.setNote(cancelReason);
+    order.getStatusHistories().add(statusHistory);
 
     // Return stock to inventory
     order.getLineItems().forEach(lineItem -> {

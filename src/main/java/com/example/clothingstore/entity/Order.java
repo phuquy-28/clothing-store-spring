@@ -85,6 +85,9 @@ public class Order extends AbstractEntity {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PointHistory> pointHistories = new ArrayList<>();
 
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<OrderStatusHistory> statusHistories = new ArrayList<>();
+
   @Getter
   @Setter
   @NoArgsConstructor

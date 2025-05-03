@@ -34,6 +34,7 @@ import com.example.clothingstore.dto.response.OrderStatisticsSummaryRes;
 import com.example.clothingstore.dto.response.MonthlySpendingChartRes;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.StatusSpendingChartRes;
+import com.example.clothingstore.dto.response.OrderStatusHistoryDTO;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.service.OderCancellationService;
@@ -172,6 +173,23 @@ public class OrderController {
       @RequestBody @Valid OrderStatisticsSummaryReq request) {
     log.debug("REST request to get user order status chart data: {}", request);
     StatusSpendingChartRes result = orderService.getUserOrderStatusChart(request);
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping(UrlConfig.ORDERS + UrlConfig.ORDER_ID + UrlConfig.STATUS_HISTORY)
+  public ResponseEntity<List<OrderStatusHistoryDTO>> getOrderStatusHistory(
+      @PathVariable Long orderId) {
+    log.debug("REST request to get order status history: {}", orderId);
+    List<OrderStatusHistoryDTO> result = orderService.getOrderStatusHistory(orderId);
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.ORDER_ID
+      + UrlConfig.STATUS_HISTORY)
+  public ResponseEntity<List<OrderStatusHistoryDTO>> getOrderStatusHistoryForUser(
+      @PathVariable Long orderId) {
+    log.debug("REST request to get order status history for user: {}", orderId);
+    List<OrderStatusHistoryDTO> result = orderService.getOrderStatusHistoryForUser(orderId);
     return ResponseEntity.ok(result);
   }
 }
