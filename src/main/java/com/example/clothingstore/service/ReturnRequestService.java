@@ -17,6 +17,8 @@ public interface ReturnRequestService {
 
   ReturnRequestResDTO getReturnRequestById(Long id);
 
+  ReturnRequestResDTO getReturnRequestByOrderId(Long id);
+
   ResultPaginationDTO getAllReturnRequests(Specification<ReturnRequest> spec, Pageable pageable);
 
   void deleteReturnRequest(Long id);

@@ -15,7 +15,6 @@ import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.service.OderCancellationService;
 import com.example.clothingstore.util.SecurityUtil;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
@@ -31,7 +30,6 @@ public class OderCancallationServiceImpl implements OderCancellationService {
   private final ProductVariantRepository productVariantRepository;
 
   @Override
-  @Transactional
   public void cancelOrderAndReturnStock(Long orderId) {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
@@ -70,7 +68,6 @@ public class OderCancallationServiceImpl implements OderCancellationService {
   }
 
   @Override
-  @Transactional
   public void userCancelOrder(Long orderId, String reason) {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ORDER_NOT_FOUND));
@@ -120,7 +117,7 @@ public class OderCancallationServiceImpl implements OderCancellationService {
   }
 
   private boolean canCancelOrder(Order order) {
-    // Chỉ cho phép hủy đơn hàng ở trạng thái PENDING hoặc PROCESSING
-    return order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PROCESSING;
+    // Chỉ cho phép hủy đơn hàng ở trạng thái PENDING
+    return order.getStatus() == OrderStatus.PENDING;
   }
 }

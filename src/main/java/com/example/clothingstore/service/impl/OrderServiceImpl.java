@@ -340,12 +340,18 @@ public class OrderServiceImpl implements OrderService {
 
     canReview = canReview && !isReviewed;
 
+    OrderStatusHistory latestStatusHistory = order.getStatusHistories().stream()
+        .filter(statusHistory -> statusHistory.getNewStatus().equals(order.getStatus()))
+        .findFirst()
+        .orElse(null);
+
     return OrderResDTO.builder().id(order.getId()).code(order.getCode())
         .orderDate(order.getOrderDate()).status(order.getStatus())
         .paymentMethod(order.getPaymentMethod()).paymentStatus(order.getPaymentStatus())
         .total(order.getTotal()).shippingFee(order.getShippingFee()).discount(order.getDiscount())
         .finalTotal(order.getFinalTotal()).canReview(canReview).isReviewed(isReviewed)
         .cancelReason(order.getCancelReason())
+        .statusUpdateTimestamp(latestStatusHistory != null ? latestStatusHistory.getUpdateTimestamp() : null)
         .lineItems(
             order.getLineItems().stream().map(this::mapToLineItemDTO).collect(Collectors.toList()))
         .build();
@@ -768,6 +774,12 @@ public class OrderServiceImpl implements OrderService {
 
     canReview = canReview && !isReviewed;
 
+    // Get the latest status update timestamp corresponding to the current status
+    OrderStatusHistory latestStatusHistory = order.getStatusHistories().stream()
+        .filter(statusHistory -> statusHistory.getNewStatus().equals(order.getStatus()))
+        .findFirst()
+        .orElse(null);
+
     // Map shipping information to ShippingProfileResDTO
     ShippingProfileResDTO shippingProfile = ShippingProfileResDTO.builder()
         .firstName(order.getShippingInformation().getFirstName())
@@ -813,6 +825,8 @@ public class OrderServiceImpl implements OrderService {
         .isReviewed(isReviewed)
         .cancelReason(order.getCancelReason())
         .shippingProfile(shippingProfile)
+        .statusUpdateTimestamp(
+            latestStatusHistory != null ? latestStatusHistory.getUpdateTimestamp() : null)
         .build();
   }
 

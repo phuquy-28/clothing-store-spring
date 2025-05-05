@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.annotation.ApiMessage;
@@ -24,7 +25,6 @@ import com.example.clothingstore.entity.ReturnRequest;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.ReturnRequestService;
 import com.turkraft.springfilter.boot.Filter;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -52,6 +52,13 @@ public class ReturnRequestController {
   public ResponseEntity<ReturnRequestResDTO> getReturnRequestById(@PathVariable Long id) {
     log.debug("REST request to get return request by id: {}", id);
     ReturnRequestResDTO result = returnRequestService.getReturnRequestById(id);
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping(UrlConfig.RETURN_REQUESTS + UrlConfig.ORDERS + UrlConfig.ID)
+  public ResponseEntity<ReturnRequestResDTO> getReturnRequestByOrderId(@PathVariable Long id) {
+    log.debug("REST request to get return request by order id: {}", id);
+    ReturnRequestResDTO result = returnRequestService.getReturnRequestByOrderId(id);
     return ResponseEntity.ok(result);
   }
 

@@ -1,5 +1,7 @@
 package com.example.clothingstore.service.impl;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,8 +62,11 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
       throw new BadRequestException(ErrorMessage.USER_NOT_AUTHORIZED);
     }
 
-    // Check if order status is DELIVERED (users can only return delivered orders)
-    if (order.getStatus() != OrderStatus.DELIVERED) {
+    // Check if order is eligible for return (must be DELIVERED and within 30 days)
+    if (order.getStatus() != OrderStatus.DELIVERED || order.getStatusHistories().stream()
+        .filter(statusHistory -> statusHistory.getNewStatus().equals(order.getStatus()))
+        .anyMatch(statusHistory -> statusHistory.getUpdateTimestamp()
+            .isBefore(Instant.now().minus(30, ChronoUnit.DAYS)))) {
       throw new BadRequestException(ErrorMessage.ORDER_CAN_NOT_BE_RETURNED);
     }
 
@@ -111,6 +116,10 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     // Save return request
     ReturnRequest saved = returnRequestRepository.save(returnRequest);
+
+    // Update order status
+    order.setStatus(OrderStatus.RETURNED);
+    orderRepository.save(order);
 
     // Convert to DTO and return
     return convertToDTO(saved);
@@ -208,7 +217,9 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
       throw new BadRequestException("error.return.request.cannot.delete");
     }
 
-    returnRequestRepository.delete(returnRequest);
+    returnRequest.setStatus(ReturnRequestStatus.CANCELED);
+
+    returnRequestRepository.save(returnRequest);
   }
 
   private ReturnRequestResDTO convertToDTO(ReturnRequest returnRequest) {
@@ -241,5 +252,20 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         .accountHolderName(returnRequest.getAccountHolderName())
         .adminComment(returnRequest.getAdminComment()).imageUrls(imageUrls).orderItems(orderItems)
         .build();
+  }
+
+  @Override
+  public ReturnRequestResDTO getReturnRequestByOrderId(Long id) {
+    ReturnRequest returnRequest = returnRequestRepository.findByOrderId(id)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.RETURN_REQUEST_NOT_FOUND));
+
+    // Check if current user has access to this return request
+    User currentUser = securityUtil.getCurrentUser();
+    if (!currentUser.getRole().getName().equals(AppConstant.ROLE_ADMIN)
+        && !returnRequest.getUser().getId().equals(currentUser.getId())) {
+      throw new BadRequestException(ErrorMessage.USER_NOT_AUTHORIZED);
+    }
+
+    return convertToDTO(returnRequest);
   }
 }

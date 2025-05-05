@@ -23,4 +23,6 @@ public interface ReturnRequestRepository
   Optional<ReturnRequest> findByOrder(Order order);
 
   boolean existsByOrder(Order order);
+
+  Optional<ReturnRequest> findByOrderId(Long id);
 }

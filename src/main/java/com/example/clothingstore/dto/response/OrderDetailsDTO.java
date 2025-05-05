@@ -51,6 +51,8 @@ public class OrderDetailsDTO {
 
   private ShippingProfileResDTO shippingProfile;
 
+  private Instant statusUpdateTimestamp;
+
   @Data
   @Builder
   public static class LineItem {

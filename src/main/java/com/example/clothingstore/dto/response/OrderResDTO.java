@@ -41,6 +41,8 @@ public class OrderResDTO {
 
   private String cancelReason;
 
+  private Instant statusUpdateTimestamp;
+
   @Data
   @Builder
   public static class LineItem {
