@@ -645,6 +645,7 @@ public class OrderServiceImpl implements OrderService {
       tempOrder.setDiscount(discount);
       tempOrder.setShippingInformation(mapToShippingInformation(shippingProfile));
       tempOrder.setPaymentMethod(PaymentMethod.valueOf(orderPreviewReqDTO.getPaymentMethod().toUpperCase()));
+      tempOrder.setPointDiscount(pointDiscount);
       shippingFee = deliveryStrategy.calculateShippingFee(tempOrder);
     } else {
       shippingFee = null;
