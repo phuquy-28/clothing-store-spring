@@ -3,6 +3,7 @@ package com.example.clothingstore.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.clothingstore.enumeration.CashBackStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.ReturnRequestStatus;
 
@@ -43,6 +44,9 @@ public class ReturnRequest extends AbstractEntity {
 
   @Enumerated(EnumType.STRING)
   private ReturnRequestStatus status;
+
+  @Enumerated(EnumType.STRING)
+  private CashBackStatus cashBackStatus;
 
   @Enumerated(EnumType.STRING)
   private PaymentMethod originalPaymentMethod;

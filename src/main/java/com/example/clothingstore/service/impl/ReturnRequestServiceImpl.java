@@ -17,6 +17,7 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ReturnRequestProcessDTO;
 import com.example.clothingstore.dto.request.ReturnRequestReqDTO;
+import com.example.clothingstore.dto.request.CashBackUpdateDTO;
 import com.example.clothingstore.dto.response.OrderResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ReturnRequestResDTO;
@@ -26,6 +27,7 @@ import com.example.clothingstore.entity.ReturnRequestImage;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.ReturnRequestStatus;
+import com.example.clothingstore.enumeration.CashBackStatus;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
@@ -92,6 +94,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     returnRequest.setUser(currentUser);
     returnRequest.setReason(returnRequestReqDTO.getReason());
     returnRequest.setStatus(ReturnRequestStatus.PENDING);
+    returnRequest.setCashBackStatus(null);
     returnRequest.setOriginalPaymentMethod(order.getPaymentMethod());
 
     // Set bank information if provided
@@ -143,6 +146,9 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     // If approved, process refund
     if (newStatus == ReturnRequestStatus.APPROVED) {
+      // Update cashback status to ACCEPTED when return request is approved
+      returnRequest.setCashBackStatus(CashBackStatus.ACCEPTED);
+
       // For VNPAY payments, we would initiate a refund through VNPAY
       if (returnRequest.getOriginalPaymentMethod().name().equals("VNPAY")) {
         // This is a placeholder - in a real implementation, you would call the VNPay refund API
@@ -222,6 +228,32 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     returnRequestRepository.save(returnRequest);
   }
 
+  @Override
+  @Transactional
+  public ReturnRequestResDTO updateCashBackStatus(CashBackUpdateDTO cashBackUpdateDTO) {
+    ReturnRequest returnRequest =
+        returnRequestRepository.findById(cashBackUpdateDTO.getReturnRequestId()).orElseThrow(
+            () -> new ResourceNotFoundException(ErrorMessage.RETURN_REQUEST_NOT_FOUND));
+
+    if (returnRequest.getStatus() != ReturnRequestStatus.APPROVED) {
+      throw new BadRequestException(ErrorMessage.RETURN_REQUEST_NOT_APPROVED);
+    }
+
+    CashBackStatus newCashBackStatus;
+    try {
+      newCashBackStatus =
+          CashBackStatus.valueOf(cashBackUpdateDTO.getCashBackStatus().toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(ErrorMessage.CASHBACK_STATUS_INVALID);
+    }
+
+    returnRequest.setCashBackStatus(newCashBackStatus);
+
+    ReturnRequest updated = returnRequestRepository.save(returnRequest);
+
+    return convertToDTO(updated);
+  }
+
   private ReturnRequestResDTO convertToDTO(ReturnRequest returnRequest) {
     List<String> imageUrls = returnRequest.getImages().stream().map(ReturnRequestImage::getImageUrl)
         .collect(Collectors.toList());
@@ -245,8 +277,8 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     return ReturnRequestResDTO.builder().id(returnRequest.getId())
         .orderId(returnRequest.getOrder().getId()).orderCode(returnRequest.getOrder().getCode())
-        .status(returnRequest.getStatus()).reason(returnRequest.getReason())
-        .createdAt(returnRequest.getCreatedAt())
+        .status(returnRequest.getStatus()).cashBackStatus(returnRequest.getCashBackStatus())
+        .reason(returnRequest.getReason()).createdAt(returnRequest.getCreatedAt())
         .originalPaymentMethod(returnRequest.getOriginalPaymentMethod())
         .bankName(returnRequest.getBankName()).accountNumber(returnRequest.getAccountNumber())
         .accountHolderName(returnRequest.getAccountHolderName())

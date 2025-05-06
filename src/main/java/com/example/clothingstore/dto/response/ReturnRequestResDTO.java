@@ -3,6 +3,7 @@ package com.example.clothingstore.dto.response;
 import java.time.Instant;
 import java.util.List;
 
+import com.example.clothingstore.enumeration.CashBackStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.ReturnRequestStatus;
 
@@ -20,6 +21,8 @@ public class ReturnRequestResDTO {
   private String orderCode;
 
   private ReturnRequestStatus status;
+
+  private CashBackStatus cashBackStatus;
 
   private String reason;
 

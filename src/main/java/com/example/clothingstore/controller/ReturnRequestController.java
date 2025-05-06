@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.annotation.ApiMessage;
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.CashBackUpdateDTO;
 import com.example.clothingstore.dto.request.ReturnRequestProcessDTO;
 import com.example.clothingstore.dto.request.ReturnRequestReqDTO;
 import com.example.clothingstore.dto.request.UploadImageReqDTO;
@@ -93,6 +94,15 @@ public class ReturnRequestController {
       @RequestBody @Valid ReturnRequestProcessDTO returnRequestProcessDTO) {
     log.debug("REST request to process return request: {}", returnRequestProcessDTO);
     ReturnRequestResDTO result = returnRequestService.processReturnRequest(returnRequestProcessDTO);
+    return ResponseEntity.ok(result);
+  }
+
+  @PutMapping(UrlConfig.RETURN_REQUESTS + UrlConfig.CASHBACK)
+  @ApiMessage("Cashback status updated successfully")
+  public ResponseEntity<ReturnRequestResDTO> updateCashBackStatus(
+      @RequestBody @Valid CashBackUpdateDTO cashBackUpdateDTO) {
+    log.debug("REST request to update cashback status: {}", cashBackUpdateDTO);
+    ReturnRequestResDTO result = returnRequestService.updateCashBackStatus(cashBackUpdateDTO);
     return ResponseEntity.ok(result);
   }
 

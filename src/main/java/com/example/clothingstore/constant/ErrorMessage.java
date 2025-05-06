@@ -86,6 +86,8 @@ public final class ErrorMessage {
   public static final String RETURN_REQUEST_EXISTS = "error.return.request.already.exists";
   public static final String BANK_INFORMATION_REQUIRED = "error.bank.information.required";
   public static final String RETURN_REQUEST_NOT_FOUND = "error.return.request.not.found";
+  public static final String RETURN_REQUEST_NOT_APPROVED = "error.return.request.not.approved";
+  public static final String CASHBACK_STATUS_INVALID = "error.cashback.status.invalid";
 
   // OTP Related Errors
   public static final String OTP_NOT_SENT = "error.otp.not_sent";

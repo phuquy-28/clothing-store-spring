@@ -92,6 +92,7 @@ public class UrlConfig {
   public static final String PROCESS = "/process";
   public static final String ADMIN = "/admin";
   public static final String RETURN_REQUESTS_USER = "/user";
+  public static final String CASHBACK = "/cashback";
 
   // Payment controller
   public static final String PAYMENT = "/payment";

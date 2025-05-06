@@ -3,6 +3,7 @@ package com.example.clothingstore.service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.example.clothingstore.dto.request.CashBackUpdateDTO;
 import com.example.clothingstore.dto.request.ReturnRequestProcessDTO;
 import com.example.clothingstore.dto.request.ReturnRequestReqDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
@@ -14,6 +15,8 @@ public interface ReturnRequestService {
   ReturnRequestResDTO createReturnRequest(ReturnRequestReqDTO returnRequestReqDTO);
 
   ReturnRequestResDTO processReturnRequest(ReturnRequestProcessDTO returnRequestProcessDTO);
+
+  ReturnRequestResDTO updateCashBackStatus(CashBackUpdateDTO cashBackUpdateDTO);
 
   ReturnRequestResDTO getReturnRequestById(Long id);
 
