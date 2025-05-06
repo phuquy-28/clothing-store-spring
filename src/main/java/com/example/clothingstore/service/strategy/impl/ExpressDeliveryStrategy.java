@@ -18,8 +18,16 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
 
   @Override
   public double calculateShippingFee(Order order) {
-    if (order.getTotal() - order.getDiscount() - order.getPointDiscount() < freeShippingThreshold) {
-      return 50000;
+    if (order == null) {
+        return 0;
+    }
+    
+    double orderTotal = order.getTotal() != null ? order.getTotal() : 0;
+    double discount = order.getDiscount() != null ? order.getDiscount() : 0;
+    double pointDiscount = order.getPointDiscount() != null ? order.getPointDiscount() : 0;
+    
+    if (orderTotal - discount - pointDiscount < freeShippingThreshold) {
+        return 50000;
     }
     return 0;
   }
