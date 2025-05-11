@@ -107,6 +107,10 @@ public class AuthServiceImpl implements AuthService {
     newUser.setPoint(point);
 
     User savedUser = userRepository.save(newUser);
+    
+    // Send activation code email asynchronously
+    log.debug("Sending activation code email for User: {}", savedUser.getEmail());
+    emailService.sendActivationCodeEmail(savedUser);
 
     log.debug("Created Information for User: {}", savedUser);
 
