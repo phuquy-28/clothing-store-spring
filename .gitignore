@@ -52,3 +52,10 @@ dist/
 
 ### Miscellaneous ###
 *.log
+
+### Cursor ###
+.cursor
+
+### Docs ###
+docs/
+memory-bank/
