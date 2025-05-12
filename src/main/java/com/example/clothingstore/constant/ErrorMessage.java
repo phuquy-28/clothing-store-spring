@@ -22,6 +22,7 @@ public final class ErrorMessage {
   // Account Activation & Password Recovery
   public static final String ACTIVATION_TOKEN_INVALID = "error.activation_token.invalid";
   public static final String ACTIVATION_CODE_INVALID = "error.activation_code.invalid";
+  public static final String ACTIVATION_CODE_TOO_FREQUENT = "error.activation_code.too_frequent";
   public static final String RESET_TOKEN_INVALID = "error.reset_token.invalid";
   public static final String RESET_CODE_INVALID = "error.reset_code.invalid";
   public static final String RESET_CODE_EXPIRED = "error.reset_code.expired";

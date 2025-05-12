@@ -80,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
     // generate activation key and activation code
     newUser.setActivationKey(RandomUtil.generateActivationKey());
     newUser.setActivationCode(RandomUtil.generateActivationCode());
+    newUser.setActivationCodeDate(Instant.now());
 
     // firstName and lastName are optional
     Profile profile = new Profile();
@@ -348,6 +349,20 @@ public class AuthServiceImpl implements AuthService {
   public void sendActivationCode(String email) {
     if (userRepository.findByEmailAndActivatedFalse(email).isPresent()) {
       User user = userRepository.findByEmail(email).get();
+      
+      // Check if the last activation code request has expired (30 seconds)
+      if (user.getActivationCodeDate() != null
+          && user.getActivationCodeDate().isAfter(Instant.now().minusSeconds(30))) {
+        log.debug("Activation code request too frequent for User: {}", user.getEmail());
+        throw new EmailInvalidException(ErrorMessage.ACTIVATION_CODE_TOO_FREQUENT);
+      }
+      
+      // Update activation code and timestamp
+      user.setActivationCode(RandomUtil.generateActivationCode());
+      user.setActivationCodeDate(Instant.now());
+      userRepository.save(user);
+      
+      log.debug("Sending activation code email for User: {}", user.getEmail());
       emailService.sendActivationCodeEmail(user);
     } else {
       throw new EmailInvalidException(ErrorMessage.EMAIL_INVALID);

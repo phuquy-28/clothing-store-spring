@@ -23,7 +23,8 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users")
-@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens", "defaultShippingProfile", "cart", "profile", "orders"})
+@ToString(exclude = {"shippingProfiles", "reviews", "refreshTokens", "defaultShippingProfile",
+    "cart", "profile", "orders"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractEntity {
@@ -50,6 +51,9 @@ public class User extends AbstractEntity {
 
   @Size(max = 6)
   private String activationCode;
+
+  @Column(name = "activation_code_date")
+  private Instant activationCodeDate = null;
 
   @Size(max = 50)
   @Column(name = "reset_key", length = 50)

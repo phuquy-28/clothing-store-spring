@@ -14,15 +14,15 @@ public final class AppConstant {
   public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
 
   // Email Subject Constants
-  public static final String ACTIVATION_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Activate your account";
+  public static final String ACTIVATION_EMAIL_SUBJECT = "[EZSTORE] Activate your account";
   public static final String ACTIVATION_CODE_EMAIL_SUBJECT =
-      "[ECOMMERCE FASHION] Activate your account";
-  public static final String RESET_CODE_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Recover your password";
+      "[EZSTORE] Activate your account";
+  public static final String RESET_CODE_EMAIL_SUBJECT = "[EZSTORE] Recover your password";
   public static final String RECOVER_PASSWORD_EMAIL_SUBJECT =
-      "[ECOMMERCE FASHION] Recover your password";
-  public static final String ORDER_EMAIL_SUBJECT = "[ECOMMERCE FASHION] Order confirmation";
+      "[EZSTORE] Recover your password";
+  public static final String ORDER_EMAIL_SUBJECT = "[EZSTORE] Order confirmation";
   public static final String PROFILE_OTP_MOBILE_EMAIL_SUBJECT =
-      "[ECOMMERCE FASHION] OTP for profile";
+      "[EZSTORE] OTP for profile";
 
   // Email Template Paths
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
