@@ -1,4 +1,4 @@
-@startuml
+@startuml register
 
 ' General configuration
 skinparam defaultFontSize 30
@@ -32,6 +32,7 @@ skinparam {
 actor "Actor" as actor
 boundary "HomePage" as homePage
 boundary "SignupPage" as signupPage
+boundary "ActivationPage" as activationPage
 control "AuthController" as controller
 control "AuthService" as service
 entity "User" as user
@@ -41,9 +42,8 @@ database "Database" as db
 
 ' Start processing flow
 activate actor
-actor -> signupPage: input(firstName, lastName, email, password)
+actor -> signupPage: input(firstName, lastName, email, password, birthDate, gender)
 activate signupPage
-
 signupPage -> controller: register(dto)
 activate controller
 
@@ -64,7 +64,7 @@ alt email not found
     activate user
     user --> service: user
     deactivate user
-    
+
     service -> repo: save(user)
     activate repo
     repo -> db: save(user)
@@ -73,29 +73,33 @@ alt email not found
     deactivate db
     repo --> service: return(user)
     deactivate repo
-    
-    service -> emailService: sendActivation(user)
+
+    service -> emailService: sendActivationCodeEmail(user)
     activate emailService
     emailService -> emailService: sendEmail()
     emailService --> service: return()
     deactivate emailService
-    
+
     service --> controller: return(dto)
     controller --> signupPage: return(dto)
-    signupPage --> actor: message("Email sent")
-    
+    signupPage -> activationPage: navigate()
+    activate activationPage
+    activationPage --> actor: showActivationPage()
+
     actor -> actor: checkEmail()
-    actor -> signupPage: activate(key)
-    signupPage -> controller: activate(key)
-    controller -> service: activate(key)
-    service -> repo: findByKey(key)
+    actor -> activationPage: enterActivationCode(code)
+    activationPage -> controller: activateAccount(email, code)
+    controller -> service: activateAccount(email, code)
+
+    service -> repo: findByEmailAndActivationCode(email, code)
     activate repo
-    repo -> db: findByKey(key)
+    repo -> db: findByEmailAndActivationCode(email, code)
     activate db
     db --> repo: return(user)
     deactivate db
     repo --> service: return(user)
     deactivate repo
+
     service -> service: setActive(user)
     service -> repo: save(user)
     activate repo
@@ -105,11 +109,14 @@ alt email not found
     deactivate db
     repo --> service: return(user)
     deactivate repo
-    service --> controller: return(dto)
-    controller --> signupPage: return(dto)
-    signupPage --> homePage: navigate()
+
+    service --> controller: return(loginResDTO)
+    controller --> activationPage: return(loginResDTO)
+
+    activationPage -> homePage: navigate()
+    deactivate activationPage
     activate homePage
-    homePage --> actor: message("Register success")
+    homePage --> actor: message("Account activated successfully")
     deactivate homePage
 else email found
     service --> controller: throwException()
@@ -118,9 +125,7 @@ else email found
     deactivate controller
     signupPage --> actor: message("Email already exists")
     deactivate signupPage
-    deactivate actor
 end
 
-
 hide footbox
-@enduml 
+@enduml
