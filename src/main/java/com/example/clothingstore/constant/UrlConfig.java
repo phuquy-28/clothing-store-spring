@@ -59,6 +59,7 @@ public class UrlConfig {
   public static final String PROFILE = "/profiles";
   public static final String EDIT_PROFILE = "/edit-profile";
   public static final String CHANGE_PASSWORD = "/change-password";
+  public static final String CREATE_PASSWORD = "/create-password";
   public static final String INFO = "/info";
   public static final String ROLES = "/roles";
   public static final String AVATAR = "/avatar";
@@ -150,8 +151,7 @@ public class UrlConfig {
         API_VERSION + AUTH + RECOVER_PASSWORD, API_VERSION + AUTH + RECOVER_PASSWORD_CODE,
         API_VERSION + AUTH + RESET_PASSWORD + "/**", API_VERSION + AUTH + RESET_PASSWORD_CODE,
         API_VERSION + AUTH + ACTIVATE_CODE + "/**", API_VERSION + AUTH + VERIFY_RESET_CODE,
-        API_VERSION + AUTH + GOOGLE_AUTH,
-        API_VERSION + ORDERS,
+        API_VERSION + AUTH + GOOGLE_AUTH, API_VERSION + ORDERS,
         // API_VERSION + ORDERS + CHECK_OUT,
         API_VERSION + WORKSPACE + LOGIN};
   }

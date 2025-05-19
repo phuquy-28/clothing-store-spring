@@ -18,6 +18,7 @@ public final class ErrorMessage {
   public static final String OLD_PASSWORD_NOT_MATCH = "error.old_password.not_match";
   public static final String NEW_PASSWORD_NOT_MATCH = "error.new_password.not_match";
   public static final String PASSWORD_NOT_MATCH = "error.password.not_match";
+  public static final String USER_ALREADY_HAS_PASSWORD = "error.user.already_has_password";
 
   // Account Activation & Password Recovery
   public static final String ACTIVATION_TOKEN_INVALID = "error.activation_token.invalid";

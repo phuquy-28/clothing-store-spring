@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
+import com.example.clothingstore.dto.request.CreatePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
@@ -352,5 +353,27 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
 
     return profileMapper.toProfileResMobileDTO(user.getProfile());
+  }
+
+  @Override
+  public void createPassword(CreatePasswordReqDTO createPasswordReqDTO) {
+    // Get current user from security context
+    User currentUser = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().orElse(null))
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    // Check if user already has a password
+    if (checkUserHasPassword(currentUser)) {
+      throw new BadRequestException(ErrorMessage.USER_ALREADY_HAS_PASSWORD);
+    }
+
+    // Validate password confirmation
+    if (!createPasswordReqDTO.getPassword().equals(createPasswordReqDTO.getConfirmPassword())) {
+      throw new BadRequestException(ErrorMessage.PASSWORD_NOT_MATCH);
+    }
+
+    // Encode and save password
+    String encodedPassword = passwordEncoder.encode(createPasswordReqDTO.getPassword());
+    currentUser.setPassword(encodedPassword);
+    userRepository.save(currentUser);
   }
 }

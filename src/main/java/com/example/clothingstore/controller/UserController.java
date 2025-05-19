@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
+import com.example.clothingstore.dto.request.CreatePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
@@ -138,5 +139,13 @@ public class UserController {
       @RequestBody @Valid AvatarReqDTO avatarReqDTO) {
     log.debug("REST request to update avatar");
     return ResponseEntity.status(HttpStatus.OK).body(userService.updateAvatar(avatarReqDTO));
+  }
+
+  @PostMapping(UrlConfig.USER + UrlConfig.CREATE_PASSWORD)
+  public ResponseEntity<Void> createPassword(
+      @Valid @RequestBody CreatePasswordReqDTO createPasswordReqDTO) {
+    log.debug("REST request to create password for Google-authenticated user");
+    userService.createPassword(createPasswordReqDTO);
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 }

@@ -2,6 +2,7 @@ package com.example.clothingstore.service;
 
 import com.example.clothingstore.dto.request.AvatarReqDTO;
 import com.example.clothingstore.dto.request.ChangePasswordReqDTO;
+import com.example.clothingstore.dto.request.CreatePasswordReqDTO;
 import com.example.clothingstore.dto.request.EditProfileReqDTO;
 import com.example.clothingstore.dto.request.UpdateProfileMobileReqDTO;
 import com.example.clothingstore.dto.request.UpdateUserReqDTO;
@@ -26,6 +27,8 @@ public interface UserService {
   UserResDTO editProfile(EditProfileReqDTO editProfileReqDTO);
 
   void changePassword(ChangePasswordReqDTO changePasswordReqDTO);
+
+  void createPassword(CreatePasswordReqDTO createPasswordReqDTO);
 
   UserInfoDTO getUserInfo(String email);
 
