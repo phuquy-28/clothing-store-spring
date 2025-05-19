@@ -24,4 +24,6 @@ public interface EmailService {
   public void sendResetCodeEmail(User user);
 
   public void sendProfileOtpMobile(User user);
+
+  public void sendNewUserAccountEmail(User user, String rawPassword);
 }

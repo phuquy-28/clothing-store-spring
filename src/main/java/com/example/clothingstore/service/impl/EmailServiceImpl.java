@@ -234,4 +234,24 @@ public class EmailServiceImpl implements EmailService {
         AppConstant.PROFILE_OTP_MOBILE_EMAIL_TEMPLATE, user.getProfile().getFirstName(),
         user.getProfileCode());
   }
+
+  @Async
+  @Override
+  public void sendNewUserAccountEmail(User user, String rawPassword) {
+    log.debug("Sending new user account email to '{}'", user.getEmail());
+
+    String username = user.getProfile().getFirstName() != null ? user.getProfile().getFirstName()
+        : user.getEmail();
+
+    Context context = new Context();
+    context.setVariable("email", user.getEmail());
+    context.setVariable("password", rawPassword);
+    context.setVariable("name", username);
+    context.setVariable("loginUrl", baseUrl);
+
+    String content = templateEngine.process(AppConstant.NEW_USER_ACCOUNT_EMAIL_TEMPLATE, context);
+
+    sendEmailSync(user.getEmail(), AppConstant.NEW_USER_ACCOUNT_EMAIL_SUBJECT, content, false,
+        true);
+  }
 }

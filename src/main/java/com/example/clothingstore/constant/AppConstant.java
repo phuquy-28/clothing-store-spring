@@ -15,14 +15,13 @@ public final class AppConstant {
 
   // Email Subject Constants
   public static final String ACTIVATION_EMAIL_SUBJECT = "[EZSTORE] Activate your account";
-  public static final String ACTIVATION_CODE_EMAIL_SUBJECT =
-      "[EZSTORE] Activate your account";
+  public static final String ACTIVATION_CODE_EMAIL_SUBJECT = "[EZSTORE] Activate your account";
   public static final String RESET_CODE_EMAIL_SUBJECT = "[EZSTORE] Recover your password";
-  public static final String RECOVER_PASSWORD_EMAIL_SUBJECT =
-      "[EZSTORE] Recover your password";
+  public static final String RECOVER_PASSWORD_EMAIL_SUBJECT = "[EZSTORE] Recover your password";
   public static final String ORDER_EMAIL_SUBJECT = "[EZSTORE] Order confirmation";
-  public static final String PROFILE_OTP_MOBILE_EMAIL_SUBJECT =
-      "[EZSTORE] OTP for profile";
+  public static final String PROFILE_OTP_MOBILE_EMAIL_SUBJECT = "[EZSTORE] OTP for profile";
+  public static final String NEW_USER_ACCOUNT_EMAIL_SUBJECT =
+      "[EZSTORE] Your Account Has Been Created";
 
   // Email Template Paths
   public static final String ACTIVATION_EMAIL_TEMPLATE = "mail/activationEmail";
@@ -32,6 +31,7 @@ public final class AppConstant {
   public static final String ORDER_EMAIL_TEMPLATE = "mail/orderEmail";
   public static final String ORDER_CONFIRMATION_EMAIL_TEMPLATE = "mail/orderEmail";
   public static final String PROFILE_OTP_MOBILE_EMAIL_TEMPLATE = "mail/profileOtpMobileEmail";
+  public static final String NEW_USER_ACCOUNT_EMAIL_TEMPLATE = "mail/newUserAccountEmail";
 
   // Date Format
   public static final String SIMPLE_DATE_FORMAT = "dd/MM/yyyy";

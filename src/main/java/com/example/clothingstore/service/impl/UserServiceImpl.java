@@ -32,6 +32,8 @@ import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.RandomUtil;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -47,6 +49,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
+  private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
   private final UserRepository userRepository;
 
@@ -195,7 +199,10 @@ public class UserServiceImpl implements UserService {
 
     User user = new User();
     user.setEmail(userReqDTO.getEmail());
-    user.setPassword(passwordEncoder.encode(userReqDTO.getPassword()));
+    
+    // Store raw password for email
+    String rawPassword = userReqDTO.getPassword();
+    user.setPassword(passwordEncoder.encode(rawPassword));
     user.setActivated(true);
     user.setRole(role);
 
@@ -211,9 +218,17 @@ public class UserServiceImpl implements UserService {
     profile.setUser(user);
     user.setProfile(profile);
 
-    userRepository.save(user);
+    User savedUser = userRepository.save(user);
 
-    return userMapper.toUserResDTO(user);
+    // Send email notification with account details
+    try {
+      emailService.sendNewUserAccountEmail(savedUser, rawPassword);
+    } catch (Exception e) {
+      log.error("Failed to send account creation email to {}: {}", savedUser.getEmail(),
+          e.getMessage());
+    }
+
+    return userMapper.toUserResDTO(savedUser);
   }
 
   @Override
