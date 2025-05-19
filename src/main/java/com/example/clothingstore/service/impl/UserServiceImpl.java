@@ -145,14 +145,35 @@ public class UserServiceImpl implements UserService {
             user.getProfile().getFirstName() != null ? user.getProfile().getFirstName() : null)
         .lastName(user.getProfile().getLastName() != null ? user.getProfile().getLastName() : null)
         .role(user.getRole().getName() != null ? user.getRole().getName() : null)
-        .cartItemsCount(cartItemsCount).build();
+        .cartItemsCount(cartItemsCount)
+        .avatar(user.getProfile().getAvatar() != null ? user.getProfile().getAvatar() : null)
+        .hasPassword(checkUserHasPassword(user))
+        .build();
   }
 
   @Override
   public ProfileResDTO getProfile() {
-    Profile profile = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)).getProfile();
-    return profileMapper.toProfileResDTO(profile);
+    User user = userRepository.findByEmail(SecurityUtil.getCurrentUserLogin().get())
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    ProfileResDTO profileResDTO = profileMapper.toProfileResDTO(user.getProfile());
+    profileResDTO.setEmail(user.getEmail());
+    profileResDTO.setRole(
+        RoleResDTO.builder().id(user.getRole().getId()).name(user.getRole().getName()).build());
+    profileResDTO.setHasPassword(checkUserHasPassword(user));
+
+    return profileResDTO;
+  }
+
+  @Override
+  public boolean checkUserHasPassword(User user) {
+    // Check if the user has a googleId (logged in via Google)
+    // and if their password is null or empty
+    if (user.getGoogleId() != null
+        && (user.getPassword() == null || user.getPassword().isEmpty())) {
+      return false;
+    }
+    return true;
   }
 
   @Override

@@ -16,4 +16,8 @@ public class UserInfoDTO {
   private String role;
 
   private Long cartItemsCount;
+
+  private String avatar;
+
+  private Boolean hasPassword;
 }

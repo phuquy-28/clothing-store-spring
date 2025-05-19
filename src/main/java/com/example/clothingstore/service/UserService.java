@@ -52,4 +52,6 @@ public interface UserService {
   ProfileResMobileDTO updateProfileMobile(UpdateProfileMobileReqDTO updateProfileMobileReqDTO);
 
   ProfileResMobileDTO updateAvatar(AvatarReqDTO avatarReqDTO);
+
+  boolean checkUserHasPassword(User user);
 }

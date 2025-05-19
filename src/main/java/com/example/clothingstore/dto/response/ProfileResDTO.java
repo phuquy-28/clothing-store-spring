@@ -10,7 +10,7 @@ import lombok.Builder;
 public class ProfileResDTO {
 
   private Long id;
-  
+
   private String firstName;
 
   private String lastName;
@@ -20,4 +20,12 @@ public class ProfileResDTO {
   private String phoneNumber;
 
   private Gender gender;
+
+  private String email;
+
+  private RoleResDTO role;
+
+  private String avatar;
+
+  private Boolean hasPassword;
 }
