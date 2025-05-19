@@ -34,4 +34,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
   Long countByActivatedTrue();
 
   Optional<User> findByEmailAndActivationCode(String email, String activationCode);
+
+  Optional<User> findByGoogleId(String googleId);
 }

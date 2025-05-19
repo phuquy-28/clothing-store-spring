@@ -100,6 +100,13 @@ google:
     storage:
       project-id: ${GOOGLE_CLOUD_PROJECT_ID}
       bucket: ${GOOGLE_CLOUD_BUCKET}
+  auth:
+    client-id: ${GOOGLE_AUTH_CLIENT_ID}
+    client-secret: ${GOOGLE_AUTH_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
+    base-url: https://oauth2.googleapis.com
+  userinfo:
+    base-url: https://www.googleapis.com/oauth2/v1/userinfo
 
 vnpay:
   tmncode: ${VNPAY_TMNCODE}

@@ -4,6 +4,8 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.RegisterReqDTO;
 import com.example.clothingstore.dto.request.ResetAccountDTO;
+import com.example.clothingstore.dto.response.GoogleTokenResponseDTO;
+import com.example.clothingstore.dto.response.GoogleUserInfoDTO;
 import com.example.clothingstore.entity.Point;
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.TokenBlacklist;
@@ -18,6 +20,7 @@ import com.example.clothingstore.repository.TokenBlacklistRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.AuthService;
 import com.example.clothingstore.service.EmailService;
+import com.example.clothingstore.service.GoogleAuthService;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.RandomUtil;
 import com.example.clothingstore.util.SecurityUtil;
@@ -61,6 +64,8 @@ public class AuthServiceImpl implements AuthService {
   private final AuthenticationManager authenticationManager;
 
   private final TokenBlacklistRepository tokenBlacklistRepository;
+
+  private final GoogleAuthService googleAuthService;
 
   @Override
   public RegisterResDTO register(RegisterReqDTO user) throws EmailInvalidException {
@@ -108,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
     newUser.setPoint(point);
 
     User savedUser = userRepository.save(newUser);
-    
+
     // Send activation code email asynchronously
     log.debug("Sending activation code email for User: {}", savedUser.getEmail());
     emailService.sendActivationCodeEmail(savedUser);
@@ -169,7 +174,7 @@ public class AuthServiceImpl implements AuthService {
     // Get current access token
     String token = SecurityUtil.getCurrentUserJWT().orElse(null);
     if (token == null) {
-        throw new TokenInvalidException(ErrorMessage.ACCESS_TOKEN_INVALID);
+      throw new TokenInvalidException(ErrorMessage.ACCESS_TOKEN_INVALID);
     }
 
     // Validate refresh token
@@ -190,9 +195,9 @@ public class AuthServiceImpl implements AuthService {
     // Remove refresh token for current device
     String email = SecurityUtil.getCurrentUserLogin().orElse(null);
     if (email != null) {
-        User user = userService.handleGetUserByUsername(email);
-        user.getRefreshTokens().removeIf(rt -> rt.getRefreshToken().equals(refreshToken));
-        userRepository.save(user);
+      User user = userService.handleGetUserByUsername(email);
+      user.getRefreshTokens().removeIf(rt -> rt.getRefreshToken().equals(refreshToken));
+      userRepository.save(user);
     }
   }
 
@@ -242,18 +247,18 @@ public class AuthServiceImpl implements AuthService {
     // Decode and validate refresh token
     Jwt jwt = securityUtil.jwtDecoder(refreshToken);
     String email = jwt.getSubject();
-    
+
     // Get user and validate refresh token
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID));
-    
+
     // Check if refresh token exists and is not expired
-    boolean validRefreshToken = user.getRefreshTokens().stream()
-        .anyMatch(rt -> rt.getRefreshToken().equals(refreshToken) 
+    boolean validRefreshToken =
+        user.getRefreshTokens().stream().anyMatch(rt -> rt.getRefreshToken().equals(refreshToken)
             && rt.getExpiryDate().isAfter(Instant.now()));
-            
+
     if (!validRefreshToken) {
-        throw new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID);
+      throw new TokenInvalidException(ErrorMessage.REFRESH_TOKEN_INVALID);
     }
 
     // Create response
@@ -349,19 +354,19 @@ public class AuthServiceImpl implements AuthService {
   public void sendActivationCode(String email) {
     if (userRepository.findByEmailAndActivatedFalse(email).isPresent()) {
       User user = userRepository.findByEmail(email).get();
-      
+
       // Check if the last activation code request has expired (30 seconds)
       if (user.getActivationCodeDate() != null
           && user.getActivationCodeDate().isAfter(Instant.now().minusSeconds(30))) {
         log.debug("Activation code request too frequent for User: {}", user.getEmail());
         throw new EmailInvalidException(ErrorMessage.ACTIVATION_CODE_TOO_FREQUENT);
       }
-      
+
       // Update activation code and timestamp
       user.setActivationCode(RandomUtil.generateActivationCode());
       user.setActivationCodeDate(Instant.now());
       userRepository.save(user);
-      
+
       log.debug("Sending activation code email for User: {}", user.getEmail());
       emailService.sendActivationCodeEmail(user);
     } else {
@@ -453,6 +458,71 @@ public class AuthServiceImpl implements AuthService {
     user.setCodeResetDate(null);
 
     userRepository.save(user);
+  }
+
+  @Override
+  public LoginResDTO loginWithGoogleAuth(String code) {
+    // 1. Exchange code for tokens
+    GoogleTokenResponseDTO tokenResponse = googleAuthService.getTokensFromCode(code);
+
+    // 2. Get user info from Google
+    GoogleUserInfoDTO userInfo = googleAuthService.getUserInfo(tokenResponse.getAccessToken());
+    log.debug("User info from Google: {}", userInfo);
+
+    // 3. Find or create user
+    User user = findOrCreateGoogleUser(userInfo);
+
+    // 4. Create JWT tokens like regular login
+    LoginResDTO loginResDTO = convertUserToResLoginDTO(user);
+
+    String accessToken = securityUtil.createAccessToken(user, loginResDTO);
+    loginResDTO.setAccessToken(accessToken);
+
+    String refreshToken = securityUtil.createRefreshToken(user.getEmail(), loginResDTO);
+    loginResDTO.setRefreshToken(refreshToken);
+
+    userService.updateUserWithRefreshToken(user, refreshToken);
+
+    return loginResDTO;
+  }
+
+  private User findOrCreateGoogleUser(GoogleUserInfoDTO userInfo) {
+    Optional<User> existingUser = userRepository.findByEmail(userInfo.getEmail());
+
+    if (existingUser.isPresent()) {
+      User user = existingUser.get();
+      // Update Google-specific fields if needed
+      user.setGoogleId(userInfo.getId());
+      return userRepository.save(user);
+    } else {
+      // Create new user
+      User newUser = new User();
+      newUser.setEmail(userInfo.getEmail());
+      newUser.setGoogleId(userInfo.getId());
+      newUser.setActivated(true); // Google users are pre-verified
+
+      // Set role
+      newUser.setRole(roleRepository.findByName(AppConstant.ROLE_USER)
+          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.ROLE_NOT_FOUND)));
+
+      // Create profile
+      Profile profile = new Profile();
+      profile.setFirstName(userInfo.getGivenName());
+      profile.setLastName(userInfo.getFamilyName());
+      profile.setFullName(userInfo.getName());
+      profile.setAvatar(userInfo.getPicture()); // Set Google profile picture
+      profile.setUser(newUser);
+      newUser.setProfile(profile);
+
+      // Create point system for user
+      Point point = new Point();
+      point.setCurrentPoints(0L);
+      point.setTotalAccumulatedPoints(0L);
+      point.setUser(newUser);
+      newUser.setPoint(point);
+
+      return userRepository.save(newUser);
+    }
   }
 }
 

@@ -43,6 +43,7 @@ public class UrlConfig {
   public static final String RESET_PASSWORD = "/reset-password";
   public static final String RESET_PASSWORD_CODE = "/reset-password-code";
   public static final String VERIFY_RESET_CODE = "/verify-reset-code";
+  public static final String GOOGLE_AUTH = "/google";
 
   // Product controller
   public static final String PRODUCT = "/products";
@@ -149,6 +150,7 @@ public class UrlConfig {
         API_VERSION + AUTH + RECOVER_PASSWORD, API_VERSION + AUTH + RECOVER_PASSWORD_CODE,
         API_VERSION + AUTH + RESET_PASSWORD + "/**", API_VERSION + AUTH + RESET_PASSWORD_CODE,
         API_VERSION + AUTH + ACTIVATE_CODE + "/**", API_VERSION + AUTH + VERIFY_RESET_CODE,
+        API_VERSION + AUTH + GOOGLE_AUTH,
         API_VERSION + ORDERS,
         // API_VERSION + ORDERS + CHECK_OUT,
         API_VERSION + WORKSPACE + LOGIN};

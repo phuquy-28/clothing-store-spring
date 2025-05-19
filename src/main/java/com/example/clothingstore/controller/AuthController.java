@@ -2,11 +2,12 @@ package com.example.clothingstore.controller;
 
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.UrlConfig;
-import com.example.clothingstore.dto.request.RegisterReqDTO;
-import com.example.clothingstore.dto.request.ReqEmailRecover;
 import com.example.clothingstore.dto.request.ActivateAccountDTO;
+import com.example.clothingstore.dto.request.GoogleAuthCodeRequestDTO;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.request.LogoutReqDTO;
+import com.example.clothingstore.dto.request.RegisterReqDTO;
+import com.example.clothingstore.dto.request.ReqEmailRecover;
 import com.example.clothingstore.dto.request.ReqResetPassword;
 import com.example.clothingstore.dto.request.ResetAccountDTO;
 import com.example.clothingstore.dto.request.VerifyResetCodeDTO;
@@ -71,6 +72,27 @@ public class AuthController {
       return ResponseEntity.ok().body(loginResDTO);
     }
 
+  }
+
+  @PostMapping(UrlConfig.AUTH + UrlConfig.GOOGLE_AUTH)
+  public ResponseEntity<LoginResDTO> googleLogin(
+      @RequestBody @Valid GoogleAuthCodeRequestDTO googleAuthCodeRequestDTO) {
+    log.debug("REST request to login with Google: {}", googleAuthCodeRequestDTO);
+    LoginResDTO loginResDTO = authService.loginWithGoogleAuth(googleAuthCodeRequestDTO.getCode());
+
+    // Create refresh token
+    String refreshToken =
+        securityUtil.createRefreshToken(loginResDTO.getUser().getEmail(), loginResDTO);
+
+    // Create cookie
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).build();
+
+    // Return response
+    log.debug("Set refresh token cookie: {}", springCookie.toString());
+    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString())
+        .body(loginResDTO);
   }
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.LOGOUT)

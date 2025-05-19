@@ -36,4 +36,6 @@ public interface AuthService {
   void verifyResetCode(String email, String resetCode);
 
   void resetPassword(ResetAccountDTO resetAccountDTO);
+
+  LoginResDTO loginWithGoogleAuth(String code);
 }
