@@ -126,3 +126,9 @@ ghn:
     width: ${GHN_SHOP_WIDTH}
     height: ${GHN_SHOP_HEIGHT}
     free-shipping-threshold: ${GHN_SHOP_FREE_SHIPPING_THRESHOLD}
+
+goong:
+  api:
+    base-url: ${GOONG_API_BASE_URL}
+    key: ${GOONG_API_KEY}
+    vehicle-type: ${GOONG_API_VEHICLE_TYPE}
