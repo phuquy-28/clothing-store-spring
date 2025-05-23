@@ -1,6 +1,8 @@
 package com.example.clothingstore.service.impl;
 
 import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -55,6 +57,11 @@ public class ReviewServiceImpl implements ReviewService {
   }
 
   private ReviewDTO convertToDTO(Review review) {
+    List<String> imageUrls = null;
+    if (review.getImageUrls() != null) {
+      imageUrls = Arrays.asList(review.getImageUrls().split(";"));
+    }
+
     return ReviewDTO.builder().reviewId(review.getId()).description(review.getDescription())
         .rating(review.getRating())
         .createdAt(review.getCreatedAt() != null
@@ -66,7 +73,7 @@ public class ReviewServiceImpl implements ReviewService {
             .lastName(review.getUser().getProfile().getLastName())
             .email(review.getUser().getEmail()).totalSpend(calculateTotalSpend(review.getUser()))
             .totalReview(calculateTotalReview(review.getUser())).build())
-        .build();
+        .imageUrls(imageUrls).videoUrl(review.getVideoUrl()).build();
   }
 
   private Double calculateTotalSpend(User user) {

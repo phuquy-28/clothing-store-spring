@@ -21,6 +21,8 @@ import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
+import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
+import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 
 public interface OrderService {
 
@@ -57,4 +59,6 @@ public interface OrderService {
   List<OrderStatusHistoryDTO> getOrderStatusHistory(Long orderId);
 
   List<OrderStatusHistoryDTO> getOrderStatusHistoryForUser(Long orderId);
+
+  MultiMediaUploadResDTO getReviewMediaUploadUrls(MultiMediaUploadReqDTO uploadRequestDTO);
 }

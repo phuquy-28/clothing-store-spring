@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.UploadImageReqDTO;
+import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
+import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 import com.example.clothingstore.service.CloudStorageService;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -19,7 +21,9 @@ import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.HttpMethod;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -43,7 +47,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
   private Storage storage;
 
   private static final List<String> ALLOWED_EXTENSIONS =
-      Arrays.asList("png", "jpg", "jpeg", "webp");
+      Arrays.asList("png", "jpg", "jpeg", "webp", "mp4", "mov");
 
   @PostConstruct
   public void initialize() throws IOException {
@@ -62,13 +66,14 @@ public class CloudStorageServiceImpl implements CloudStorageService {
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
     String fileName = uploadImageReqDTO.getFileName();
     String fileExtension = getFileExtension(fileName);
+    String uniqueFileName = generateUniqueFileName(fileName);
 
     if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
       throw new InvalidFileTypeException(ErrorMessage.INVALID_FILE_TYPE);
     }
 
     UploadImageResDTO response = new UploadImageResDTO();
-    response.setSignedUrl(generateSignedUrl(fileName));
+    response.setSignedUrl(generateSignedUrl(uniqueFileName));
     return response;
   }
 
@@ -77,6 +82,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
       String directory) {
     String fileName = uploadImageReqDTO.getFileName();
     String fileExtension = getFileExtension(fileName);
+    String uniqueFileName = generateUniqueFileName(fileName);
 
     if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
       throw new InvalidFileTypeException(ErrorMessage.INVALID_FILE_TYPE);
@@ -84,11 +90,48 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     // Append directory to file name
     String fileNameWithDirectory =
-        directory.endsWith("/") ? directory + fileName : directory + "/" + fileName;
+        directory.endsWith("/") ? directory + uniqueFileName : directory + "/" + uniqueFileName;
 
     UploadImageResDTO response = new UploadImageResDTO();
     response.setSignedUrl(generateSignedUrl(fileNameWithDirectory));
     return response;
+  }
+
+  @Override
+  public MultiMediaUploadResDTO createMultiMediaSignedUrlsWithDirectory(
+      MultiMediaUploadReqDTO uploadRequestDTO, String directory) {
+    MultiMediaUploadResDTO response = new MultiMediaUploadResDTO();
+    List<MultiMediaUploadResDTO.SignedUrlDTO> signedUrls = new ArrayList<>();
+
+    for (String fileName : uploadRequestDTO.getFileNames()) {
+      String fileExtension = getFileExtension(fileName);
+
+      if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+        throw new InvalidFileTypeException(ErrorMessage.INVALID_FILE_TYPE);
+      }
+
+      // Generate unique filename while preserving original name
+      String uniqueFileName = generateUniqueFileName(fileName);
+      String fileNameWithDirectory =
+          directory.endsWith("/") ? directory + uniqueFileName : directory + "/" + uniqueFileName;
+
+      String signedUrl = generateSignedUrl(fileNameWithDirectory);
+
+      MultiMediaUploadResDTO.SignedUrlDTO urlDTO = new MultiMediaUploadResDTO.SignedUrlDTO();
+      urlDTO.setFileName(uniqueFileName); // Return the unique filename so client knows what to
+                                          // reference
+      urlDTO.setSignedUrl(signedUrl);
+      signedUrls.add(urlDTO);
+    }
+
+    response.setSignedUrls(signedUrls);
+    return response;
+  }
+
+  private String generateUniqueFileName(String originalFileName) {
+    String extension = getFileExtension(originalFileName);
+    String nameWithoutExtension = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+    return UUID.randomUUID().toString() + "_" + nameWithoutExtension + "." + extension;
   }
 
   private String getFileExtension(String fileName) {
@@ -100,7 +143,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
   private String generateSignedUrl(String fileName) {
     try {
-      BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucket, fileName)).build();
+      BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucket, fileName))
+          .setContentType(determineContentType(fileName)).build();
 
       URL url = storage.signUrl(blobInfo, 10, TimeUnit.MINUTES,
           Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
@@ -114,4 +158,24 @@ public class CloudStorageServiceImpl implements CloudStorageService {
     }
   }
 
+  private String determineContentType(String fileName) {
+    String extension = getFileExtension(fileName);
+    switch (extension) {
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      case "png":
+        return "image/png";
+      case "gif":
+        return "image/gif";
+      case "webp":
+        return "image/webp";
+      case "mp4":
+        return "video/mp4";
+      case "mov":
+        return "video/quicktime";
+      default:
+        return "application/octet-stream";
+    }
+  }
 }

@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class OrderReviewReqDTO {
@@ -27,5 +29,10 @@ public class OrderReviewReqDTO {
     private Integer rating;
 
     private String description;
+    
+    @Size(max = 5, message = "imageUrls.max.size")
+    private List<String> imageUrls;
+    
+    private String videoUrl;
   }
 }

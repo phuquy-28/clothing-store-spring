@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -69,7 +70,7 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
-    return cloudStorageService.createSignedUrl(uploadImageReqDTO);
+    return cloudStorageService.createSignedUrlWithDirectory(uploadImageReqDTO, "products-images");
   }
 
   @Override
@@ -631,13 +632,19 @@ public class ProductServiceImpl implements ProductService {
             avatar = review.getUser().getProfile().getAvatar();
           }
 
+          List<String> imageUrls = null;
+          if (review.getImageUrls() != null) {
+            imageUrls = Arrays.asList(review.getImageUrls().split(";"));
+          }
+
           return ReviewProductDTO.builder().reviewId(review.getId()).firstName(firstName)
               .lastName(lastName).avatar(avatar).rating(review.getRating())
               .description(review.getDescription())
               .createdAt(review.getCreatedAt() != null
                   ? review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime()
                   : null)
-              .variant(variantDTO).description(review.getDescription()).build();
+              .variant(variantDTO).description(review.getDescription()).imageUrls(imageUrls)
+              .videoUrl(review.getVideoUrl()).build();
         }).filter(dto -> dto != null).collect(Collectors.toList())).build();
   }
 

@@ -47,4 +47,8 @@ public class Review extends SoftDeleteEntity {
 
   @OneToOne(mappedBy = "review")
   private PointHistory pointHistory;
+
+  private String imageUrls;
+
+  private String videoUrl;
 }

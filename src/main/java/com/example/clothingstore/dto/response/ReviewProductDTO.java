@@ -3,6 +3,7 @@ package com.example.clothingstore.dto.response;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
+import java.util.List;
 
 @Builder
 @Data
@@ -23,6 +24,10 @@ public class ReviewProductDTO {
   private BoughtVariantDTO variant;
 
   private String description;
+
+  private List<String> imageUrls;
+
+  private String videoUrl;
 
   @Builder
   @Data

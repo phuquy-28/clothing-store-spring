@@ -21,6 +21,7 @@ public class UrlConfig {
   public static final String ID = "/{id}";
   public static final String MOBILE = "/mobile";
   public static final String SEND_OTP = "/send-otp";
+  public static final String UPLOAD = "/upload";
 
   // Public endpoints
   public static final String ROOT = "/";

@@ -60,6 +60,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,6 +84,9 @@ import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.dto.response.OrderStatusHistoryDTO;
 import com.example.clothingstore.entity.OrderStatusHistory;
 import com.example.clothingstore.repository.OrderStatusHistoryRepository;
+import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
+import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
+import com.example.clothingstore.service.CloudStorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -119,6 +123,8 @@ public class OrderServiceImpl implements OrderService {
   private final NotificationService notificationService;
 
   private final OrderStatusHistoryRepository orderStatusHistoryRepository;
+
+  private final CloudStorageService cloudStorageService;
 
   @Override
   @Transactional
@@ -373,7 +379,13 @@ public class OrderServiceImpl implements OrderService {
     checkOrderBelongsToCurrentUser(order);
 
     return order.getLineItems().stream()
-        .map(lineItem -> OrderReviewDTO.builder()
+        .map(lineItem -> {
+          List<String> imageUrls = null;
+          if (lineItem.getReview() != null && lineItem.getReview().getImageUrls() != null) {
+            imageUrls = Arrays.asList(lineItem.getReview().getImageUrls().split(";"));
+          }
+
+          OrderReviewDTO reviewDTO = OrderReviewDTO.builder()
             .lineItemId(lineItem.getId())
             .productName(lineItem.getProductVariant().getProduct().getName())
             .color(lineItem.getProductVariant().getColor())
@@ -385,7 +397,11 @@ public class OrderServiceImpl implements OrderService {
             .createdAt(lineItem.getReview() != null ? lineItem.getReview().getCreatedAt() : null)
             .rating(lineItem.getReview() != null ? lineItem.getReview().getRating() : null)
             .description(lineItem.getReview() != null ? lineItem.getReview().getDescription() : null)
-            .build())
+            .imageUrls(imageUrls)
+            .videoUrl(lineItem.getReview() != null ? lineItem.getReview().getVideoUrl() : null)
+            .build();
+          return reviewDTO;
+        })
         .collect(Collectors.toList());
   }
 
@@ -423,18 +439,22 @@ public class OrderServiceImpl implements OrderService {
     checkOrderBelongsToCurrentUser(order);
 
     if (order.getStatus() != OrderStatus.DELIVERED) {
-        throw new BadRequestException(ErrorMessage.REVIEW_NOT_ALLOWED);
+      throw new BadRequestException(ErrorMessage.REVIEW_NOT_ALLOWED);
     }
 
     OrderReviewReqDTO.ReviewItem reviewItem = orderReviewReqDTO.getReviewItem();
-    
+
     LineItem lineItem = order.getLineItems().stream()
-        .filter(item -> item.getId().equals(reviewItem.getLineItemId()))
-        .findFirst()
+        .filter(item -> item.getId().equals(reviewItem.getLineItemId())).findFirst()
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.LINE_ITEM_NOT_FOUND));
 
     if (lineItem.getReview() != null) {
-        throw new ResourceAlreadyExistException(ErrorMessage.REVIEW_ALREADY_EXISTS);
+      throw new ResourceAlreadyExistException(ErrorMessage.REVIEW_ALREADY_EXISTS);
+    }
+
+    String imageUrls = null;
+    if (reviewItem.getImageUrls() != null) {
+      imageUrls = reviewItem.getImageUrls().stream().collect(Collectors.joining(";"));
     }
 
     Review review = new Review();
@@ -443,6 +463,8 @@ public class OrderServiceImpl implements OrderService {
     review.setRating(reviewItem.getRating().doubleValue());
     review.setDescription(reviewItem.getDescription());
     review.setLineItem(lineItem);
+    review.setImageUrls(imageUrls);
+    review.setVideoUrl(reviewItem.getVideoUrl());
     reviewRepository.save(review);
 
     pointService.addPointsFromOrderReview(review);
@@ -468,9 +490,16 @@ public class OrderServiceImpl implements OrderService {
     Review review = reviewRepository.findByLineItemId(lineItem.getId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.REVIEW_NOT_FOUND));
 
+    String imageUrls = null;
+    if (reviewItem.getImageUrls() != null) {
+      imageUrls = reviewItem.getImageUrls().stream().collect(Collectors.joining(";"));
+    }
+
     review.setRating(reviewItem.getRating().doubleValue());
     review.setDescription(reviewItem.getDescription());
-    
+    review.setImageUrls(imageUrls);
+    review.setVideoUrl(reviewItem.getVideoUrl());
+
     reviewRepository.save(review);
 
     return orderReviewReqDTO;
@@ -1067,5 +1096,10 @@ public class OrderServiceImpl implements OrderService {
         .previousStatus(history.getPreviousStatus()).newStatus(history.getNewStatus())
         .updateTimestamp(history.getUpdateTimestamp()).updatedBy(history.getUpdatedBy())
         .note(history.getNote()).build();
+  }
+
+  @Override
+  public MultiMediaUploadResDTO getReviewMediaUploadUrls(MultiMediaUploadReqDTO uploadRequestDTO) {
+    return cloudStorageService.createMultiMediaSignedUrlsWithDirectory(uploadRequestDTO, "reviews-images");
   }
 }

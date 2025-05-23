@@ -5,6 +5,7 @@ import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.Size;
 import lombok.Builder;
 import lombok.Data;
+import java.util.List;
 
 @Data
 @Builder
@@ -31,4 +32,8 @@ public class OrderReviewDTO {
   private Double rating;
 
   private String description;
+
+  private List<String> imageUrls;
+
+  private String videoUrl;
 }

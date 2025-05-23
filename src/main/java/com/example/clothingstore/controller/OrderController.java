@@ -43,6 +43,8 @@ import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
+import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 
 @RestController
 @RequestMapping("${api.version}")
@@ -94,6 +96,13 @@ public class OrderController {
   // List<OrderReviewDTO> lineItems = orderService.getLineItemByOrderId(orderId);
   // return ResponseEntity.ok(lineItems);
   // }
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.REVIEW + UrlConfig.UPLOAD)
+  public ResponseEntity<MultiMediaUploadResDTO> getReviewMediaUploadUrls(
+      @RequestBody @Valid MultiMediaUploadReqDTO uploadRequestDTO) {
+    MultiMediaUploadResDTO result = orderService.getReviewMediaUploadUrls(uploadRequestDTO);
+    return ResponseEntity.ok(result);
+  }
 
   @PostMapping(UrlConfig.ORDERS + UrlConfig.USER_ORDERS + UrlConfig.REVIEW)
   public ResponseEntity<OrderReviewReqDTO> createOrderReview(
