@@ -1,6 +1,5 @@
 package com.example.clothingstore.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +14,6 @@ public class LoginResDTO {
   private String accessToken;
 
   @JsonProperty("refresh_token")
-  @JsonIgnore
   private String refreshToken;
 
   private ResUser user;

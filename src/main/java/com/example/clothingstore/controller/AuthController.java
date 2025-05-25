@@ -61,8 +61,9 @@ public class AuthController {
       String refreshToken = securityUtil.createRefreshToken(loginReqDto.getEmail(), loginResDTO);
 
       // Create cookie
-      ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
-          .httpOnly(true).secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).build();
+      ResponseCookie springCookie =
+          ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+              .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).build();
 
       // Return response
       log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -96,30 +97,36 @@ public class AuthController {
   }
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.LOGOUT)
-  public ResponseEntity<Void> logout(@RequestBody @Valid LogoutReqDTO logoutReqDTO) {
+  public ResponseEntity<Void> logout(@RequestBody LogoutReqDTO logoutReqDTO,
+      @CookieValue(name = AppConstant.REFRESH_TOKEN_COOKIE_NAME,
+          required = false) String refreshToken) {
     log.debug("REST request to logout");
-    ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, "").httpOnly(true)
-        .secure(true).path("/").maxAge(AppConstant.COOKIE_INVALID_EXPIRE).build();
 
-    authService.logout(logoutReqDTO.getRefreshToken());
+    ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, "")
+        .httpOnly(true).secure(true).path("/").maxAge(AppConstant.COOKIE_INVALID_EXPIRE).build();
+
+    authService.logout(refreshToken == null ? logoutReqDTO.getRefreshToken() : refreshToken);
     log.debug("Set refresh token cookie: {}", springCookie.toString());
     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).build();
   }
 
   @GetMapping(UrlConfig.AUTH + UrlConfig.REFRESH)
   public ResponseEntity<LoginResDTO> refreshToken(
-      @CookieValue(name = AppConstant.REFRESH_TOKEN_COOKIE_NAME) String refreshToken) throws TokenInvalidException {
+      @CookieValue(name = AppConstant.REFRESH_TOKEN_COOKIE_NAME,
+          required = false) String refreshToken)
+      throws TokenInvalidException {
     // log to debug refresh token
     log.debug("REST request to refresh token: {}", refreshToken);
     LoginResDTO loginResDTO = authService.refreshToken(refreshToken);
 
     // Tạo refresh token
-    String newRefreshToken = securityUtil.createRefreshToken(loginResDTO.getUser().getEmail(),
-        loginResDTO);
+    String newRefreshToken =
+        securityUtil.createRefreshToken(loginResDTO.getUser().getEmail(), loginResDTO);
 
     // Tạo cookie
-    ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken)
-        .httpOnly(true).secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).build();
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).build();
 
     // Trả về response
     log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -178,8 +185,8 @@ public class AuthController {
   }
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.RECOVER_PASSWORD_CODE)
-  public ResponseEntity<Void> recoverPasswordCode(@RequestBody @Valid ReqEmailRecover reqEmailRecover)
-      throws EmailInvalidException {
+  public ResponseEntity<Void> recoverPasswordCode(
+      @RequestBody @Valid ReqEmailRecover reqEmailRecover) throws EmailInvalidException {
     log.debug("REST request to recover password: {}", reqEmailRecover);
     authService.recoverPasswordCode(reqEmailRecover.getEmail());
     return ResponseEntity.ok().build();
