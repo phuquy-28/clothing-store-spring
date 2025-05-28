@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -80,6 +81,27 @@ public class GlobalException {
     res.setError("Access denied");
     res.setMessage(Translator.toLocale(e.getMessage()));
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+  }
+
+  @ExceptionHandler(value = DataValidationException.class)
+  public ResponseEntity<RestResponse<Object>> handleDataValidationException(
+      DataValidationException ex) {
+    RestResponse<Object> res = new RestResponse<>();
+    res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+    res.setError("Data Validation Error");
+    res.setMessage(Translator.toLocale(ex.getMessageKey(),
+        ex.getArgs() != null ? ex.getArgs() : new Object[] {}));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<RestResponse<Object>> handleMaxUploadSizeExceededException(
+      MaxUploadSizeExceededException ex) {
+    RestResponse<Object> res = new RestResponse<>();
+    res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+    res.setError("File Too Large");
+    res.setMessage(Translator.toLocale("import.error.file_too_large_configured"));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
   }
 
 }

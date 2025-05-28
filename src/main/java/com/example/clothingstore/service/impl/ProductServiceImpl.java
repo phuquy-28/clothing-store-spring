@@ -476,7 +476,8 @@ public class ProductServiceImpl implements ProductService {
     return convertToProductResDTO(product);
   }
 
-  private String createSlug(String input) {
+  @Override
+  public String createSlug(String input) {
     // Replace Vietnamese characters with their non-accented equivalents
     String[] vietnameseChars = {
         "À", "Á", "Ạ", "Ả", "Ã", "Â", "Ầ", "Ấ", "Ậ", "Ẩ", "Ẫ", "Ă", "Ằ", "Ắ", "Ặ", "Ẳ", "Ẵ",

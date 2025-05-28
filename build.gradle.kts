@@ -50,6 +50,13 @@ dependencies {
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.6.0")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.0")
+
+    // Apache POI for Excel manipulation
+    implementation("org.apache.poi:poi:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
+
+    // Apache Commons IO
+    implementation("commons-io:commons-io:2.15.1")
 }
 
 tasks.jar {

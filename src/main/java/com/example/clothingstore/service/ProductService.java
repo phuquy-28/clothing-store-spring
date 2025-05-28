@@ -35,4 +35,7 @@ public interface ProductService {
   ResultPaginationDTO getProducts(Boolean isBestSeller, Boolean isDiscounted, Integer days,
       Double averageRating, Boolean hasDiscount, Double minPrice, Double maxPrice, String sizes,
       String sortField, String sortOrder, Specification<Product> specification, Pageable pageable);
+
+  String createSlug(String input);
+
 }

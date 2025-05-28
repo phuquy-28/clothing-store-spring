@@ -116,7 +116,8 @@ public class UrlConfig {
   public static final String WORKSPACE = "/workspace";
   public static final String DASHBOARD = "/dashboard";
   public static final String REVENUE_BY_MONTH = "/revenue-by-month";
-
+  public static final String IMPORT_TEMPLATE = "/import/template/{templateType}";
+  public static final String IMPORT_PRODUCTS = "/import/products";
   // Notification controller
   public static final String NOTIFICATION = "/notifications";
   public static final String UNREAD_COUNT = "/unread-count";
