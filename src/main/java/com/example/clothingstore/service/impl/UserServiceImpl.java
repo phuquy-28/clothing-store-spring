@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
   public User handleGetUserByUsername(String username) {
     if (userRepository.findByEmail(username).isPresent()) {
-      return userRepository.findByEmail(username).get();
+      return userRepository.findByEmailAndActivatedTrue(username).get();
     }
     return null;
   }

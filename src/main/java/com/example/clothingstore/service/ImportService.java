@@ -11,4 +11,6 @@ public interface ImportService {
 
   ProductImportResponseDTO importProducts(MultipartFile file, ImportMode addOnly);
 
+  ProductImportResponseDTO importCategories(MultipartFile file, ImportMode importMode);
+
 }

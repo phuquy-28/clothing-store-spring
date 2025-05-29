@@ -70,4 +70,12 @@ public class WorkspaceController {
     ProductImportResponseDTO response = importService.importProducts(file, ImportMode.ADD_ONLY);
     return ResponseEntity.ok(response);
   }
+
+  @PostMapping(value = UrlConfig.WORKSPACE + UrlConfig.IMPORT_CATEGORIES,
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ProductImportResponseDTO> importCategories(
+      @RequestParam("file") MultipartFile file) {
+    ProductImportResponseDTO response = importService.importCategories(file, ImportMode.ADD_ONLY);
+    return ResponseEntity.ok(response);
+  }
 }

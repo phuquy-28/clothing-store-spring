@@ -182,7 +182,18 @@ public class AuthController {
     log.debug("REST request to activate account: {}", activateAccountDTO);
     LoginResDTO res = authService.activateAccount(activateAccountDTO.getEmail(),
         activateAccountDTO.getActivationCode());
-    return ResponseEntity.ok().body(res);
+
+    // Create refresh token
+    String refreshToken = securityUtil.createRefreshToken(res.getUser().getEmail(), res);
+
+    // Create cookie
+    ResponseCookie springCookie = ResponseCookie
+        .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
+        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("Lax").build();
+
+    // Return response
+    log.debug("Set refresh token cookie: {}", springCookie.toString());
+    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).body(res);
   }
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.RECOVER_PASSWORD_CODE)
