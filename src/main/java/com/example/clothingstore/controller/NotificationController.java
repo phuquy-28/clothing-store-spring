@@ -3,6 +3,7 @@ package com.example.clothingstore.controller;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.service.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,7 @@ public class NotificationController {
   private final NotificationService notificationService;
 
   @GetMapping(UrlConfig.NOTIFICATION)
-  public ResponseEntity<NotificationResDTO.NotificationListDTO> getUserNotifications(
-      Pageable pageable) {
+  public ResponseEntity<ResultPaginationDTO> getUserNotifications(Pageable pageable) {
     log.debug("REST request to get notifications for current user");
     return ResponseEntity.ok(notificationService.getUserNotifications(pageable));
   }

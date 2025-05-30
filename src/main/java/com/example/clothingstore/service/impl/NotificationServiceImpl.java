@@ -3,6 +3,7 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Notification;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.Product;
@@ -20,6 +21,7 @@ import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -124,18 +126,31 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public NotificationResDTO.NotificationListDTO getUserNotifications(Pageable pageable) {
+  public ResultPaginationDTO getUserNotifications(Pageable pageable) {
     User currentUser = securityUtil.getCurrentUser();
-    List<Notification> notificationsPage =
-        notificationRepository.findByUserOrderByNotificationDateDesc(currentUser);
+    
+    // Get paginated notifications
+    Page<Notification> notificationsPage = notificationRepository.findByUserOrderByNotificationDateDesc(currentUser, pageable);
+    
+    // Convert notifications to DTOs
+    List<NotificationResDTO> notifications = notificationsPage.getContent()
+        .stream()
+        .map(this::convertToNotificationDTO)
+        .collect(Collectors.toList());
 
-    List<NotificationResDTO> notifications =
-        notificationsPage.stream().map(this::convertToNotificationDTO).collect(Collectors.toList());
+    // Build meta information
+    ResultPaginationDTO.Meta meta = ResultPaginationDTO.Meta.builder()
+        .page((long) pageable.getPageNumber())
+        .pageSize((long) pageable.getPageSize())
+        .total(notificationsPage.getTotalElements())
+        .pages((long) notificationsPage.getTotalPages())
+        .build();
 
-    long unreadCount = notificationRepository.countByUserAndReadFalse(currentUser);
-
-    return NotificationResDTO.NotificationListDTO.builder().notifications(notifications)
-        .unreadCount(unreadCount).build();
+    // Build final response
+    return ResultPaginationDTO.builder()
+        .meta(meta)
+        .data(notifications)
+        .build();
   }
 
   @Override

@@ -2,6 +2,7 @@ package com.example.clothingstore.service;
 
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import java.util.HashSet;
@@ -16,7 +17,7 @@ public interface NotificationService {
       NotificationReqDTO.CreatePromotionNotificationDTO createPromotionNotificationDTO);
 
   // Get notifications
-  NotificationResDTO.NotificationListDTO getUserNotifications(Pageable pageable);
+  ResultPaginationDTO getUserNotifications(Pageable pageable);
 
   long getUnreadNotificationCount();
 
