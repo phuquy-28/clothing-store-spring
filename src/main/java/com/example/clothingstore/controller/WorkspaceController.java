@@ -51,7 +51,7 @@ public class WorkspaceController {
     // Create cookie
     ResponseCookie springCookie = ResponseCookie
         .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
-        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("Lax").build();
+        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
 
     // Return response
     log.debug("Set refresh token cookie: {}", springCookie.toString());
