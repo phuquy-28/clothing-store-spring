@@ -42,8 +42,8 @@ public class WorkspaceController {
   private final ImportService importService;
   private final SecurityUtil securityUtil;
 
-  @Value("${spring.application.domain}")
-  private final String DOMAIN;
+  @Value("${domain}")
+  private String DOMAIN;
 
   @PostMapping(UrlConfig.WORKSPACE + UrlConfig.LOGIN)
   public ResponseEntity<LoginResDTO> login(@RequestBody @Valid LoginReqDTO loginReqDTO) {

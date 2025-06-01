@@ -45,8 +45,8 @@ public class AuthController {
 
   private final SecurityUtil securityUtil;
 
-  @Value("${spring.application.domain}")
-  private final String DOMAIN;
+  @Value("${domain}")
+  private String DOMAIN;
 
   @PostMapping(UrlConfig.AUTH + UrlConfig.REGISTER)
   public ResponseEntity<RegisterResDTO> register(@RequestBody @Valid RegisterReqDTO user)
