@@ -132,3 +132,7 @@ goong:
     base-url: ${GOONG_API_BASE_URL}
     key: ${GOONG_API_KEY}
     vehicle-type: ${GOONG_API_VEHICLE_TYPE}
+
+sendgrid:
+  api-key: ${SENDGRID_API_KEY}
+  from-email: ${SENDGRID_FROM_EMAIL}

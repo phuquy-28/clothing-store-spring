@@ -7,9 +7,14 @@ import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.service.EmailService;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import java.nio.charset.StandardCharsets;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -21,9 +26,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,25 +38,50 @@ public class EmailServiceImpl implements EmailService {
 
   private final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
-  private final JavaMailSender javaMailSender;
-
+  private final SendGrid sendGrid;
   private final SpringTemplateEngine templateEngine;
 
   @Value("${cors.allowed-origins}")
   private String baseUrl;
 
+  @Value("${sendgrid.from-email}")
+  private String fromEmail;
+
+  // public void sendEmailSync(String to, String subject, String content, boolean isMultipart,
+  //     boolean isHtml) {
+  //   // Prepare message using a Spring helper
+  //   MimeMessage mimeMessage = this.javaMailSender.createMimeMessage();
+  //   try {
+  //     MimeMessageHelper message =
+  //         new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
+  //     message.setTo(to);
+  //     message.setSubject(subject);
+  //     message.setText(content, isHtml);
+  //     this.javaMailSender.send(mimeMessage);
+  //   } catch (MailException | MessagingException e) {
+  //     log.error("Email could not be sent to user '{}'", to, e);
+  //   }
+  // }
+
   public void sendEmailSync(String to, String subject, String content, boolean isMultipart,
       boolean isHtml) {
-    // Prepare message using a Spring helper
-    MimeMessage mimeMessage = this.javaMailSender.createMimeMessage();
     try {
-      MimeMessageHelper message =
-          new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-      message.setTo(to);
-      message.setSubject(subject);
-      message.setText(content, isHtml);
-      this.javaMailSender.send(mimeMessage);
-    } catch (MailException | MessagingException e) {
+      Email from = new Email(fromEmail);
+      Email toEmail = new Email(to);
+      Content emailContent = new Content(isHtml ? "text/html" : "text/plain", content);
+      Mail mail = new Mail(from, subject, toEmail, emailContent);
+
+      Request request = new Request();
+      request.setMethod(Method.POST);
+      request.setEndpoint("mail/send");
+      request.setBody(mail.build());
+
+      Response response = sendGrid.api(request);
+      if (response.getStatusCode() >= 400) {
+        log.error("Failed to send email. Status Code: {}. Response: {}", 
+            response.getStatusCode(), response.getBody());
+      }
+    } catch (IOException e) {
       log.error("Email could not be sent to user '{}'", to, e);
     }
   }
