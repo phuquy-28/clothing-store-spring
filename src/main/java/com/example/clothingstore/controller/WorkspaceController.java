@@ -1,6 +1,7 @@
 package com.example.clothingstore.controller;
 
 import java.io.IOException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -41,6 +42,9 @@ public class WorkspaceController {
   private final ImportService importService;
   private final SecurityUtil securityUtil;
 
+  @Value("${spring.application.domain}")
+  private final String DOMAIN;
+
   @PostMapping(UrlConfig.WORKSPACE + UrlConfig.LOGIN)
   public ResponseEntity<LoginResDTO> login(@RequestBody @Valid LoginReqDTO loginReqDTO) {
     LoginResDTO loginResDTO = workspaceService.login(loginReqDTO);
@@ -49,9 +53,10 @@ public class WorkspaceController {
     String refreshToken = securityUtil.createRefreshToken(loginReqDTO.getEmail(), loginResDTO);
 
     // Create cookie
-    ResponseCookie springCookie = ResponseCookie
-        .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
-        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None")
+            .domain(DOMAIN).build();
 
     // Return response
     log.debug("Set refresh token cookie: {}", springCookie.toString());

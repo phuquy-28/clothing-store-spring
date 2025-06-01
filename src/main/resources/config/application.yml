@@ -1,6 +1,7 @@
 spring:
   application:
     name: clothingstore
+    domain: ${DOMAIN}
 
   jpa:
     hibernate:

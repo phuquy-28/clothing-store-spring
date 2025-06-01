@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -44,6 +45,9 @@ public class AuthController {
 
   private final SecurityUtil securityUtil;
 
+  @Value("${spring.application.domain}")
+  private final String DOMAIN;
+
   @PostMapping(UrlConfig.AUTH + UrlConfig.REGISTER)
   public ResponseEntity<RegisterResDTO> register(@RequestBody @Valid RegisterReqDTO user)
       throws EmailInvalidException {
@@ -61,9 +65,10 @@ public class AuthController {
       String refreshToken = securityUtil.createRefreshToken(loginReqDto.getEmail(), loginResDTO);
 
       // Create cookie
-      ResponseCookie springCookie = ResponseCookie
-          .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
-          .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
+      ResponseCookie springCookie =
+          ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+              .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE)
+              .sameSite("None").domain(DOMAIN).build();
 
       // Return response
       log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -86,9 +91,10 @@ public class AuthController {
         securityUtil.createRefreshToken(loginResDTO.getUser().getEmail(), loginResDTO);
 
     // Create cookie
-    ResponseCookie springCookie = ResponseCookie
-        .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
-        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None")
+            .domain(DOMAIN).build();
 
     // Return response
     log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -102,9 +108,9 @@ public class AuthController {
           required = false) String refreshToken) {
     log.debug("REST request to logout");
 
-    ResponseCookie springCookie =
-        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, "").httpOnly(true).secure(true)
-            .path("/").maxAge(AppConstant.COOKIE_INVALID_EXPIRE).sameSite("None").build();
+    ResponseCookie springCookie = ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, "")
+        .httpOnly(true).secure(true).path("/").maxAge(AppConstant.COOKIE_INVALID_EXPIRE)
+        .sameSite("None").domain(DOMAIN).build();
 
     authService.logout(refreshToken == null ? logoutReqDTO.getRefreshToken() : refreshToken);
     log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -125,9 +131,10 @@ public class AuthController {
         securityUtil.createRefreshToken(loginResDTO.getUser().getEmail(), loginResDTO);
 
     // Tạo cookie
-    ResponseCookie springCookie = ResponseCookie
-        .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken).httpOnly(true).secure(true)
-        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None")
+            .domain(DOMAIN).build();
 
     // Trả về response
     log.debug("Set refresh token cookie: {}", springCookie.toString());
@@ -187,9 +194,10 @@ public class AuthController {
     String refreshToken = securityUtil.createRefreshToken(res.getUser().getEmail(), res);
 
     // Create cookie
-    ResponseCookie springCookie = ResponseCookie
-        .from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true).secure(true)
-        .path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None").build();
+    ResponseCookie springCookie =
+        ResponseCookie.from(AppConstant.REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true)
+            .secure(true).path("/").maxAge(AppConstant.REFRESH_TOKEN_COOKIE_EXPIRE).sameSite("None")
+            .domain(DOMAIN).build();
 
     // Return response
     log.debug("Set refresh token cookie: {}", springCookie.toString());
