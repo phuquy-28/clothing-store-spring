@@ -361,7 +361,8 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(productReqDTO.getPrice());
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
-
+    product.setFeatured(productReqDTO.getFeatured());
+    
     // Update slug
     String slug = createSlug(product.getName()) + "-" + System.currentTimeMillis();
     product.setSlug(slug);
