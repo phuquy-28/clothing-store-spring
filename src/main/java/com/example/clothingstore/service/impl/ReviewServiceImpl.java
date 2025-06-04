@@ -62,18 +62,34 @@ public class ReviewServiceImpl implements ReviewService {
       imageUrls = Arrays.asList(review.getImageUrls().split(";"));
     }
 
-    return ReviewDTO.builder().reviewId(review.getId()).description(review.getDescription())
+    return ReviewDTO.builder()
+        .reviewId(review.getId())
+        .description(review.getDescription())
         .rating(review.getRating())
         .createdAt(review.getCreatedAt() != null
             ? review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime()
             : null)
         .isPublished(review.isPublished())
-        .userReviewDTO(UserReviewDTO.builder().id(review.getUser().getId())
+        .userReviewDTO(UserReviewDTO.builder()
+            .id(review.getUser().getId())
             .firstName(review.getUser().getProfile().getFirstName())
             .lastName(review.getUser().getProfile().getLastName())
-            .email(review.getUser().getEmail()).totalSpend(calculateTotalSpend(review.getUser()))
-            .totalReview(calculateTotalReview(review.getUser())).build())
-        .imageUrls(imageUrls).videoUrl(review.getVideoUrl()).build();
+            .email(review.getUser().getEmail())
+            .totalSpend(calculateTotalSpend(review.getUser()))
+            .totalReview(calculateTotalReview(review.getUser()))
+            .build())
+        .productVariantDTO(ReviewDTO.ProductVariantDTO.builder()
+            .id(review.getLineItem().getProductVariant().getId())
+            .productName(review.getProduct().getName())
+            .color(review.getLineItem().getProductVariant().getColor())
+            .size(review.getLineItem().getProductVariant().getSize())
+            .price(review.getProduct().getPrice() + review.getLineItem().getProductVariant().getDifferencePrice())
+            .imageUrl(review.getLineItem().getProductVariant().getImages().get(0).getPublicUrl())
+            .build())
+        .orderCode(review.getLineItem().getOrder().getCode())
+        .imageUrls(imageUrls)
+        .videoUrl(review.getVideoUrl())
+        .build();
   }
 
   private Double calculateTotalSpend(User user) {
