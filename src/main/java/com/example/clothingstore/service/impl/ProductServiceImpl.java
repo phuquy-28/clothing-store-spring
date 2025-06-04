@@ -75,10 +75,10 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public ProductResDTO createProduct(ProductReqDTO productReqDTO) {
-    productRepository.findByName(productReqDTO.getName())
-        .ifPresent(product -> {
-          throw new ResourceAlreadyExistException(ErrorMessage.PRODUCT_ALREADY_EXISTS);
-        });
+    List<Product> existingProducts = productRepository.findByNameAndIsDeletedFalse(productReqDTO.getName());
+    if (!existingProducts.isEmpty()) {
+      throw new ResourceAlreadyExistException(ErrorMessage.PRODUCT_ALREADY_EXISTS);
+    }
 
     Product product = new Product();
     product.setName(productReqDTO.getName());
@@ -86,7 +86,7 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(productReqDTO.getPrice());
     product.setCategory(categoryRepository.findById(productReqDTO.getCategoryId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.CATEGORY_NOT_FOUND)));
-    product.setFeatured(productReqDTO.getIsFeatured());
+    product.setFeatured(productReqDTO.getFeatured());
 
     final Product finalProduct = product;
     product.setImages(IntStream.range(0, productReqDTO.getImages().size()).mapToObj(index -> {

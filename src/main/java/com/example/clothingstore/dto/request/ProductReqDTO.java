@@ -26,7 +26,7 @@ public class ProductReqDTO {
   @NotNull(message = "product.category.not.null")
   private Long categoryId;
 
-  private Boolean isFeatured = false;
+  private Boolean featured = false;
 
   @NotEmpty(message = "product.images.not.empty")
   private List<String> images;

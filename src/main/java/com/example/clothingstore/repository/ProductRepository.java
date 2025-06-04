@@ -1,5 +1,6 @@
 package com.example.clothingstore.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -13,6 +14,8 @@ import com.example.clothingstore.enumeration.PaymentStatus;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
   Optional<Product> findByName(String name);
+
+  List<Product> findByNameAndIsDeletedFalse(String name);
 
   Optional<Product> findBySlug(String slug);
 
