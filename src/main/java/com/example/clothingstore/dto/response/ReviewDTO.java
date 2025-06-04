@@ -42,6 +42,8 @@ public class ReviewDTO {
 
     private String email;
 
+    private String phoneNumber;
+
     private Double totalSpend;
 
     private Long totalReview;
