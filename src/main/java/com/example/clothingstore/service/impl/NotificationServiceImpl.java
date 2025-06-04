@@ -54,8 +54,8 @@ public class NotificationServiceImpl implements NotificationService {
     User user = order.getUser();
 
     // Create notification content based on order status
-    String title = "Order Status Updated";
-    String content = String.format("Your order #%s has been updated to: %s", order.getCode(),
+    String title = "Cập nhật trạng thái đơn hàng";
+    String content = String.format("Đơn hàng #%s của bạn đã được cập nhật thành: %s", order.getCode(),
         order.getStatus().toString());
 
     // Create and save notification

@@ -118,7 +118,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
       String signedUrl = generateSignedUrl(fileNameWithDirectory);
 
       MultiMediaUploadResDTO.SignedUrlDTO urlDTO = new MultiMediaUploadResDTO.SignedUrlDTO();
-      urlDTO.setFileName(uniqueFileName); // Return the unique filename so client knows what to
+      urlDTO.setFileName(fileName); // Return the unique filename so client knows what to
                                           // reference
       urlDTO.setSignedUrl(signedUrl);
       signedUrls.add(urlDTO);
