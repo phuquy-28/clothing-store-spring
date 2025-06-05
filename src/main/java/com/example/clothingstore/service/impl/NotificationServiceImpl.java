@@ -10,20 +10,28 @@ import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.entity.ScheduledNotification;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.entity.UserDevice;
 import com.example.clothingstore.enumeration.NotificationType;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.NotificationRepository;
 import com.example.clothingstore.repository.PromotionRepository;
 import com.example.clothingstore.repository.ScheduledNotificationRepository;
+import com.example.clothingstore.repository.UserDeviceRepository;
 import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.NotificationService;
 import com.example.clothingstore.util.SecurityUtil;
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.SendResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +41,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +49,8 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
 
   private final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
+  private final FirebaseMessaging firebaseMessaging;
+  private final UserDeviceRepository userDeviceRepository;
 
   private final NotificationRepository notificationRepository;
   private final ScheduledNotificationRepository scheduledNotificationRepository;
@@ -50,7 +61,7 @@ public class NotificationServiceImpl implements NotificationService {
 
   @Override
   @Transactional
-  public void createOrderStatusNotification(Order order) {
+  public NotificationResDTO createOrderStatusNotification(Order order) {
     User user = order.getUser();
 
     // Create notification content based on order status
@@ -71,8 +82,7 @@ public class NotificationServiceImpl implements NotificationService {
     // Convert to DTO for sending via WebSocket
     NotificationResDTO notificationDTO = convertToNotificationDTO(notification);
 
-    // Send notification via WebSocket
-    sendNotificationToUser(user, notificationDTO);
+    return notificationDTO;
   }
 
   @Override
@@ -179,6 +189,7 @@ public class NotificationServiceImpl implements NotificationService {
     return convertToNotificationDTO(notification);
   }
 
+  @Async
   @Override
   public void sendNotificationToUser(User user, NotificationResDTO notification) {
     String destination = "/queue/notifications";
@@ -302,5 +313,51 @@ public class NotificationServiceImpl implements NotificationService {
 
     log.debug("Marked {} notifications as read for user {}", unreadNotifications.size(),
         currentUser.getEmail());
+  }
+
+  @Async
+  @Override
+  public void sendNotificationToUser(Long userId, String title, String body,
+      Map<String, String> data) {
+    // 1. Lấy tất cả các device token của người dùng
+    List<String> tokens = userDeviceRepository.findByUserId(userId).stream()
+        .map(UserDevice::getDeviceToken).collect(Collectors.toList());
+
+    if (tokens.isEmpty()) {
+      log.debug("Không tìm thấy thiết bị nào cho người dùng: {}", userId);
+      return;
+    }
+
+    // 2. Tạo thông báo
+    // Sử dụng MulticastMessage để gửi đến nhiều thiết bị cùng lúc
+    MulticastMessage message =
+        MulticastMessage
+            .builder().setNotification(com.google.firebase.messaging.Notification.builder()
+                .setTitle(title).setBody(body).build())
+            .putAllData(data).addAllTokens(tokens).build();
+    try {
+      // 3. Gửi thông báo
+      BatchResponse response = firebaseMessaging.sendEachForMulticast(message);
+      log.debug("{} messages were sent successfully", response.getSuccessCount());
+
+      // 4. Xử lý các token không hợp lệ (ví dụ: người dùng đã gỡ app)
+      if (response.getFailureCount() > 0) {
+        List<SendResponse> responses = response.getResponses();
+        for (int i = 0; i < responses.size(); i++) {
+          if (!responses.get(i).isSuccessful()) {
+            String failedToken = tokens.get(i);
+            String errorCode = responses.get(i).getException().getMessagingErrorCode().name();
+            // Nếu lỗi là UNREGISTERED, nghĩa là token không còn hợp lệ -> xóa khỏi DB
+            if ("UNREGISTERED".equals(errorCode) || "INVALID_ARGUMENT".equals(errorCode)) {
+              log.debug("Xóa token không hợp lệ: {}", failedToken);
+              userDeviceRepository.findByDeviceToken(failedToken)
+                  .ifPresent(userDevice -> userDeviceRepository.delete(userDevice));
+            }
+          }
+        }
+      }
+    } catch (FirebaseMessagingException e) {
+      log.error("Lỗi khi gửi thông báo: {}", e.getMessage());
+    }
   }
 }

@@ -86,7 +86,9 @@ import com.example.clothingstore.entity.OrderStatusHistory;
 import com.example.clothingstore.repository.OrderStatusHistoryRepository;
 import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
 import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
+import com.example.clothingstore.dto.response.NotificationResDTO;
 import com.example.clothingstore.service.CloudStorageService;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -571,9 +573,53 @@ public class OrderServiceImpl implements OrderService {
     orderRepository.save(order);
 
     // Create and send notification
-    notificationService.createOrderStatusNotification(order);
+    NotificationResDTO notificationDTO = notificationService.createOrderStatusNotification(order);
+
+    // Send notification via WebSocket
+    notificationService.sendNotificationToUser(order.getUser(), notificationDTO);
+
+    // Send Firebase notification
+    Long userId = order.getUser().getId();
+    String orderCode = order.getCode();
+    String orderId = order.getId().toString();
+    String statusDisplay = getStatusDisplay(newStatus);
+    Long notificationId = notificationDTO.getId();
+
+    // Prepare notification content
+    String title = "Cập nhật đơn hàng " + orderCode;
+    String body = "Đơn hàng của bạn đã chuyển sang trạng thái: " + statusDisplay;
+
+    // Prepare data payload
+    Map<String, String> dataPayload = new HashMap<>();
+    dataPayload.put("orderId", orderId);
+    dataPayload.put("navigateTo", "order_details");
+    dataPayload.put("orderCode", orderCode);
+    dataPayload.put("status", newStatus.toString());
+    dataPayload.put("notificationId", notificationId.toString());
+
+    // Send Firebase notification
+    notificationService.sendNotificationToUser(userId, title, body, dataPayload);
 
     return mapToOrderItemList(order);
+  }
+
+  private String getStatusDisplay(OrderStatus status) {
+    switch (status) {
+      case PENDING:
+        return "Chờ xử lý";
+      case PROCESSING:
+        return "Đang xử lý";
+      case SHIPPING:
+        return "Đang giao hàng";
+      case DELIVERED:
+        return "Đã giao hàng";
+      case CANCELLED:
+        return "Đã hủy";
+      case RETURNED:
+        return "Đã hoàn trả";
+      default:
+        return status.toString();
+    }
   }
 
   @Override

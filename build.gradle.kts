@@ -58,6 +58,9 @@ dependencies {
 
     // Apache Commons IO
     implementation("commons-io:commons-io:2.15.1")
+
+    // Firebase Admin SDK
+    implementation("com.google.firebase:firebase-admin:9.2.0")
 }
 
 tasks.jar {

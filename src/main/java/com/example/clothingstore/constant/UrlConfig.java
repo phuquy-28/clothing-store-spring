@@ -119,6 +119,7 @@ public class UrlConfig {
   public static final String IMPORT_TEMPLATE = "/import/template/{templateType}";
   public static final String IMPORT_PRODUCTS = "/import/products";
   public static final String IMPORT_CATEGORIES = "/import/categories";
+  
   // Notification controller
   public static final String NOTIFICATION = "/notifications";
   public static final String UNREAD_COUNT = "/unread-count";
@@ -126,6 +127,8 @@ public class UrlConfig {
   public static final String MARK_READ_ALL = "/mark-read-all";
   public static final String PROMOTION_NOTIFICATION = "/notifications/promotion";
   public static final String WS = "/ws/**";
+  public static final String SAVE_FCM_TOKEN = "/save-fcm-token";
+  public static final String DELETE_FCM_TOKEN = "/delete-fcm-token";
 
   // Full paths for public endpoints
   public static String[] PUBLIC_ENDPOINTS() {

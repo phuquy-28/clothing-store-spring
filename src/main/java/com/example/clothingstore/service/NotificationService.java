@@ -6,12 +6,13 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import java.util.HashSet;
+import java.util.Map;
 import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
 
   // Create notifications
-  void createOrderStatusNotification(Order order);
+  NotificationResDTO createOrderStatusNotification(Order order);
 
   NotificationResDTO.PromotionNotificationDTO createPromotionNotification(
       NotificationReqDTO.CreatePromotionNotificationDTO createPromotionNotificationDTO);
@@ -37,4 +38,6 @@ public interface NotificationService {
 
   // Process scheduled notifications
   void processScheduledNotifications();
+
+  void sendNotificationToUser(Long userId, String title, String body, Map<String, String> data);
 }
