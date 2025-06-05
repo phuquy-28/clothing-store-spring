@@ -90,6 +90,7 @@ public final class ErrorMessage {
   public static final String RETURN_REQUEST_NOT_FOUND = "error.return.request.not.found";
   public static final String RETURN_REQUEST_NOT_APPROVED = "error.return.request.not.approved";
   public static final String CASHBACK_STATUS_INVALID = "error.cashback.status.invalid";
+  public static final String RETURN_REQUEST_CANNOT_BE_CANCELLED = "error.return.request.cannot.be.cancelled";
 
   // OTP Related Errors
   public static final String OTP_NOT_SENT = "error.otp.not_sent";

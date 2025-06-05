@@ -300,4 +300,26 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     return convertToDTO(returnRequest);
   }
+
+  @Override
+  public ReturnRequestResDTO cancelReturnRequestByUser(Long id) {
+    ReturnRequest returnRequest = returnRequestRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.RETURN_REQUEST_NOT_FOUND));
+
+    User currentUser = securityUtil.getCurrentUser();
+
+    if (!returnRequest.getUser().getId().equals(currentUser.getId())) {
+      throw new BadRequestException(ErrorMessage.USER_NOT_AUTHORIZED);
+    }
+
+    if (returnRequest.getStatus() != ReturnRequestStatus.PENDING) {
+      throw new BadRequestException(ErrorMessage.RETURN_REQUEST_CANNOT_BE_CANCELLED);
+    }
+
+    returnRequest.setStatus(ReturnRequestStatus.CANCELED);
+
+    ReturnRequest updated = returnRequestRepository.save(returnRequest);
+
+    return convertToDTO(updated);
+  }
 }

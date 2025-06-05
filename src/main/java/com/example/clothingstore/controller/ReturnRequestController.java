@@ -106,4 +106,12 @@ public class ReturnRequestController {
     return ResponseEntity.ok(result);
   }
 
+  @PutMapping(UrlConfig.RETURN_REQUESTS + UrlConfig.RETURN_REQUESTS_USER + UrlConfig.CANCEL + UrlConfig.ID)
+  @ApiMessage("Return request cancelled successfully")
+  public ResponseEntity<ReturnRequestResDTO> cancelReturnRequest(@PathVariable Long id) {
+    log.debug("REST request to cancel return request: {}", id);
+    ReturnRequestResDTO result = returnRequestService.cancelReturnRequestByUser(id);
+    return ResponseEntity.ok(result);
+  }
+
 }
