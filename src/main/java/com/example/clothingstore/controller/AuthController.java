@@ -120,8 +120,10 @@ public class AuthController {
   @GetMapping(UrlConfig.AUTH + UrlConfig.REFRESH)
   public ResponseEntity<LoginResDTO> refreshToken(
       @CookieValue(name = AppConstant.REFRESH_TOKEN_COOKIE_NAME,
-          required = false) String refreshToken)
+          required = false) String refreshTokenCookie,
+      @RequestParam(name = "refresh_token", required = false) String refreshTokenParam)
       throws TokenInvalidException {
+    String refreshToken = refreshTokenCookie != null ? refreshTokenCookie : refreshTokenParam;
     // log to debug refresh token
     log.debug("REST request to refresh token: {}", refreshToken);
     LoginResDTO loginResDTO = authService.refreshToken(refreshToken);
