@@ -4,7 +4,6 @@ import com.example.clothingstore.enumeration.NotificationType;
 import lombok.Builder;
 import lombok.Data;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,7 +14,7 @@ public class NotificationResDTO {
   private String content;
   private NotificationType type;
   private boolean read;
-  private LocalDateTime notificationDate;
+  private Instant notificationDate;
   private String referenceIds;
   private Instant startPromotionDate;
   private Instant endPromotionDate;

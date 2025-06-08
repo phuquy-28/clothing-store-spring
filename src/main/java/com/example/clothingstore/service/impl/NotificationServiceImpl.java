@@ -36,8 +36,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
@@ -271,7 +269,7 @@ public class NotificationServiceImpl implements NotificationService {
     return NotificationResDTO.builder().id(notification.getId()).title(notification.getTitle())
         .content(notification.getContent()).type(notification.getType()).read(notification.isRead())
         .notificationDate(
-            LocalDateTime.ofInstant(notification.getNotificationDate(), ZoneId.systemDefault()))
+            notification.getNotificationDate())
         .referenceIds(notification.getReferenceIds())
         .startPromotionDate(
             notification.getStartPromotionDate() != null ? notification.getStartPromotionDate()

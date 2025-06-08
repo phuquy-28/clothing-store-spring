@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.ErrorMessage;
+import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.request.PromotionReqDTO;
 import com.example.clothingstore.dto.response.PromotionResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
@@ -22,6 +23,7 @@ import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.repository.PromotionRepository;
 import com.example.clothingstore.service.CategoryService;
+import com.example.clothingstore.service.NotificationService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,8 @@ public class PromotionServiceImpl implements PromotionService {
   private final ProductService productService;
 
   private final CategoryService categoryService;
+  
+  private final NotificationService notificationService;
 
   @Override
   public PromotionResDTO createPromotion(PromotionReqDTO promotionReqDTO) {
@@ -69,6 +73,13 @@ public class PromotionServiceImpl implements PromotionService {
     promotion.setProducts(products);
     promotion.setCategories(categories);
     Promotion savedPromotion = promotionRepository.save(promotion);
+
+    // Send immediate notification for the new promotion
+    NotificationReqDTO.CreatePromotionNotificationDTO notificationDTO = new NotificationReqDTO.CreatePromotionNotificationDTO();
+    notificationDTO.setPromotionId(savedPromotion.getId());
+    notificationDTO.setTitle(savedPromotion.getName());
+    notificationDTO.setContent(savedPromotion.getDescription());
+    notificationService.createPromotionNotification(notificationDTO);
 
     return convertToPromotionResDTO(savedPromotion);
   }
