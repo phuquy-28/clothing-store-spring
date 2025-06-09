@@ -516,14 +516,30 @@ public class OrderServiceImpl implements OrderService {
     OrderStatus newStatus = OrderStatus.valueOf(orderStatusReqDTO.getStatus().toUpperCase());
 
     // Kiểm tra logic chuyển trạng thái
-    if (oldStatus == OrderStatus.DELIVERED) {
-      // Nếu đơn hàng đã ở trạng thái DELIVERED, chỉ cho phép chuyển sang RETURNED
-      if (newStatus != OrderStatus.RETURNED) {
-        throw new BadRequestException(ErrorMessage.ORDER_CAN_ONLY_BE_RETURNED);
-      }
-    } else if (newStatus == OrderStatus.RETURNED) {
-      // Nếu đơn hàng chưa giao (chưa DELIVERED), không cho phép chuyển sang RETURNED
-      throw new BadRequestException(ErrorMessage.ORDER_CAN_NOT_BE_RETURNED);
+    switch (oldStatus) {
+      case PENDING:
+        if (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.PROCESSING) {
+          break;
+        }
+        throw new BadRequestException(ErrorMessage.INVALID_STATUS_TRANSITION);
+      case PROCESSING:
+        if (newStatus == OrderStatus.SHIPPING) {
+          break;
+        }
+        throw new BadRequestException(ErrorMessage.INVALID_STATUS_TRANSITION);
+      case SHIPPING:
+        if (newStatus == OrderStatus.DELIVERED) {
+          break;
+        }
+        throw new BadRequestException(ErrorMessage.INVALID_STATUS_TRANSITION);
+      case DELIVERED:
+        if (newStatus == OrderStatus.RETURNED) {
+          break;
+        }
+        throw new BadRequestException(ErrorMessage.INVALID_STATUS_TRANSITION);
+      case CANCELLED:
+      case RETURNED:
+        throw new BadRequestException(ErrorMessage.STATUS_CANNOT_BE_CHANGED);
     }
 
     // Kiểm tra thanh toán VNPAY

@@ -12,6 +12,7 @@ import com.example.clothingstore.entity.ScheduledNotification;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.entity.UserDevice;
 import com.example.clothingstore.enumeration.NotificationType;
+import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.NotificationRepository;
 import com.example.clothingstore.repository.PromotionRepository;
@@ -65,7 +66,7 @@ public class NotificationServiceImpl implements NotificationService {
     // Create notification content based on order status
     String title = "Cập nhật trạng thái đơn hàng";
     String content = String.format("Đơn hàng #%s của bạn đã được cập nhật thành: %s", order.getCode(),
-        order.getStatus().toString());
+        getStatusDisplay(order.getStatus()));
 
     // Create and save notification
     Notification notification = new Notification();
@@ -356,6 +357,25 @@ public class NotificationServiceImpl implements NotificationService {
       }
     } catch (FirebaseMessagingException e) {
       log.error("Lỗi khi gửi thông báo: {}", e.getMessage());
+    }
+  }
+
+  private String getStatusDisplay(OrderStatus status) {
+    switch (status) {
+      case PENDING:
+        return "Chờ xử lý";
+      case PROCESSING:
+        return "Đang xử lý";
+      case SHIPPING:
+        return "Đang giao hàng";
+      case DELIVERED:
+        return "Đã giao hàng";
+      case CANCELLED:
+        return "Đã hủy";
+      case RETURNED:
+        return "Đã hoàn trả";
+      default:
+        return status.toString();
     }
   }
 }
