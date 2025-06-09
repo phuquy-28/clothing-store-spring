@@ -1,5 +1,6 @@
 package com.example.clothingstore.service.impl;
 
+import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
@@ -38,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +83,53 @@ public class NotificationServiceImpl implements NotificationService {
 
     // Convert to DTO for sending via WebSocket
     NotificationResDTO notificationDTO = convertToNotificationDTO(notification);
+
+    return notificationDTO;
+  }
+
+  @Override
+  @Transactional
+  public NotificationResDTO createNewOrderNotification(Order order) {
+    // Find all admin, manager and staff users
+    List<User> adminUsers = userRepository.findByRoleNameIn(Arrays.asList(
+        AppConstant.ROLE_ADMIN,
+        AppConstant.ROLE_MANAGER,
+        AppConstant.ROLE_STAFF
+    ));
+
+    String title = "Đơn hàng mới";
+    String formattedAmount = String.format("%,.0f", order.getFinalTotal()).replace(",", ".");
+    String content = String.format("Đơn hàng mới #%s đã được tạo với tổng giá trị %s VND", 
+        order.getCode(), formattedAmount);
+
+    List<Notification> notifications = new ArrayList<>();
+
+    // Create notification for each admin user
+    for (User adminUser : adminUsers) {
+      Notification notification = new Notification();
+      notification.setUser(adminUser);
+      notification.setTitle(title);
+      notification.setContent(content);
+      notification.setType(NotificationType.SYSTEM_NOTIFICATION);
+      notification.setReferenceIds(order.getId().toString());
+      notification.setNotificationDate(Instant.now());
+      notifications.add(notification);
+    }
+
+    // Save all notifications
+    List<Notification> savedNotifications = notificationRepository.saveAll(notifications);
+
+    // Create notification DTO for broadcasting
+    NotificationResDTO notificationDTO = null;
+    if (!savedNotifications.isEmpty()) {
+      notificationDTO = convertToNotificationDTO(savedNotifications.get(0));
+    }
+
+    // Broadcast notification to admin topic
+    if (notificationDTO != null) {
+      log.debug("Broadcast notification to admin topic: {}", notificationDTO);
+      messagingTemplate.convertAndSend("/topic/admin-notifications", notificationDTO);
+    }
 
     return notificationDTO;
   }

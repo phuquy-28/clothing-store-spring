@@ -14,6 +14,8 @@ public interface NotificationService {
   // Create notifications
   NotificationResDTO createOrderStatusNotification(Order order);
 
+  NotificationResDTO createNewOrderNotification(Order order);
+
   NotificationResDTO.PromotionNotificationDTO createPromotionNotification(
       NotificationReqDTO.CreatePromotionNotificationDTO createPromotionNotificationDTO);
 

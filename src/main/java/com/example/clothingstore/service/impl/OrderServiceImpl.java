@@ -267,6 +267,9 @@ public class OrderServiceImpl implements OrderService {
 
     paymentResult.setOrderId(savedOrder.getId());
 
+    // Create and send notification to admin users
+    notificationService.createNewOrderNotification(savedOrder);
+
     // Clear cart items that were ordered
     orderReqDTO.getCartItemIds().forEach(cartItemId -> {
         cart.getCartItems().removeIf(item -> item.getId().equals(cartItemId));
