@@ -8,6 +8,7 @@ import com.example.clothingstore.dto.response.ProductResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
+import com.example.clothingstore.entity.ProductVariant;
 
 public interface ProductService {
   UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO);
@@ -38,4 +39,5 @@ public interface ProductService {
 
   String createSlug(String input);
 
+  String generateMeaningfulSku(ProductVariant variant);
 }

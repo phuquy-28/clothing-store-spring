@@ -130,6 +130,11 @@ public class UrlConfig {
   public static final String SAVE_FCM_TOKEN = "/save-fcm-token";
   public static final String DELETE_FCM_TOKEN = "/delete-fcm-token";
 
+  // Inventory controller
+  public static final String INVENTORY = "/inventory";
+  public static final String IMPORT = "/import";
+  public static final String EXPORT = "/export";
+
   // Full paths for public endpoints
   public static String[] PUBLIC_ENDPOINTS() {
     return new String[] {ROOT, API_DOCS, SWAGGER_UI, SWAGGER_UI_HTML};

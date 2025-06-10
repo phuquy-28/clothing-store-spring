@@ -11,7 +11,8 @@ import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.enumeration.PaymentStatus;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+public interface ProductRepository
+    extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
   Optional<Product> findByName(String name);
 
@@ -31,4 +32,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
       """)
   Long countSoldQuantityByProductId(@Param("productId") Long productId,
       @Param("paymentStatus") PaymentStatus paymentStatus);
+
+
+  @Query("""
+      SELECT COALESCE(SUM(li.quantity), 0L)
+      FROM LineItem li
+      WHERE li.productVariant.id = :variantId
+      AND li.order.status IN (com.example.clothingstore.enumeration.OrderStatus.DELIVERED,
+                               com.example.clothingstore.enumeration.OrderStatus.SHIPPING,
+                               com.example.clothingstore.enumeration.OrderStatus.PROCESSING)
+      """)
+  Long countSoldQuantityByVariantId(@Param("variantId") Long variantId);
 }

@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,6 +40,9 @@ public class ProductVariant extends SoftDeleteEntity {
   @ManyToOne
   @JoinColumn(name = "product_id", referencedColumnName = "id")
   private Product product;
+
+  @Column(name = "sku", unique = true)
+  private String sku;
 
   @Enumerated(EnumType.STRING)
   private Color color;

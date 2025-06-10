@@ -1,0 +1,54 @@
+// Create new file: src/main/java/com/example/clothingstore/controller/InventoryController.java
+package com.example.clothingstore.controller;
+
+import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.response.ProductImportResponseDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.service.InventoryService;
+import com.turkraft.springfilter.boot.Filter;
+import lombok.RequiredArgsConstructor;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("${api.version}")
+@RequiredArgsConstructor
+public class InventoryController {
+
+  private final InventoryService inventoryService;
+
+  @GetMapping(UrlConfig.INVENTORY)
+  public ResponseEntity<ResultPaginationDTO> getInventoryList(
+      @Filter Specification<ProductVariant> specification, Pageable pageable) {
+    return ResponseEntity.ok(inventoryService.listInventory(specification, pageable));
+  }
+
+  @GetMapping(UrlConfig.INVENTORY + UrlConfig.EXPORT)
+  public ResponseEntity<Resource> exportInventory() {
+    String timestamp = new SimpleDateFormat("dd_MM_yyyy_HH_mm").format(new Date());
+    String filename = "inventory_export_" + timestamp + ".xlsx";
+    Resource file = inventoryService.exportInventoryTemplate();
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+        .contentType(MediaType
+            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+        .body(file);
+  }
+
+  @PostMapping(value = UrlConfig.INVENTORY + UrlConfig.IMPORT,
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ProductImportResponseDTO> importInventory(
+      @RequestParam("file") MultipartFile file) {
+    return ResponseEntity.ok(inventoryService.importInventoryUpdate(file));
+  }
+}

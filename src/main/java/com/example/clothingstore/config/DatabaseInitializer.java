@@ -2,16 +2,19 @@ package com.example.clothingstore.config;
 
 import com.example.clothingstore.entity.Profile;
 import com.example.clothingstore.entity.Permission;
+import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.Role;
 import com.example.clothingstore.entity.ShippingProfile;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.Gender;
 import com.example.clothingstore.repository.PermissionRepository;
+import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.repository.RoleRepository;
 import com.example.clothingstore.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +31,8 @@ public class DatabaseInitializer implements CommandLineRunner {
   private final UserRepository userRepository;
 
   private final PasswordEncoder passwordEncoder;
+
+  private final ProductVariantRepository productVariantRepository;
 
   @Override
   public void run(String... args) throws Exception {
@@ -136,11 +141,40 @@ public class DatabaseInitializer implements CommandLineRunner {
       this.userRepository.saveAll(users);
     }
 
+    // Generate missing SKUs for product variants
+    this.generateMissingSkus();
+
     if (countPermissions > 0 && countRoles > 0 && countUsers > 0) {
       System.out.println(">>> SKIP INIT DATABASE ~ ALREADY HAVE DATA...");
     } else {
       System.out.println(">>> END INIT DATABASE");
     }
+  }
+
+  private void generateMissingSkus() {
+    System.out.println(">>> START GENERATING MISSING MEANINGFUL SKUS FOR VARIANTS");
+    List<ProductVariant> variantsWithoutSku =
+        productVariantRepository
+            .findAll().stream().filter(variant -> variant.getSku() == null
+                || variant.getSku().isBlank() || variant.getSku().startsWith("SKU-"))
+            .collect(Collectors.toList());
+
+    if (!variantsWithoutSku.isEmpty()) {
+      for (ProductVariant variant : variantsWithoutSku) {
+        String colorCode =
+            variant.getColor().name().substring(0, Math.min(3, variant.getColor().name().length()));
+        String sku = String
+            .format("%d-%s-%s", variant.getProduct().getId(), colorCode, variant.getSize().name())
+            .toUpperCase();
+        variant.setSku(sku);
+      }
+      productVariantRepository.saveAll(variantsWithoutSku);
+      System.out
+          .println(">>> Generated/Updated " + variantsWithoutSku.size() + " meaningful SKUs.");
+    } else {
+      System.out.println(">>> No missing or old-format SKUs to generate.");
+    }
+    System.out.println(">>> END GENERATING MISSING SKUS");
   }
 
 }

@@ -225,8 +225,19 @@ public class ImportServiceImpl implements ImportService {
         }
       }
 
-      productRepository.saveAll(productsToSave);
-      successfulEntityGroups = productsToSave.size();
+      // Save products first to generate IDs
+      List<Product> savedProducts = productRepository.saveAll(productsToSave);
+
+      // Generate SKUs for variants
+      for (Product product : savedProducts) {
+        for (ProductVariant variant : product.getVariants()) {
+          variant.setSku(productService.generateMeaningfulSku(variant));
+        }
+      }
+
+      // Save products again with generated SKUs
+      productRepository.saveAll(savedProducts);
+      successfulEntityGroups = savedProducts.size();
       log.info("Đã lưu thành công {} sản phẩm.", successfulEntityGroups);
 
     } catch (IOException e) {
@@ -236,7 +247,7 @@ public class ImportServiceImpl implements ImportService {
     }
 
     return ProductImportResponseDTO.builder().totalRowsRead(totalRowsRead - 1)
-        .successfulImports(successfulEntityGroups).failedImports(0).errorMessages(new ArrayList<>())
+        .successfulImports(successfulEntityGroups)
         .successMessage(Translator.toLocale("import.success.total", successfulEntityGroups))
         .build();
   }
@@ -343,8 +354,7 @@ public class ImportServiceImpl implements ImportService {
     }
 
     return ProductImportResponseDTO.builder() // Vẫn dùng ProductImportResponseDTO theo yêu cầu
-        .totalRowsRead(totalRowsRead - 1).successfulImports(successfulImports).failedImports(0)
-        .errorMessages(new ArrayList<>())
+        .totalRowsRead(totalRowsRead - 1).successfulImports(successfulImports)
         .successMessage(Translator.toLocale("import.category.success.total", successfulImports))
         .build();
   }

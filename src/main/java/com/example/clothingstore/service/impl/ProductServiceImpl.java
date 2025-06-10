@@ -128,10 +128,30 @@ public class ProductServiceImpl implements ProductService {
     log.debug("Product created with id: {}", product.getId());
     log.debug("Slug created: {}", slug);
 
+    // Save product to generate IDs for product and variants
+    product = productRepository.save(product);
+
+    // Generate SKUs for each variant
+    for (ProductVariant variant : product.getVariants()) {
+      variant.setSku(generateMeaningfulSku(variant));
+    }
+
     product = productRepository.save(product);
 
     return convertToProductResDTO(product);
   }
+
+  @Override
+  public String generateMeaningfulSku(ProductVariant variant) {
+    if (variant.getProduct() == null || variant.getProduct().getId() == null) {
+        throw new IllegalStateException("Product and Product ID must not be null to generate SKU.");
+    }
+    String productId = variant.getProduct().getId().toString();
+    String colorCode = variant.getColor().name().substring(0, Math.min(3, variant.getColor().name().length()));
+    String sizeCode = variant.getSize().name();
+    
+    return String.format("%s-%s-%s", productId, colorCode, sizeCode).toUpperCase();
+}
 
   @Override
   @EnableSoftDeleteFilter
