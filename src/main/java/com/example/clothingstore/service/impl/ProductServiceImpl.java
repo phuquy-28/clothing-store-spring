@@ -42,6 +42,7 @@ import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.service.CloudStorageService;
+import com.example.clothingstore.service.PineconeService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.PromotionCalculatorService;
 import com.example.clothingstore.specification.ProductSpecification;
@@ -67,6 +68,8 @@ public class ProductServiceImpl implements ProductService {
   private final ReviewRepository reviewRepository;
 
   private final CartRepository cartRepository;
+
+  private final PineconeService pineconeService;
 
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
@@ -135,6 +138,9 @@ public class ProductServiceImpl implements ProductService {
     for (ProductVariant variant : product.getVariants()) {
       variant.setSku(generateMeaningfulSku(variant));
     }
+
+    // Index product to Pinecone
+    pineconeService.indexSingleProduct(product);
 
     product = productRepository.save(product);
 
@@ -394,6 +400,10 @@ public class ProductServiceImpl implements ProductService {
     updateProductVariants(product, productReqDTO.getVariants());
 
     product = productRepository.save(product);
+
+    // Index product to Pinecone
+    pineconeService.indexSingleProduct(product);
+
     return convertToProductResDTO(product);
   }
 

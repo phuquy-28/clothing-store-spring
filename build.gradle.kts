@@ -61,6 +61,23 @@ dependencies {
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.2.0")
+
+    // OpenAI
+    implementation("com.openai:openai-java:2.7.0")
+
+    // Pinecone client - compatible with protobuf 4.x
+    implementation("io.pinecone:pinecone-client:5.0.0") {
+        // Exclude transitive protobuf to avoid conflicts
+        exclude(group = "com.google.protobuf", module = "protobuf-java")
+    }
+    
+    // Force protobuf 4.29.3 to match Pinecone gencode version
+    implementation("com.google.protobuf:protobuf-java:4.29.3")
+}
+
+// Force resolution strategy for protobuf 4.29.3
+configurations.all {
+    resolutionStrategy.force("com.google.protobuf:protobuf-java:4.29.3")
 }
 
 tasks.jar {

@@ -1,5 +1,6 @@
 package com.example.clothingstore.controller;
 
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +23,11 @@ import com.example.clothingstore.dto.response.ProductResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
+import com.example.clothingstore.entity.User;
 import com.example.clothingstore.service.ProductService;
+import com.example.clothingstore.service.RecommendationService;
+import com.example.clothingstore.service.UserService;
+import com.example.clothingstore.util.SecurityUtil;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +40,10 @@ public class ProductController {
   private final Logger log = LoggerFactory.getLogger(ProductController.class);
 
   private final ProductService productService;
+
+  private final UserService userService;
+
+  private final RecommendationService recommendationService;
 
   @PostMapping(UrlConfig.PRODUCT + UrlConfig.UPLOAD_IMAGES)
   public ResponseEntity<UploadImageResDTO> uploadImages(
@@ -131,5 +140,16 @@ public class ProductController {
     ResultPaginationDTO resultPaginationDTO =
         productService.getReviewsByProductSlug(slug, rating, pageable);
     return ResponseEntity.status(HttpStatus.OK).body(resultPaginationDTO);
+  }
+
+  @GetMapping(UrlConfig.PRODUCT + UrlConfig.RECOMMENDATIONS + UrlConfig.FOR_YOU)
+  public ResponseEntity<List<ProductResDTO>> getRecommendationsForUser(
+      @RequestParam(defaultValue = "10") int limit) {
+    log.debug("REST request to get personalized recommendations for current user.");
+    User currentUser =
+        userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin().orElse(null));
+    List<ProductResDTO> recommendations =
+        recommendationService.getRecommendationsForUser(currentUser, limit);
+    return ResponseEntity.ok(recommendations);
   }
 }

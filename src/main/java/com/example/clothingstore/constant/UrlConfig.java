@@ -51,6 +51,8 @@ public class UrlConfig {
   public static final String PRODUCT_ID = "/ids";
   public static final String UPLOAD_IMAGES = "/upload-images";
   public static final String PRODUCT_SLUG = "/{slug}";
+  public static final String RECOMMENDATIONS = "/recommendations";
+  public static final String FOR_YOU = "/for-you";
 
   // Category controller
   public static final String CATEGORY = "/categories";
@@ -119,7 +121,7 @@ public class UrlConfig {
   public static final String IMPORT_TEMPLATE = "/import/template/{templateType}";
   public static final String IMPORT_PRODUCTS = "/import/products";
   public static final String IMPORT_CATEGORIES = "/import/categories";
-  
+
   // Notification controller
   public static final String NOTIFICATION = "/notifications";
   public static final String UNREAD_COUNT = "/unread-count";
@@ -153,7 +155,8 @@ public class UrlConfig {
         API_VERSION + PRODUCT + PRODUCT_ID + ID, API_VERSION + PRODUCT + PRODUCT_SLUG + REVIEW,
         API_VERSION + CATEGORY, API_VERSION + USER, API_VERSION + USER + INFO,
         API_VERSION + PAYMENT, API_VERSION + PAYMENT + VNPAY_RETURN,
-        API_VERSION + MOBILE + USER + PROFILE + SEND_OTP};
+        API_VERSION + MOBILE + USER + PROFILE + SEND_OTP,
+        API_VERSION + PRODUCT + RECOMMENDATIONS + FOR_YOU};
   }
 
   // Full paths for public POST endpoints

@@ -138,3 +138,12 @@ sendgrid:
   from-email: ${SENDGRID_FROM_EMAIL}
 
 domain: ${DOMAIN}
+
+openai:
+  api-key: ${OPENAI_API_KEY}
+
+pinecone:
+  api-key: ${PINECONE_API_KEY}
+  environment: ${PINECONE_ENVIRONMENT}
+  index: ${PINECONE_INDEX_NAME}
+  namespace: ${PINECONE_NAMESPACE}
