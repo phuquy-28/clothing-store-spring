@@ -40,5 +40,5 @@ public class ReturnRequestResDTO {
 
   private List<String> imageUrls;
 
-  private OrderResDTO.LineItem[] orderItems;
+  private OrderDetailsDTO orderDetails;
 }

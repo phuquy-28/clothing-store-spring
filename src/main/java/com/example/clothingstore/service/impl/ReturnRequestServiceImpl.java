@@ -18,7 +18,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.ReturnRequestProcessDTO;
 import com.example.clothingstore.dto.request.ReturnRequestReqDTO;
 import com.example.clothingstore.dto.request.CashBackUpdateDTO;
-import com.example.clothingstore.dto.response.OrderResDTO;
+import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ReturnRequestResDTO;
 import com.example.clothingstore.entity.Order;
@@ -32,6 +32,7 @@ import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ReturnRequestRepository;
+import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.ReturnRequestService;
 import com.example.clothingstore.util.SecurityUtil;
 
@@ -46,6 +47,8 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
   private final ReturnRequestRepository returnRequestRepository;
 
   private final OrderRepository orderRepository;
+
+  private final OrderService orderService;
 
   private final SecurityUtil securityUtil;
 
@@ -258,22 +261,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     List<String> imageUrls = returnRequest.getImages().stream().map(ReturnRequestImage::getImageUrl)
         .collect(Collectors.toList());
 
-    OrderResDTO.LineItem[] orderItems =
-        returnRequest.getOrder().getLineItems().stream().map(lineItem -> {
-          String variantImage = "";
-          if (lineItem.getProductVariant() != null
-              && lineItem.getProductVariant().getImages() != null
-              && !lineItem.getProductVariant().getImages().isEmpty()) {
-            variantImage = lineItem.getProductVariant().getImages().get(0).getPublicUrl();
-          }
-
-          return OrderResDTO.LineItem.builder().id(lineItem.getId())
-              .productName(lineItem.getProductVariant().getProduct().getName())
-              .color(lineItem.getProductVariant().getColor())
-              .size(lineItem.getProductVariant().getSize()).variantImage(variantImage)
-              .quantity(lineItem.getQuantity()).unitPrice(lineItem.getUnitPrice())
-              .discount(lineItem.getDiscountAmount()).build();
-        }).toArray(OrderResDTO.LineItem[]::new);
+    OrderDetailsDTO orderDetails = orderService.mapToOrderDetailsDTO(returnRequest.getOrder());
 
     return ReturnRequestResDTO.builder().id(returnRequest.getId())
         .orderId(returnRequest.getOrder().getId()).orderCode(returnRequest.getOrder().getCode())
@@ -282,8 +270,8 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         .originalPaymentMethod(returnRequest.getOriginalPaymentMethod())
         .bankName(returnRequest.getBankName()).accountNumber(returnRequest.getAccountNumber())
         .accountHolderName(returnRequest.getAccountHolderName())
-        .adminComment(returnRequest.getAdminComment()).imageUrls(imageUrls).orderItems(orderItems)
-        .build();
+        .adminComment(returnRequest.getAdminComment()).imageUrls(imageUrls)
+        .orderDetails(orderDetails).build();
   }
 
   @Override

@@ -858,7 +858,8 @@ public class OrderServiceImpl implements OrderService {
     return mapToOrderDetailsDTO(order);
   }
 
-  private OrderDetailsDTO mapToOrderDetailsDTO(Order order) {
+  @Override
+  public OrderDetailsDTO mapToOrderDetailsDTO(Order order) {
     // Check if order can be reviewed
     boolean canReview = order.getStatus() == OrderStatus.DELIVERED;
     

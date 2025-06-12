@@ -61,4 +61,6 @@ public interface OrderService {
   List<OrderStatusHistoryDTO> getOrderStatusHistoryForUser(Long orderId);
 
   MultiMediaUploadResDTO getReviewMediaUploadUrls(MultiMediaUploadReqDTO uploadRequestDTO);
+
+  OrderDetailsDTO mapToOrderDetailsDTO(Order order);
 }
