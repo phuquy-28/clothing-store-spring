@@ -3,13 +3,11 @@ package com.example.clothingstore.service.impl;
 import com.example.clothingstore.dto.response.ProductResDTO;
 import com.example.clothingstore.entity.*;
 import com.example.clothingstore.repository.ProductRepository;
-import com.example.clothingstore.repository.UserProfileVectorRepository;
 import com.example.clothingstore.repository.ProductEmbeddingRepository;
 import com.example.clothingstore.service.PineconeService;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.RecommendationService;
 import com.example.clothingstore.enumeration.OrderStatus;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +28,6 @@ public class RecommendationServiceImpl implements RecommendationService {
   private final ProductRepository productRepository;
   private final ProductService productService;
   private final PineconeService pineconeService;
-  private final UserProfileVectorRepository userProfileVectorRepository;
   private final ProductEmbeddingRepository productEmbeddingRepository;
   private final ObjectMapper objectMapper;
 
@@ -74,68 +67,13 @@ public class RecommendationServiceImpl implements RecommendationService {
   }
 
   private List<Float> getOrCreateUserProfileVector(User user) {
-    Optional<UserProfileVector> cachedOpt = userProfileVectorRepository.findByUserId(user.getId());
-
-    // Kiểm tra cache có tồn tại và còn "tươi" (dưới 24 giờ) không
-    if (cachedOpt.isPresent()
-        && cachedOpt.get().getUpdatedAt().isAfter(Instant.now().minus(24, ChronoUnit.HOURS))) {
-      log.info("Cache hit for user profile vector from MySQL: {}", user.getEmail());
-      try {
-        List<Number> numbers = objectMapper.readValue(cachedOpt.get().getVector(),
-            new TypeReference<List<Number>>() {});
-        return numbers.stream().map(Number::floatValue).collect(Collectors.toList());
-      } catch (IOException e) {
-        log.error("Error deserializing cached vector for user {}", user.getId(), e);
-      }
-    }
-
-    log.info("Cache miss or stale for user profile vector in MySQL: {}", user.getEmail());
     Set<Long> historyIds = getUserHistoryProductIds(user);
     if (historyIds.isEmpty()) {
       return Collections.emptyList();
     }
 
     List<Float> newVector = createUserProfileVector(historyIds);
-    if (!newVector.isEmpty()) {
-      saveOrUpdateUserProfileVector(user, newVector);
-    }
     return newVector;
-  }
-
-  @Transactional
-  private void saveOrUpdateUserProfileVector(User user, List<Float> vector) {
-    if (user == null || user.getId() == null) {
-      log.error("Cannot save user profile vector: user or user ID is null");
-      return;
-    }
-
-    try {
-      String vectorAsJson = objectMapper.writeValueAsString(vector);
-
-      // Tìm kiếm UserProfileVector hiện có
-      Optional<UserProfileVector> existingOpt =
-          userProfileVectorRepository.findByUserId(user.getId());
-
-      UserProfileVector userProfileVector;
-      if (existingOpt.isPresent()) {
-        // Cập nhật entity hiện có
-        userProfileVector = existingOpt.get();
-      } else {
-        // Tạo entity mới với User (quan trọng với @MapsId)
-        userProfileVector = new UserProfileVector(user);
-        // userId sẽ tự động được map từ User thông qua @MapsId
-      }
-
-      userProfileVector.setVector(vectorAsJson);
-      userProfileVector.setUpdatedAt(Instant.now());
-
-      userProfileVectorRepository.save(userProfileVector);
-      log.info("Saved/Updated user profile vector in MySQL for user: {}", user.getEmail());
-    } catch (JsonProcessingException e) {
-      log.error("Failed to serialize user profile vector for user {}: {}", user.getId(), e);
-    } catch (Exception e) {
-      log.error("Failed to save user profile vector for user {}: {}", user.getId(), e.getMessage());
-    }
   }
 
   private List<Float> createUserProfileVector(Set<Long> productIds) {
