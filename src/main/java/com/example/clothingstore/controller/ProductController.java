@@ -24,6 +24,8 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.User;
+import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.RecommendationService;
 import com.example.clothingstore.service.UserService;
@@ -77,27 +79,28 @@ public class ProductController {
 
   // @GetMapping(UrlConfig.PRODUCT)
   // public ResponseEntity<ResultPaginationDTO> getProducts(
-  //     @RequestParam(required = false) Boolean isBestSeller,
-  //     @RequestParam(required = false) Boolean isDiscounted,
-  //     @RequestParam(required = false) Integer days, @Filter Specification<Product> specification,
-  //     Pageable pageable, HttpServletRequest request) {
+  // @RequestParam(required = false) Boolean isBestSeller,
+  // @RequestParam(required = false) Boolean isDiscounted,
+  // @RequestParam(required = false) Integer days, @Filter Specification<Product> specification,
+  // Pageable pageable, HttpServletRequest request) {
 
-  //   boolean hasBestSellerParam = request.getParameterMap().containsKey("isBestSeller");
-  //   boolean hasDiscountedParam = request.getParameterMap().containsKey("isDiscounted");
+  // boolean hasBestSellerParam = request.getParameterMap().containsKey("isBestSeller");
+  // boolean hasDiscountedParam = request.getParameterMap().containsKey("isDiscounted");
 
-  //   log.debug(
-  //       "Get products request: hasBestSellerParam={}, hasDiscountedParam={}, days={}, spec={}, pageable={}",
-  //       hasBestSellerParam, hasDiscountedParam, days, specification, pageable);
+  // log.debug(
+  // "Get products request: hasBestSellerParam={}, hasDiscountedParam={}, days={}, spec={},
+  // pageable={}",
+  // hasBestSellerParam, hasDiscountedParam, days, specification, pageable);
 
-  //   if (hasBestSellerParam) {
-  //     return ResponseEntity.ok(productService.getBestSellerProducts(days, pageable));
-  //   }
+  // if (hasBestSellerParam) {
+  // return ResponseEntity.ok(productService.getBestSellerProducts(days, pageable));
+  // }
 
-  //   if (hasDiscountedParam) {
-  //     return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
-  //   }
+  // if (hasDiscountedParam) {
+  // return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
+  // }
 
-  //   return ResponseEntity.ok(productService.getProducts(specification, pageable));
+  // return ResponseEntity.ok(productService.getProducts(specification, pageable));
   // }
 
   @GetMapping(UrlConfig.PRODUCT)
@@ -108,8 +111,7 @@ public class ProductController {
       @RequestParam(required = false) Double averageRating,
       @RequestParam(required = false, defaultValue = "false") Boolean hasDiscount,
       @RequestParam(required = false) Double minPrice,
-      @RequestParam(required = false) Double maxPrice, 
-      @RequestParam(required = false) String sizes,
+      @RequestParam(required = false) Double maxPrice, @RequestParam(required = false) String sizes,
       @RequestParam(required = false) String sortField,
       @RequestParam(required = false, defaultValue = "asc") String sortOrder,
       @Filter Specification<Product> specification, Pageable pageable) {
@@ -151,5 +153,13 @@ public class ProductController {
     List<ProductResDTO> recommendations =
         recommendationService.getRecommendationsForUser(currentUser, limit);
     return ResponseEntity.ok(recommendations);
+  }
+
+  @PostMapping(UrlConfig.PRODUCT + UrlConfig.ID + UrlConfig.LOG_VIEW)
+  public ResponseEntity<Void> logProductView(@PathVariable Long id) {
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_LOGGED_IN)));
+    productService.logUserProductView(currentUser.getId(), id);
+    return ResponseEntity.ok().build();
   }
 }

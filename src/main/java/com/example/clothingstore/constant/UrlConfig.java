@@ -53,6 +53,7 @@ public class UrlConfig {
   public static final String PRODUCT_SLUG = "/{slug}";
   public static final String RECOMMENDATIONS = "/recommendations";
   public static final String FOR_YOU = "/for-you";
+  public static final String LOG_VIEW = "/log-view";
 
   // Category controller
   public static final String CATEGORY = "/categories";

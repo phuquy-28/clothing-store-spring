@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -31,7 +32,9 @@ import com.example.clothingstore.entity.CartItem;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductImage;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.entity.ProductViewHistory;
 import com.example.clothingstore.entity.Review;
+import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
@@ -40,7 +43,9 @@ import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.CartRepository;
 import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
+import com.example.clothingstore.repository.ProductViewHistoryRepository;
 import com.example.clothingstore.repository.ReviewRepository;
+import com.example.clothingstore.repository.UserRepository;
 import com.example.clothingstore.service.CloudStorageService;
 import com.example.clothingstore.service.PineconeService;
 import com.example.clothingstore.service.ProductService;
@@ -70,6 +75,10 @@ public class ProductServiceImpl implements ProductService {
   private final CartRepository cartRepository;
 
   private final PineconeService pineconeService;
+
+  private final ProductViewHistoryRepository productViewHistoryRepository;
+
+  private final UserRepository userRepository;
 
   @Override
   public UploadImageResDTO createSignedUrl(UploadImageReqDTO uploadImageReqDTO) {
@@ -692,6 +701,18 @@ public class ProductServiceImpl implements ProductService {
       return 0L;
     }
     return productRepository.countSoldQuantityByProductId(product.getId(), PaymentStatus.SUCCESS);
+  }
+
+  @Override
+  @Async
+  public void logUserProductView(Long userId, Long productId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+    Product product = productRepository.findById(productId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND));
+    ProductViewHistory viewHistory = new ProductViewHistory(user, product);
+    productViewHistoryRepository.save(viewHistory);
+    log.debug("Logged view for user {} on product {}", user.getEmail(), product.getId());
   }
 
 }

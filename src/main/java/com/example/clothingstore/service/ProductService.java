@@ -40,4 +40,6 @@ public interface ProductService {
   String createSlug(String input);
 
   String generateMeaningfulSku(ProductVariant variant);
+
+  void logUserProductView(Long userId, Long productId);
 }
