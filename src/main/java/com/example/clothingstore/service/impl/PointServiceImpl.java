@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.exception.BadRequestException;
+import com.example.clothingstore.dto.response.PointUserCurrentResDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -331,8 +332,8 @@ public class PointServiceImpl implements PointService {
     PointHistory pointHistory = new PointHistory();
     pointHistory.setPoints(POINT_REVIEWS);
     pointHistory.setActionType(PointActionType.EARNED);
-    pointHistory.setDescription(String.format("Cộng %d điểm từ review #%d", POINT_REVIEWS,
-        review.getId()));
+    pointHistory
+        .setDescription(String.format("Cộng %d điểm từ review #%d", POINT_REVIEWS, review.getId()));
     pointHistory.setUser(user);
     pointHistory.setReview(review);
     pointHistoryRepository.save(pointHistory);
@@ -360,20 +361,41 @@ public class PointServiceImpl implements PointService {
     User user = point.getUser();
     return PointResDTO.builder().id(point.getId()).currentPoints(point.getCurrentPoints())
         .totalAccumulatedPoints(point.getTotalAccumulatedPoints())
-        .user(
-            user != null
-                ? UserResDTO.builder().id(user.getId()).email(user.getEmail())
-                    .firstName(user.getProfile().getFirstName())
-                    .lastName(user.getProfile().getLastName())
-                    .fullName(user.getProfile().getFullName())
-                    .birthDate(user.getProfile().getBirthDate().toString())
-                    .phoneNumber(user.getProfile().getPhoneNumber())
-                    .gender(Gender.valueOf(user.getProfile().getGender().name()))
-                    .role(RoleResDTO.builder().id(user.getRole().getId())
-                        .name(user.getRole().getName()).build())
-                    .build()
+        .user(user != null ? UserResDTO.builder().id(user.getId()).email(user.getEmail())
+            .firstName(
+                user.getProfile().getFirstName() != null ? user.getProfile().getFirstName() : null)
+            .lastName(
+                user.getProfile().getLastName() != null ? user.getProfile().getLastName() : null)
+            .fullName(
+                user.getProfile().getFullName() != null ? user.getProfile().getFullName() : null)
+            .birthDate(user.getProfile().getBirthDate() != null
+                ? user.getProfile().getBirthDate().toString()
                 : null)
+            .phoneNumber(
+                user.getProfile().getPhoneNumber() != null ? user.getProfile().getPhoneNumber()
+                    : null)
+            .gender(user.getProfile().getGender() != null
+                ? Gender.valueOf(user.getProfile().getGender().name())
+                : null)
+            .role(RoleResDTO.builder().id(user.getRole().getId()).name(user.getRole().getName())
+                .build())
+            .build() : null)
         .build();
+  }
+
+  @Override
+  public PointUserCurrentResDTO getCurrentUserPoints() {
+    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND)));
+
+    Point point = currentUser.getPoint();
+    if (point == null) {
+      return PointUserCurrentResDTO.builder().currentPoints(0L).totalAccumulatedPoints(0L).build();
+    }
+
+    return PointUserCurrentResDTO.builder().id(point.getId())
+        .currentPoints(point.getCurrentPoints())
+        .totalAccumulatedPoints(point.getTotalAccumulatedPoints()).build();
   }
 
 }

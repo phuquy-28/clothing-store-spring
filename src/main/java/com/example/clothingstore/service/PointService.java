@@ -9,6 +9,7 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.Point;
 import com.example.clothingstore.entity.PointHistory;
+import com.example.clothingstore.dto.response.PointUserCurrentResDTO;
 
 public interface PointService {
 
@@ -27,5 +28,7 @@ public interface PointService {
   PointHistoryDTO addPointHistory(PointHistoryReqDTO pointHistoryReqDTO);
 
   void addPointsFromOrderReview(Review review);
+
+  PointUserCurrentResDTO getCurrentUserPoints();
 
 }

@@ -114,6 +114,7 @@ public class UrlConfig {
   // Point controller
   public static final String POINT = "/points";
   public static final String USER_POINT = "/user";
+  public static final String CURRENT = "/current";
 
   // Dashboard controller
   public static final String WORKSPACE = "/workspace";

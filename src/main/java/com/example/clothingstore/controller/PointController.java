@@ -14,6 +14,7 @@ import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.PointHistoryReqDTO;
 import com.example.clothingstore.dto.response.PointHistoryDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.PointUserCurrentResDTO;
 import com.example.clothingstore.entity.Point;
 import com.example.clothingstore.entity.PointHistory;
 import com.example.clothingstore.service.PointService;
@@ -34,6 +35,12 @@ public class PointController {
   public ResponseEntity<ResultPaginationDTO> getUserPointHistory(
       @Filter Specification<PointHistory> spec, Pageable pageable) {
     return ResponseEntity.ok(pointService.getUserPointHistory(spec, pageable));
+  }
+
+  @GetMapping(UrlConfig.POINT + UrlConfig.USER_POINT + UrlConfig.CURRENT)
+  public ResponseEntity<PointUserCurrentResDTO> getCurrentUserPoints() {
+    log.debug("Request to get current user's points");
+    return ResponseEntity.ok(pointService.getCurrentUserPoints());
   }
 
   @GetMapping(UrlConfig.POINT)
