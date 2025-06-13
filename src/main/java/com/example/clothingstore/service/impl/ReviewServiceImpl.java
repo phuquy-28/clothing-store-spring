@@ -57,7 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
 
   private ReviewDTO convertToDTO(Review review) {
     List<String> imageUrls = null;
-    if (review.getImageUrls() != null) {
+    if (review.getImageUrls() != null && !review.getImageUrls().isEmpty()) {
       imageUrls = Arrays.asList(review.getImageUrls().split(";"));
     }
 
