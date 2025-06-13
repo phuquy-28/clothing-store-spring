@@ -1,6 +1,5 @@
 package com.example.clothingstore.service.impl;
 
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -64,9 +63,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     return ReviewDTO.builder().reviewId(review.getId()).description(review.getDescription())
         .rating(review.getRating())
-        .createdAt(review.getCreatedAt() != null
-            ? review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime()
-            : null)
+        .createdAt(review.getCreatedAt())
         .isPublished(review.isPublished())
         .userReviewDTO(UserReviewDTO.builder().id(review.getUser().getId())
             .firstName(review.getUser().getProfile().getFirstName())

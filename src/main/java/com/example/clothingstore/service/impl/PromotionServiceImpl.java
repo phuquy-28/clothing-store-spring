@@ -144,8 +144,8 @@ public class PromotionServiceImpl implements PromotionService {
   private PromotionResDTO convertToPromotionResDTO(Promotion promotion) {
     return PromotionResDTO.builder().id(promotion.getId()).name(promotion.getName())
         .discountRate(promotion.getDiscountRate())
-        .startDate(promotion.getStartDate().atOffset(ZoneOffset.UTC).toLocalDateTime())
-        .endDate(promotion.getEndDate().atOffset(ZoneOffset.UTC).toLocalDateTime())
+        .startDate(promotion.getStartDate())
+        .endDate(promotion.getEndDate())
         .description(promotion.getDescription())
         .products(Optional.ofNullable(promotion.getProducts())
             .map(list -> list.stream().map(productService::convertToProductResDTO)

@@ -1,6 +1,6 @@
 package com.example.clothingstore.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import com.example.clothingstore.enumeration.DeliveryMethod;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
@@ -16,7 +16,7 @@ public class OrderItemList {
 
   private String orderCode;
 
-  private LocalDateTime orderDate;
+  private Instant orderDate;
 
   private String customerName;
 

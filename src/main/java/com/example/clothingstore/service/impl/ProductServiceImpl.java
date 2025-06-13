@@ -2,7 +2,6 @@ package com.example.clothingstore.service.impl;
 
 import com.example.clothingstore.annotation.EnableSoftDeleteFilter;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -681,9 +680,7 @@ public class ProductServiceImpl implements ProductService {
           return ReviewProductDTO.builder().reviewId(review.getId()).firstName(firstName)
               .lastName(lastName).avatar(avatar).rating(review.getRating())
               .description(review.getDescription())
-              .createdAt(review.getCreatedAt() != null
-                  ? review.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDateTime()
-                  : null)
+              .createdAt(review.getCreatedAt())
               .variant(variantDTO).description(review.getDescription()).imageUrls(imageUrls)
               .videoUrl(review.getVideoUrl()).build();
         }).filter(dto -> dto != null).collect(Collectors.toList())).build();

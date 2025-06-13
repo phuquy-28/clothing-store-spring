@@ -1,6 +1,6 @@
 package com.example.clothingstore.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
@@ -21,7 +21,7 @@ public class ReviewDTO {
 
   private String videoUrl;
 
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   private boolean isPublished;
 

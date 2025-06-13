@@ -1,6 +1,6 @@
 package com.example.clothingstore.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +15,9 @@ public class PromotionResDTO {
 
   private Double discountRate;
 
-  private LocalDateTime startDate;
+  private Instant startDate;
 
-  private LocalDateTime endDate;
+  private Instant endDate;
 
   private String description;
 

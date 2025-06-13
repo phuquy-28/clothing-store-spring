@@ -57,7 +57,6 @@ import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.repository.ReviewRepository;
 import com.example.clothingstore.repository.UserRepository;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -793,7 +792,7 @@ public class OrderServiceImpl implements OrderService {
     return OrderItemList.builder()
         .id(order.getId())
         .orderCode(order.getCode())
-        .orderDate(LocalDateTime.ofInstant(order.getOrderDate(), ZoneId.systemDefault()))
+        .orderDate(order.getOrderDate())
         .customerName(order.getUser().getProfile().getFirstName() + " " 
             + order.getUser().getProfile().getLastName())
         .total(order.getTotal())
