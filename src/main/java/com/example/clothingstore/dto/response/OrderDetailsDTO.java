@@ -2,12 +2,14 @@ package com.example.clothingstore.dto.response;
 
 import java.time.Instant;
 import java.util.List;
+import com.example.clothingstore.enumeration.CashBackStatus;
 import com.example.clothingstore.enumeration.Color;
 import com.example.clothingstore.enumeration.DeliveryMethod;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
+import com.example.clothingstore.enumeration.ReturnRequestStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -52,6 +54,10 @@ public class OrderDetailsDTO {
   private ShippingProfileResDTO shippingProfile;
 
   private Instant statusUpdateTimestamp;
+
+  private ReturnRequestStatus returnRequestStatus;
+
+  private CashBackStatus cashBackStatus;
 
   @Data
   @Builder

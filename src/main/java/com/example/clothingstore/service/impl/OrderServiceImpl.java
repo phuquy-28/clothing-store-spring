@@ -925,6 +925,8 @@ public class OrderServiceImpl implements OrderService {
         .shippingProfile(shippingProfile)
         .statusUpdateTimestamp(
             latestStatusHistory != null ? latestStatusHistory.getUpdateTimestamp() : null)
+        .returnRequestStatus(order.getReturnRequest() != null ? order.getReturnRequest().getStatus() : null)
+        .cashBackStatus(order.getReturnRequest() != null ? order.getReturnRequest().getCashBackStatus() : null)
         .build();
   }
 

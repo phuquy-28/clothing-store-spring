@@ -673,7 +673,7 @@ public class ProductServiceImpl implements ProductService {
           }
 
           List<String> imageUrls = null;
-          if (review.getImageUrls() != null) {
+          if (review.getImageUrls() != null && !review.getImageUrls().isEmpty()) {
             imageUrls = Arrays.asList(review.getImageUrls().split(";"));
           }
 
