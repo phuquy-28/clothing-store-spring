@@ -15,6 +15,7 @@ import com.example.clothingstore.repository.CategoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.service.ImportService;
 import com.example.clothingstore.service.ProductService;
+import com.example.clothingstore.service.PineconeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -45,6 +46,7 @@ public class ImportServiceImpl implements ImportService {
   private final ProductRepository productRepository;
   private final CategoryRepository categoryRepository;
   private final ProductService productService;
+  private final PineconeService pineconeService;
 
   @Value("${spring.servlet.multipart.max-file-size}")
   private String maxFileSizeConfig;
@@ -123,7 +125,7 @@ public class ImportServiceImpl implements ImportService {
   @Override
   @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
   public ProductImportResponseDTO importProducts(MultipartFile file, ImportMode importMode) {
-    validateFileBasic(file); // Gọi hàm kiểm tra chung
+    validateFileBasic(file);
 
     if (importMode != ImportMode.ADD_ONLY) {
       throw new UnsupportedOperationException(
@@ -236,9 +238,20 @@ public class ImportServiceImpl implements ImportService {
       }
 
       // Save products again with generated SKUs
-      productRepository.saveAll(savedProducts);
+      savedProducts = productRepository.saveAll(savedProducts);
       successfulEntityGroups = savedProducts.size();
       log.info("Đã lưu thành công {} sản phẩm.", successfulEntityGroups);
+
+      // Index products in Pinecone
+      for (Product product : savedProducts) {
+        try {
+          pineconeService.indexSingleProduct(product);
+          log.debug("Đã gửi yêu cầu indexing cho sản phẩm ID: {}", product.getId());
+        } catch (Exception e) {
+          log.error("Lỗi khi indexing sản phẩm ID {}: {}", product.getId(), e.getMessage());
+          // Don't throw exception here as the products are already saved
+        }
+      }
 
     } catch (IOException e) {
       log.error("Lỗi khi đọc file Excel sản phẩm '{}': {}", file.getOriginalFilename(),

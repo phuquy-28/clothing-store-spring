@@ -65,13 +65,23 @@ public class RecommendationServiceImpl implements RecommendationService {
     List<Long> recommendedIds = pineconeService.querySimilarVectors(userProfileVector,
         limit + userHistoryProductIds.size());
 
-    // Đảm bảo có đủ số lượng `limit` sản phẩm, nếu không đủ, thêm các sản phẩm đã mua vào cuối danh
-    // sách
+    // Tạo danh sách cuối cùng với đúng số lượng limit
     List<Long> finalIds = new ArrayList<>();
-    finalIds.addAll(recommendedIds.stream().filter(id -> !userHistoryProductIds.contains(id))
-        .limit(limit).collect(Collectors.toList()));
-    finalIds.addAll(userHistoryProductIds.stream().filter(id -> !finalIds.contains(id)).limit(limit)
+    
+    // Thêm các sản phẩm được đề xuất mà chưa có trong lịch sử
+    finalIds.addAll(recommendedIds.stream()
+        .filter(id -> !userHistoryProductIds.contains(id))
+        .limit(limit)
         .collect(Collectors.toList()));
+    
+    // Nếu chưa đủ limit, bổ sung từ lịch sử người dùng
+    if (finalIds.size() < limit) {
+        int remaining = limit - finalIds.size();
+        finalIds.addAll(userHistoryProductIds.stream()
+            .filter(id -> !finalIds.contains(id))
+            .limit(remaining)
+            .collect(Collectors.toList()));
+    }
 
     // Lấy thông tin sản phẩm từ DB và trả về
     return productRepository.findAllById(finalIds).stream()
