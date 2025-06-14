@@ -43,6 +43,7 @@ import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.util.SecurityUtil;
 import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import com.example.clothingstore.dto.request.CheckQuantityReqDTO;
 import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
 import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 
@@ -58,6 +59,13 @@ public class OrderController {
   private final UserService userService;
 
   private final OderCancellationService oderCancellationService;
+
+  @PostMapping(UrlConfig.ORDERS + UrlConfig.CHECK_QUANTITY)
+  public ResponseEntity<Void> checkQuantity(
+      @RequestBody @Valid CheckQuantityReqDTO checkQuantityReqDTO) {
+    orderService.checkQuantity(checkQuantityReqDTO);
+    return ResponseEntity.ok().build();
+  }
 
   @PostMapping(UrlConfig.ORDERS + UrlConfig.PREVIEW)
   public ResponseEntity<OrderPreviewDTO> previewOrder(

@@ -45,6 +45,7 @@ import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.OrderCreationException;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.exception.UnprocessableException;
 import com.example.clothingstore.repository.CartRepository;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.service.OderCancellationService;
@@ -83,6 +84,7 @@ import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.dto.response.OrderStatusHistoryDTO;
 import com.example.clothingstore.entity.OrderStatusHistory;
 import com.example.clothingstore.repository.OrderStatusHistoryRepository;
+import com.example.clothingstore.dto.request.CheckQuantityReqDTO;
 import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
 import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
@@ -161,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
         ProductVariant variant = cartItem.getProductVariant();
         // Kiểm tra số lượng tồn kho
         if (variant.getQuantity() < cartItem.getQuantity()) {
-            throw new BadRequestException(ErrorMessage.NOT_ENOUGH_STOCK);
+            throw new UnprocessableException(ErrorMessage.NOT_ENOUGH_STOCK);
         }
 
         Product product = variant.getProduct();
@@ -682,7 +684,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Kiểm tra số lượng tồn kho
         if (cartItem.getProductVariant().getQuantity() < cartItem.getQuantity()) {
-            throw new BadRequestException(ErrorMessage.NOT_ENOUGH_STOCK);
+            throw new UnprocessableException(ErrorMessage.NOT_ENOUGH_STOCK);
         }
 
         ProductVariant variant = cartItem.getProductVariant();
@@ -766,6 +768,38 @@ public class OrderServiceImpl implements OrderService {
         .finalTotal(subtotal + (shippingFee != null ? shippingFee : 0.0) - discount - pointDiscount)
         .points(user.getPoint() == null ? 0L : user.getPoint().getCurrentPoints())
         .build();
+  }
+
+  @Override
+  public void checkQuantity(CheckQuantityReqDTO checkQuantityReqDTO) {
+    // Lấy thông tin user hiện tại
+    String email = SecurityUtil.getCurrentUserLogin()
+        .orElseThrow(() -> new BadRequestException(ErrorMessage.USER_NOT_LOGGED_IN));
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+    Cart cart = user.getCart();
+    if (cart == null) {
+      throw new ResourceNotFoundException(ErrorMessage.CART_NOT_FOUND);
+    }
+
+    // Tạo map để lưu cartItem theo id để dễ truy xuất
+    Map<Long, CartItem> cartItemMap =
+        cart.getCartItems().stream().collect(Collectors.toMap(CartItem::getId, item -> item));
+
+    // Kiểm tra số lượng tồn kho cho từng sản phẩm
+    for (Long cartItemId : checkQuantityReqDTO.getCartItemIds()) {
+      CartItem cartItem = cartItemMap.get(cartItemId);
+      if (cartItem == null) {
+        throw new ResourceNotFoundException(ErrorMessage.CART_ITEM_NOT_FOUND);
+      }
+
+      // Kiểm tra số lượng tồn kho
+      if (cartItem.getProductVariant().getQuantity() < cartItem.getQuantity()) {
+        throw new UnprocessableException(ErrorMessage.NOT_ENOUGH_STOCK);
+      }
+    }
   }
 
   @Override

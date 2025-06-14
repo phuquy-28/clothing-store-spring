@@ -21,6 +21,7 @@ import com.example.clothingstore.dto.response.StatusSpendingChartRes;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
+import com.example.clothingstore.dto.request.CheckQuantityReqDTO;
 import com.example.clothingstore.dto.request.MultiMediaUploadReqDTO;
 import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 
@@ -63,4 +64,6 @@ public interface OrderService {
   MultiMediaUploadResDTO getReviewMediaUploadUrls(MultiMediaUploadReqDTO uploadRequestDTO);
 
   OrderDetailsDTO mapToOrderDetailsDTO(Order order);
+
+  void checkQuantity(CheckQuantityReqDTO checkQuantityReqDTO);
 }

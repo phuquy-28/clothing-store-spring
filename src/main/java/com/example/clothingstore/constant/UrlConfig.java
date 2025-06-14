@@ -88,6 +88,7 @@ public class UrlConfig {
   public static final String BAR = "/bar";
   public static final String LINE = "/line";
   public static final String CANCEL = "/cancel";
+  public static final String CHECK_QUANTITY = "/check-quantity";
 
   // Review controller
   public static final String REVIEW = "/reviews";

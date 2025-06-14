@@ -37,7 +37,7 @@ public class GlobalException {
       EmailInvalidException.class, TokenInvalidException.class, MissingRequestCookieException.class,
       ResourceNotFoundException.class, ResourceAlreadyExistException.class,
       InvalidFileTypeException.class, BadRequestException.class, BadCredentialsException.class,
-      PaymentException.class, OrderCreationException.class, DeliveryException.class})
+      PaymentException.class, DeliveryException.class})
   public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -102,6 +102,16 @@ public class GlobalException {
     res.setError("File Too Large");
     res.setMessage(Translator.toLocale("import.error.file_too_large_configured"));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+  }
+
+  @ExceptionHandler(value = {UnprocessableException.class, OrderCreationException.class})
+  public ResponseEntity<RestResponse<Object>> handleUnprocessableException(
+      UnprocessableException ex) {
+    RestResponse<Object> res = new RestResponse<>();
+    res.setStatusCode(HttpStatus.UNPROCESSABLE_ENTITY.value());
+    res.setError("Unprocessable Entity");
+    res.setMessage(Translator.toLocale(ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(res);
   }
 
 }
