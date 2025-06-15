@@ -13,13 +13,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.PromotionReqDTO;
+import com.example.clothingstore.dto.request.UploadImageReqDTO;
+import com.example.clothingstore.dto.response.PromotionImageRes;
 import com.example.clothingstore.dto.response.PromotionResDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.service.PromotionService;
+import com.example.clothingstore.service.CloudStorageService;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +36,8 @@ public class PromotionController {
   private final Logger log = LoggerFactory.getLogger(PromotionController.class);
 
   private final PromotionService promotionService;
+
+  private final CloudStorageService cloudStorageService;
 
   @PostMapping(UrlConfig.PROMOTION)
   public ResponseEntity<PromotionResDTO> createPromotion(
@@ -64,5 +71,20 @@ public class PromotionController {
   public ResponseEntity<PromotionResDTO> getPromotion(@PathVariable Long id) {
     log.debug("REST request to get promotion: {}", id);
     return ResponseEntity.ok(promotionService.getPromotion(id));
+  }
+
+  @PostMapping(UrlConfig.PROMOTION + UrlConfig.UPLOAD_IMAGES)
+  public ResponseEntity<UploadImageResDTO> uploadPromotionImage(
+      @RequestBody UploadImageReqDTO uploadImageReqDTO) {
+    log.debug("REST request to upload promotion image: {}", uploadImageReqDTO);
+    UploadImageResDTO result =
+        cloudStorageService.createSignedUrlWithDirectory(uploadImageReqDTO, "promotion-images");
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping(UrlConfig.PROMOTION + UrlConfig.PROMOTION_IMAGES)
+  public ResponseEntity<List<PromotionImageRes>> getPromotionImages() {
+    log.debug("REST request to get promotion images");
+    return ResponseEntity.ok(promotionService.getPromotionImages());
   }
 }

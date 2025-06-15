@@ -107,6 +107,7 @@ public class UrlConfig {
 
   // Promotion controller
   public static final String PROMOTION = "/promotions";
+  public static final String PROMOTION_IMAGES = "/images";
 
   // Cart controller
   public static final String CART = "/carts";

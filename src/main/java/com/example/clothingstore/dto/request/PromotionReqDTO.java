@@ -33,4 +33,6 @@ public class PromotionReqDTO {
   private List<Long> productIds;
 
   private List<Long> categoryIds;
+
+  private String imageUrl;
 }

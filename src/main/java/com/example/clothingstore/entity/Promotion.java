@@ -39,6 +39,8 @@ public class Promotion extends AbstractEntity {
 
   private Instant endDate;
 
+  private String imageUrl;
+
   @ManyToMany
   @JoinTable(name = "promotion_products", joinColumns = @JoinColumn(name = "promotion_id"),
       inverseJoinColumns = @JoinColumn(name = "product_id"),

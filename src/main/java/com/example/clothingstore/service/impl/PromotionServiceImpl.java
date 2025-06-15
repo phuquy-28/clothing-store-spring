@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Collections;
+import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +14,7 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.NotificationReqDTO;
 import com.example.clothingstore.dto.request.PromotionReqDTO;
 import com.example.clothingstore.dto.response.PromotionResDTO;
+import com.example.clothingstore.dto.response.PromotionImageRes;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO.Meta;
 import com.example.clothingstore.entity.Category;
@@ -41,7 +43,7 @@ public class PromotionServiceImpl implements PromotionService {
   private final ProductService productService;
 
   private final CategoryService categoryService;
-  
+
   private final NotificationService notificationService;
 
   @Override
@@ -72,10 +74,12 @@ public class PromotionServiceImpl implements PromotionService {
     promotion.setDescription(promotionReqDTO.getDescription());
     promotion.setProducts(products);
     promotion.setCategories(categories);
+    promotion.setImageUrl(promotionReqDTO.getImageUrl());
     Promotion savedPromotion = promotionRepository.save(promotion);
 
     // Send immediate notification for the new promotion
-    NotificationReqDTO.CreatePromotionNotificationDTO notificationDTO = new NotificationReqDTO.CreatePromotionNotificationDTO();
+    NotificationReqDTO.CreatePromotionNotificationDTO notificationDTO =
+        new NotificationReqDTO.CreatePromotionNotificationDTO();
     notificationDTO.setPromotionId(savedPromotion.getId());
     notificationDTO.setTitle(savedPromotion.getName());
     notificationDTO.setContent(savedPromotion.getDescription());
@@ -94,6 +98,7 @@ public class PromotionServiceImpl implements PromotionService {
     promotion.setStartDate(promotionReqDTO.getStartDate().toInstant(ZoneOffset.UTC));
     promotion.setEndDate(promotionReqDTO.getEndDate().toInstant(ZoneOffset.UTC));
     promotion.setDescription(promotionReqDTO.getDescription());
+    promotion.setImageUrl(promotionReqDTO.getImageUrl());
 
     // validate list productIds if exist
     List<Product> products = null;
@@ -143,19 +148,34 @@ public class PromotionServiceImpl implements PromotionService {
 
   private PromotionResDTO convertToPromotionResDTO(Promotion promotion) {
     return PromotionResDTO.builder().id(promotion.getId()).name(promotion.getName())
-        .discountRate(promotion.getDiscountRate())
-        .startDate(promotion.getStartDate())
-        .endDate(promotion.getEndDate())
-        .description(promotion.getDescription())
+        .discountRate(promotion.getDiscountRate()).startDate(promotion.getStartDate())
+        .endDate(promotion.getEndDate()).description(promotion.getDescription())
         .products(Optional.ofNullable(promotion.getProducts())
             .map(list -> list.stream().map(productService::convertToProductResDTO)
                 .collect(Collectors.toList()))
             .orElse(Collections.emptyList()))
-        .categories(Optional
-            .ofNullable(promotion.getCategories()).map(list -> list.stream()
-                .map(categoryService::convertToCategoryResDTO).collect(Collectors.toList()))
+        .categories(Optional.ofNullable(promotion.getCategories())
+            .map(list -> list.stream().map(categoryService::convertToCategoryResDTO)
+                .collect(Collectors.toList()))
             .orElse(Collections.emptyList()))
-        .build();
+        .imageUrl(promotion.getImageUrl()).build();
+  }
+
+  @Override
+  public List<PromotionImageRes> getPromotionImages() {
+    Instant now = Instant.now();
+
+    List<PromotionImageRes> activePromotions = promotionRepository.findAll().stream().filter(
+        promotion -> promotion.getStartDate().isBefore(now) && promotion.getEndDate().isAfter(now))
+        .map(promotion -> {
+          PromotionImageRes info = PromotionImageRes.builder().id(promotion.getId())
+              .name(promotion.getName()).description(promotion.getDescription())
+              .discountRate(promotion.getDiscountRate()).startDate(promotion.getStartDate())
+              .endDate(promotion.getEndDate()).imageUrl(promotion.getImageUrl()).build();
+          return info;
+        }).collect(Collectors.toList());
+
+    return activePromotions;
   }
 
 }
