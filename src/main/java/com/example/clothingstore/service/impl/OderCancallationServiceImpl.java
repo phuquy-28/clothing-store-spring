@@ -7,12 +7,15 @@ import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.entity.Order;
 import com.example.clothingstore.entity.OrderStatusHistory;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.entity.InventoryHistory;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentStatus;
+import com.example.clothingstore.enumeration.InventoryChangeType;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ProductVariantRepository;
+import com.example.clothingstore.repository.InventoryHistoryRepository;
 import com.example.clothingstore.service.OderCancellationService;
 import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ public class OderCancallationServiceImpl implements OderCancellationService {
   private final OrderRepository orderRepository;
 
   private final ProductVariantRepository productVariantRepository;
+
+  private final InventoryHistoryRepository inventoryHistoryRepository;
 
   @Override
   public void cancelOrderAndReturnStock(Long orderId) {
@@ -57,8 +62,20 @@ public class OderCancallationServiceImpl implements OderCancellationService {
     order.getLineItems().forEach(lineItem -> {
       ProductVariant variant = lineItem.getProductVariant();
       if (variant != null) {
-        variant.setQuantity(variant.getQuantity() + lineItem.getQuantity().intValue());
+        int returnQuantity = lineItem.getQuantity().intValue();
+        variant.setQuantity(variant.getQuantity() + returnQuantity);
         productVariantRepository.save(variant);
+
+        // Ghi lại lịch sử tồn kho
+        InventoryHistory history = new InventoryHistory();
+        history.setProductVariant(variant);
+        history.setChangeInQuantity(returnQuantity);
+        history.setQuantityAfterChange(variant.getQuantity());
+        history.setTypeOfChange(InventoryChangeType.ORDER_CANCEL);
+        history.setTimestamp(Instant.now());
+        history.setOrder(order);
+        history.setNotes("Hoàn kho do hủy đơn hàng #" + order.getCode() + " bởi hệ thống");
+        inventoryHistoryRepository.save(history);
       }
     });
 
@@ -106,8 +123,20 @@ public class OderCancallationServiceImpl implements OderCancellationService {
     order.getLineItems().forEach(lineItem -> {
       ProductVariant variant = lineItem.getProductVariant();
       if (variant != null) {
-        variant.setQuantity(variant.getQuantity() + lineItem.getQuantity().intValue());
+        int returnQuantity = lineItem.getQuantity().intValue();
+        variant.setQuantity(variant.getQuantity() + returnQuantity);
         productVariantRepository.save(variant);
+
+        // Ghi lại lịch sử tồn kho
+        InventoryHistory history = new InventoryHistory();
+        history.setProductVariant(variant);
+        history.setChangeInQuantity(returnQuantity);
+        history.setQuantityAfterChange(variant.getQuantity());
+        history.setTypeOfChange(InventoryChangeType.ORDER_CANCEL);
+        history.setTimestamp(Instant.now());
+        history.setOrder(order);
+        history.setNotes("Hoàn kho do hủy đơn hàng #" + order.getCode() + " bởi khách hàng");
+        inventoryHistoryRepository.save(history);
       }
     });
 

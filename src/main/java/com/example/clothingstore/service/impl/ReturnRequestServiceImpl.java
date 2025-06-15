@@ -21,16 +21,21 @@ import com.example.clothingstore.dto.request.CashBackUpdateDTO;
 import com.example.clothingstore.dto.response.OrderDetailsDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.ReturnRequestResDTO;
+import com.example.clothingstore.entity.InventoryHistory;
 import com.example.clothingstore.entity.Order;
+import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.ReturnRequest;
 import com.example.clothingstore.entity.ReturnRequestImage;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.ReturnRequestStatus;
 import com.example.clothingstore.enumeration.CashBackStatus;
+import com.example.clothingstore.enumeration.InventoryChangeType;
 import com.example.clothingstore.exception.BadRequestException;
 import com.example.clothingstore.exception.ResourceNotFoundException;
+import com.example.clothingstore.repository.InventoryHistoryRepository;
 import com.example.clothingstore.repository.OrderRepository;
+import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.repository.ReturnRequestRepository;
 import com.example.clothingstore.service.OrderService;
 import com.example.clothingstore.service.ReturnRequestService;
@@ -51,6 +56,10 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
   private final OrderService orderService;
 
   private final SecurityUtil securityUtil;
+
+  private final ProductVariantRepository productVariantRepository;
+
+  private final InventoryHistoryRepository inventoryHistoryRepository;
 
   @Override
   @Transactional
@@ -163,6 +172,24 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
       // Update order status to RETURNED
       Order order = returnRequest.getOrder();
       order.setStatus(OrderStatus.RETURNED);
+
+      order.getLineItems().forEach(lineItem -> {
+        ProductVariant variant = lineItem.getProductVariant();
+        int returnedQuantity = lineItem.getQuantity().intValue();
+        variant.setQuantity(variant.getQuantity() + returnedQuantity);
+        ProductVariant savedVariant = productVariantRepository.save(variant);
+
+        InventoryHistory history = new InventoryHistory();
+        history.setProductVariant(savedVariant);
+        history.setChangeInQuantity(returnedQuantity);
+        history.setQuantityAfterChange(savedVariant.getQuantity());
+        history.setTypeOfChange(InventoryChangeType.RETURN);
+        history.setTimestamp(Instant.now());
+        history.setOrder(order);
+        history.setNotes("Hoàn kho do yêu cầu đổi trả đơn hàng #" + order.getCode());
+        inventoryHistoryRepository.save(history);
+      });
+
       orderRepository.save(order);
     }
 

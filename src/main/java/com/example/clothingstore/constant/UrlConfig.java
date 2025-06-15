@@ -139,6 +139,7 @@ public class UrlConfig {
   public static final String INVENTORY = "/inventory";
   public static final String IMPORT = "/import";
   public static final String EXPORT = "/export";
+  public static final String HISTORY = "/history";
 
   // Full paths for public endpoints
   public static String[] PUBLIC_ENDPOINTS() {

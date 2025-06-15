@@ -5,11 +5,15 @@ import com.example.clothingstore.config.Translator;
 import com.example.clothingstore.dto.response.InventoryVariantDTO;
 import com.example.clothingstore.dto.response.ProductImportResponseDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
+import com.example.clothingstore.entity.InventoryHistory;
 import com.example.clothingstore.entity.ProductVariant;
+import com.example.clothingstore.enumeration.InventoryChangeType;
 import com.example.clothingstore.exception.DataValidationException;
+import com.example.clothingstore.repository.InventoryHistoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.service.InventoryService;
+import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -30,6 +34,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +46,7 @@ public class InventoryServiceImpl implements InventoryService {
   private final Logger log = LoggerFactory.getLogger(InventoryServiceImpl.class);
   private final ProductVariantRepository variantRepository;
   private final ProductRepository productRepository;
+  private final InventoryHistoryRepository inventoryHistoryRepository;
 
   @EnableSoftDeleteFilter
   @Override
@@ -77,7 +83,8 @@ public class InventoryServiceImpl implements InventoryService {
 
       // Header Row
       Row headerRow = sheet.createRow(0);
-      String[] headers = {"SKU", "Tên sản phẩm", "Màu", "Kích thước", "Số lượng hiện có"};
+      String[] headers =
+          {"SKU", "Tên sản phẩm", "Màu", "Kích thước", "Số lượng hiện có", "Ghi chú"};
       for (int i = 0; i < headers.length; i++) {
         Cell cell = headerRow.createCell(i);
         cell.setCellValue(headers[i]);
@@ -127,6 +134,7 @@ public class InventoryServiceImpl implements InventoryService {
         try {
           Cell skuCell = currentRow.getCell(0);
           Cell quantityCell = currentRow.getCell(4);
+          Cell notesCell = currentRow.getCell(5);
 
           // Kiểm tra SKU
           if (skuCell == null || skuCell.getCellType() != CellType.STRING
@@ -141,6 +149,8 @@ public class InventoryServiceImpl implements InventoryService {
             throw new DataValidationException("import.error.row.col.expected_numeric",
                 String.valueOf(currentRowNum), "Số lượng");
           }
+
+          String notes = notesCell != null ? notesCell.getStringCellValue().trim() : "";
 
           int newQuantity;
           try {
@@ -159,10 +169,26 @@ public class InventoryServiceImpl implements InventoryService {
               .orElseThrow(() -> new DataValidationException("import.error.row.col.sku_not_found",
                   String.valueOf(currentRowNum), sku));
 
-          // Cập nhật số lượng
-          variant.setQuantity(newQuantity);
-          variantRepository.save(variant);
-          updatedCount++;
+          int oldQuantity = variant.getQuantity();
+
+          // Chỉ cập nhật và ghi lại lịch sử nếu có sự thay đổi số lượng
+          if (oldQuantity != newQuantity) {
+            // Cập nhật số lượng
+            variant.setQuantity(newQuantity);
+            variantRepository.save(variant);
+
+            // Ghi lại lịch sử
+            InventoryHistory history = new InventoryHistory();
+            history.setProductVariant(variant);
+            history.setChangeInQuantity(newQuantity - oldQuantity);
+            history.setQuantityAfterChange(newQuantity);
+            history.setTypeOfChange(InventoryChangeType.EXCEL_IMPORT);
+            history.setTimestamp(Instant.now());
+            history.setNotes("Cập nhật qua Excel từ file: " + file.getOriginalFilename()
+                + (notes.isEmpty() ? "" : " với ghi chú: " + notes));
+            inventoryHistoryRepository.save(history);
+            updatedCount++;
+          }
 
         } catch (DataValidationException e) {
           String errorMessage = Translator.toLocale(e.getMessageKey(),
@@ -197,7 +223,22 @@ public class InventoryServiceImpl implements InventoryService {
     ProductVariant variant = variantRepository.findBySku(sku)
         .orElseThrow(() -> new DataValidationException("inventory.sku.not.found", sku));
 
-    variant.setQuantity(quantity.intValue());
-    variantRepository.save(variant);
+    int oldQuantity = variant.getQuantity();
+
+    // Chỉ cập nhật và ghi lại lịch sử nếu có sự thay đổi số lượng
+    if (oldQuantity != quantity.intValue()) {
+      variant.setQuantity(quantity.intValue());
+      variantRepository.save(variant);
+
+      InventoryHistory history = new InventoryHistory();
+      history.setProductVariant(variant);
+      history.setChangeInQuantity(quantity.intValue() - oldQuantity);
+      history.setQuantityAfterChange(quantity.intValue());
+      history.setTypeOfChange(InventoryChangeType.MANUAL_UPDATE);
+      history.setTimestamp(Instant.now());
+      history
+          .setNotes("Cập nhật bởi " + SecurityUtil.getCurrentUserLogin().orElse("Không xác định"));
+      inventoryHistoryRepository.save(history);
+    }
   }
 }
