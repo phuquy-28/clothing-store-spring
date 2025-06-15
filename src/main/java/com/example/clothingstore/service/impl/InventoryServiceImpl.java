@@ -44,7 +44,8 @@ public class InventoryServiceImpl implements InventoryService {
 
   @EnableSoftDeleteFilter
   @Override
-  public ResultPaginationDTO listInventory(Specification<ProductVariant> specification, Pageable pageable) {
+  public ResultPaginationDTO listInventory(Specification<ProductVariant> specification,
+      Pageable pageable) {
     Page<ProductVariant> variantPage = variantRepository.findAll(specification, pageable);
 
     List<InventoryVariantDTO> dtoList =
@@ -189,5 +190,14 @@ public class InventoryServiceImpl implements InventoryService {
         .successfulImports(updatedCount)
         .successMessage(Translator.toLocale("import.inventory.success.total", updatedCount))
         .build();
+  }
+
+  @Override
+  public void updateInventory(String sku, Long quantity) {
+    ProductVariant variant = variantRepository.findBySku(sku)
+        .orElseThrow(() -> new DataValidationException("inventory.sku.not.found", sku));
+
+    variant.setQuantity(quantity.intValue());
+    variantRepository.save(variant);
   }
 }

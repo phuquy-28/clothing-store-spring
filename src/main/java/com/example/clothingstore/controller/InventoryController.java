@@ -2,11 +2,13 @@
 package com.example.clothingstore.controller;
 
 import com.example.clothingstore.constant.UrlConfig;
+import com.example.clothingstore.dto.request.UpdateInventoryReq;
 import com.example.clothingstore.dto.response.ProductImportResponseDTO;
 import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.service.InventoryService;
 import com.turkraft.springfilter.boot.Filter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -50,5 +52,12 @@ public class InventoryController {
   public ResponseEntity<ProductImportResponseDTO> importInventory(
       @RequestParam("file") MultipartFile file) {
     return ResponseEntity.ok(inventoryService.importInventoryUpdate(file));
+  }
+
+  @PutMapping(UrlConfig.INVENTORY)
+  public ResponseEntity<Void> updateInventory(
+      @RequestBody @Valid UpdateInventoryReq updateInventoryReq) {
+    inventoryService.updateInventory(updateInventoryReq.getSku(), updateInventoryReq.getQuantity());
+    return ResponseEntity.ok().build();
   }
 }
