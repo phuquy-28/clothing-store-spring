@@ -5,6 +5,8 @@ import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.PaymentMethod;
 import com.example.clothingstore.enumeration.PaymentStatus;
 import com.example.clothingstore.enumeration.Size;
+import com.example.clothingstore.enumeration.ReturnRequestStatus;
+import com.example.clothingstore.enumeration.CashBackStatus;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +44,10 @@ public class OrderResDTO {
   private String cancelReason;
 
   private Instant statusUpdateTimestamp;
+
+  private ReturnRequestStatus returnRequestStatus;
+
+  private CashBackStatus cashBackStatus;
 
   @Data
   @Builder

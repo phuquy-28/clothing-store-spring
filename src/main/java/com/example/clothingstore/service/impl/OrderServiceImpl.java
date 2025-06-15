@@ -366,6 +366,8 @@ public class OrderServiceImpl implements OrderService {
         .statusUpdateTimestamp(latestStatusHistory != null ? latestStatusHistory.getUpdateTimestamp() : null)
         .lineItems(
             order.getLineItems().stream().map(this::mapToLineItemDTO).collect(Collectors.toList()))
+        .returnRequestStatus(order.getReturnRequest() != null ? order.getReturnRequest().getStatus() : null)
+        .cashBackStatus(order.getReturnRequest() != null ? order.getReturnRequest().getCashBackStatus() : null)
         .build();
   }
 
@@ -733,6 +735,7 @@ public class OrderServiceImpl implements OrderService {
     DeliveryMethod deliveryMethod = DeliveryMethod.valueOf(orderPreviewReqDTO.getDeliveryMethod());
     DeliveryStrategy deliveryStrategy = deliveryStrategyFactory.getStrategy(deliveryMethod);
     Double shippingFee = null;
+    Instant estimatedDeliveryDate = null;
     if (shippingProfile != null) {
       // create a temp order to pass to the strategy
       Order tempOrder = new Order();
@@ -742,8 +745,10 @@ public class OrderServiceImpl implements OrderService {
       tempOrder.setPaymentMethod(PaymentMethod.valueOf(orderPreviewReqDTO.getPaymentMethod().toUpperCase()));
       tempOrder.setPointDiscount(pointDiscount);
       shippingFee = deliveryStrategy.calculateShippingFee(tempOrder);
+      estimatedDeliveryDate = deliveryStrategy.calculateEstimatedDeliveryDate(tempOrder);
     } else {
       shippingFee = null;
+      estimatedDeliveryDate = null;
     }
 
     // Tạo preview order
@@ -767,6 +772,7 @@ public class OrderServiceImpl implements OrderService {
         .pointDiscount(pointDiscount)
         .finalTotal(subtotal + (shippingFee != null ? shippingFee : 0.0) - discount - pointDiscount)
         .points(user.getPoint() == null ? 0L : user.getPoint().getCurrentPoints())
+        .estimatedDeliveryDate(estimatedDeliveryDate)
         .build();
   }
 

@@ -7,6 +7,7 @@ import com.example.clothingstore.exception.DeliveryException;
 import com.example.clothingstore.service.strategy.DeliveryStrategy;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import java.time.Instant;
 import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,5 +174,51 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
     }
 
     throw new DeliveryException(ErrorMessage.DELIVERY_FEE_CALCULATION_FAILED);
+  }
+
+  @Override
+  public Instant calculateEstimatedDeliveryDate(Order order) {
+    String url = ghnApiUrl + "/shipping-order/leadtime";
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Token", ghnApiToken);
+    headers.set("ShopId", ghnShopId);
+
+    // Get service ID for the delivery
+    String serviceId = getAvailableServiceId(order.getShippingInformation().getDistrictId());
+
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("from_district_id", shopDistrictId);
+    requestBody.put("from_ward_code", ""); // Add your shop's ward code here
+    requestBody.put("to_district_id", order.getShippingInformation().getDistrictId());
+    requestBody.put("to_ward_code", order.getShippingInformation().getWardId().toString());
+    requestBody.put("service_id", Integer.parseInt(serviceId));
+
+    HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
+
+    try {
+      log.debug("Request Body for leadtime calculation: {}", requestBody.toString());
+      ResponseEntity<String> response = 
+          restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+      if (response.getStatusCode() == HttpStatus.OK) {
+        JSONObject jsonResponse = new JSONObject(response.getBody());
+        JSONObject data = jsonResponse.optJSONObject("data");
+
+        if (data == null) {
+          throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
+        }
+
+        // GHN returns leadtime as Unix timestamp in seconds
+        long leadtime = data.getLong("leadtime");
+        return Instant.ofEpochSecond(leadtime);
+      }
+    } catch (Exception e) {
+      log.error("Error calculating GHN estimated delivery date: {}", e.getMessage());
+      throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
+    }
+
+    throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
   }
 }

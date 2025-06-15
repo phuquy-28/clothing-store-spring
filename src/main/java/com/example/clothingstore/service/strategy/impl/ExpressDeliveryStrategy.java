@@ -1,5 +1,6 @@
 package com.example.clothingstore.service.strategy.impl;
 
+import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import com.example.clothingstore.entity.Order;
@@ -214,5 +215,10 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
     } else {
       throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
     }
+  }
+
+  @Override
+  public Instant calculateEstimatedDeliveryDate(Order order) {
+    return Instant.now().plusSeconds(7200); // 2 hours from now
   }
 }

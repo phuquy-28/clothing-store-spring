@@ -1,6 +1,7 @@
 package com.example.clothingstore.service.strategy;
 
 import com.example.clothingstore.entity.Order;
+import java.time.Instant;
 
 public interface DeliveryStrategy {
 
@@ -9,4 +10,6 @@ public interface DeliveryStrategy {
     double calculateShippingFee(Order order);
     
     double calculateShippingFee(double subtotal);
+
+    Instant calculateEstimatedDeliveryDate(Order order);
 }
