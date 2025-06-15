@@ -58,9 +58,6 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
     String fullAddress = buildFullAddress(order.getShippingInformation());
     double distanceInKm = calculateDistanceToCustomer(fullAddress);
 
-    // Validate delivery distance
-    validateDeliveryDistance(distanceInKm);
-
     return calculateExpressFeeByDistance(distanceInKm);
   }
 
@@ -71,24 +68,6 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
           shippingInfo.getProvinceId());
       throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
     }
-  }
-
-  private void validateDeliveryDistance(double distanceInKm) {
-    if (distanceInKm < AppConstant.MIN_DELIVERY_DISTANCE_KM
-        || distanceInKm > AppConstant.MAX_DELIVERY_DISTANCE_KM) {
-      log.error("Distance out of range: {} km", distanceInKm);
-      throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
-    }
-  }
-
-  @Override
-  public double calculateShippingFee(double subtotal) {
-    if (subtotal >= freeShippingThreshold) {
-      return 0;
-    }
-
-    // Default fee if no address is provided
-    return AppConstant.EXPRESS_FEE_TIER_1;
   }
 
   private String buildFullAddress(Order.ShippingInformation shippingInfo) {
@@ -200,21 +179,16 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
   }
 
   private double calculateExpressFeeByDistance(double distanceInKm) {
-    if (distanceInKm >= AppConstant.EXPRESS_DISTANCE_TIER_1_MIN
-        && distanceInKm <= AppConstant.EXPRESS_DISTANCE_TIER_1_MAX) {
-      return AppConstant.EXPRESS_FEE_TIER_1;
-    } else if (distanceInKm > AppConstant.EXPRESS_DISTANCE_TIER_2_MIN
-        && distanceInKm <= AppConstant.EXPRESS_DISTANCE_TIER_2_MAX) {
-      return AppConstant.EXPRESS_FEE_TIER_2;
-    } else if (distanceInKm > AppConstant.EXPRESS_DISTANCE_TIER_3_MIN
-        && distanceInKm <= AppConstant.EXPRESS_DISTANCE_TIER_3_MAX) {
-      return AppConstant.EXPRESS_FEE_TIER_3;
-    } else if (distanceInKm > AppConstant.EXPRESS_DISTANCE_TIER_4_MIN
-        && distanceInKm <= AppConstant.EXPRESS_DISTANCE_TIER_4_MAX) {
-      return AppConstant.EXPRESS_FEE_TIER_4;
-    } else {
-      throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
+    // Base fee for first 2km
+    double totalFee = AppConstant.EXPRESS_BASE_FEE;
+    
+    // If distance is greater than base distance, add per-km fee
+    if (distanceInKm > AppConstant.EXPRESS_BASE_DISTANCE) {
+      double additionalDistance = distanceInKm - AppConstant.EXPRESS_BASE_DISTANCE;
+      totalFee += additionalDistance * AppConstant.EXPRESS_PER_KM_FEE;
     }
+    
+    return totalFee;
   }
 
   @Override

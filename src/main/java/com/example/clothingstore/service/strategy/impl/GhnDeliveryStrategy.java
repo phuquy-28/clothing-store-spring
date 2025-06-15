@@ -75,15 +75,6 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
     }
   }
 
-  @Override
-  public double calculateShippingFee(double subtotal) {
-    // Fallback simple calculation if no order details available
-    if (subtotal < 1000000) {
-      return 30000;
-    }
-    return 0;
-  }
-
   private String getAvailableServiceId(Long toDistrictId) {
     String url = ghnApiUrl + "/shipping-order/available-services";
 

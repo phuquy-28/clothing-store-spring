@@ -8,8 +8,6 @@ public interface DeliveryStrategy {
     void processDelivery(Order order);
 
     double calculateShippingFee(Order order);
-    
-    double calculateShippingFee(double subtotal);
 
     Instant calculateEstimatedDeliveryDate(Order order);
 }
