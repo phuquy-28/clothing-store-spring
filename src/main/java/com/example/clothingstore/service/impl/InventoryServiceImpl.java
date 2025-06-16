@@ -13,7 +13,6 @@ import com.example.clothingstore.repository.InventoryHistoryRepository;
 import com.example.clothingstore.repository.ProductRepository;
 import com.example.clothingstore.repository.ProductVariantRepository;
 import com.example.clothingstore.service.InventoryService;
-import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -219,7 +218,7 @@ public class InventoryServiceImpl implements InventoryService {
   }
 
   @Override
-  public void updateInventory(String sku, Long quantity) {
+  public void updateInventory(String sku, Long quantity, String note) {
     ProductVariant variant = variantRepository.findBySku(sku)
         .orElseThrow(() -> new DataValidationException("inventory.sku.not.found", sku));
 
@@ -236,8 +235,8 @@ public class InventoryServiceImpl implements InventoryService {
       history.setQuantityAfterChange(quantity.intValue());
       history.setTypeOfChange(InventoryChangeType.MANUAL_UPDATE);
       history.setTimestamp(Instant.now());
-      history
-          .setNotes("Cập nhật bởi " + SecurityUtil.getCurrentUserLogin().orElse("Không xác định"));
+      history.setNotes(
+          "Cập nhật tồn kho" + (note != null && !note.isEmpty() ? " với ghi chú: " + note : ""));
       inventoryHistoryRepository.save(history);
     }
   }

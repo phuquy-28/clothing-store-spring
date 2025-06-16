@@ -14,4 +14,6 @@ public class UpdateInventoryReq {
   @NotNull(message = "inventory.quantity.not.null")
   @Min(value = 0, message = "inventory.quantity.min")
   private Long quantity;
+
+  private String note;
 }

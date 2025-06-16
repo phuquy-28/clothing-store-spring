@@ -66,13 +66,15 @@ public class InventoryController {
   @PutMapping(UrlConfig.INVENTORY)
   public ResponseEntity<Void> updateInventory(
       @RequestBody @Valid UpdateInventoryReq updateInventoryReq) {
-    inventoryService.updateInventory(updateInventoryReq.getSku(), updateInventoryReq.getQuantity());
+    inventoryService.updateInventory(updateInventoryReq.getSku(), updateInventoryReq.getQuantity(),
+        updateInventoryReq.getNote());
     return ResponseEntity.ok().build();
   }
 
   @GetMapping(UrlConfig.INVENTORY + UrlConfig.HISTORY)
   public ResponseEntity<ResultPaginationDTO> getInventoryHistory(
       @RequestParam(required = false) String sku,
+      @RequestParam(required = false) String productName,
       @RequestParam(required = false) LocalDate startDate,
       @RequestParam(required = false) LocalDate endDate,
       @PageableDefault(sort = {"productVariant.sku", "timestamp"},
@@ -85,6 +87,7 @@ public class InventoryController {
 
     Specification<InventoryHistory> spec =
         Specification.where(InventoryHistorySpecification.hasProductSku(sku))
+            .and(InventoryHistorySpecification.hasProductName(productName))
             .and(InventoryHistorySpecification.hasTimestampAfter(startInstant))
             .and(InventoryHistorySpecification.hasTimestampBefore(endInstant));
 
@@ -93,6 +96,7 @@ public class InventoryController {
 
   @GetMapping(UrlConfig.INVENTORY + UrlConfig.HISTORY + UrlConfig.EXPORT)
   public ResponseEntity<Resource> exportInventoryHistory(@RequestParam(required = false) String sku,
+      @RequestParam(required = false) String productName,
       @RequestParam(required = false) LocalDate startDate,
       @RequestParam(required = false) LocalDate endDate) {
 
@@ -103,6 +107,7 @@ public class InventoryController {
 
     Specification<InventoryHistory> spec =
         Specification.where(InventoryHistorySpecification.hasProductSku(sku))
+            .and(InventoryHistorySpecification.hasProductName(productName))
             .and(InventoryHistorySpecification.hasTimestampAfter(startInstant))
             .and(InventoryHistorySpecification.hasTimestampBefore(endInstant));
 

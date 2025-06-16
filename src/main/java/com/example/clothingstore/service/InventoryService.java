@@ -16,6 +16,6 @@ public interface InventoryService {
 
   ProductImportResponseDTO importInventoryUpdate(MultipartFile file);
 
-  void updateInventory(String sku, Long quantity);
+  void updateInventory(String sku, Long quantity, String note);
 
 }

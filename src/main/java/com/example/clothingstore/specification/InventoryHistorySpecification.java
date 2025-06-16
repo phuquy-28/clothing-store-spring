@@ -16,6 +16,16 @@ public class InventoryHistorySpecification {
     };
   }
 
+  public static Specification<InventoryHistory> hasProductName(String productName) {
+    return (root, query, cb) -> {
+      if (productName == null || productName.isEmpty()) {
+        return cb.conjunction();
+      }
+      return cb.like(cb.lower(root.get("productVariant").get("product").get("name")),
+          "%" + productName.toLowerCase() + "%");
+    };
+  }
+
   public static Specification<InventoryHistory> hasTimestampAfter(Instant startDate) {
     return (root, query, cb) -> {
       if (startDate == null) {
