@@ -1,16 +1,18 @@
 package com.example.clothingstore.service;
 
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.CategorySalesDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
 import com.example.clothingstore.dto.response.RevenueChartDTO;
 
 public interface WorkspaceService {
-  
+
   LoginResDTO login(LoginReqDTO loginReqDTO);
 
   DashboardResDTO getDashboard();
@@ -22,4 +24,6 @@ public interface WorkspaceService {
   RevenueChartDTO getRevenueChart(Long year);
 
   List<CategorySalesDTO> getSalesByCategory(String period);
+
+  ResultPaginationDTO getTopProducts(String period, String search, Pageable pageable);
 }

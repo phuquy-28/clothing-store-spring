@@ -2,6 +2,8 @@ package com.example.clothingstore.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -14,6 +16,8 @@ import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO.MetricDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
+import com.example.clothingstore.dto.response.ProductPerformanceDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
 import com.example.clothingstore.dto.response.RevenueChartDTO;
 import com.example.clothingstore.entity.User;
@@ -254,8 +258,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
 
     // 2. Process data into maps for easy lookup
-    Map<Integer, Double> revenueMap = revenueResults.stream().collect(Collectors
-        .toMap(res -> ((Number) res[0]).intValue(), res -> Math.round(((Number) res[1]).doubleValue() * 100.0) / 100.0));
+    Map<Integer, Double> revenueMap =
+        revenueResults.stream().collect(Collectors.toMap(res -> ((Number) res[0]).intValue(),
+            res -> Math.round(((Number) res[1]).doubleValue() * 100.0) / 100.0));
 
     Map<Integer, Long> orderCountMap = orderCountResults.stream().collect(Collectors
         .toMap(res -> ((Number) res[0]).intValue(), res -> ((Number) res[1]).longValue()));
@@ -299,6 +304,29 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         .map(result -> new CategorySalesDTO((String) result[0],
             Math.round(((Number) result[1]).doubleValue() * 100.0) / 100.0))
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public ResultPaginationDTO getTopProducts(String period, String search, Pageable pageable) {
+    log.debug("Request to get top products for period: {}, search: {}", period, search);
+
+    DateRanges ranges = calculateComparisonRanges(period);
+
+    Page<Object[]> resultsPage = productRepository.findTopSellingProducts(ranges.currentStart(),
+        ranges.currentEnd(), search, pageable);
+
+    List<ProductPerformanceDTO> dtoList = resultsPage.getContent().stream()
+        .map(res -> ProductPerformanceDTO.builder().productId(((Number) res[0]).longValue())
+            .productName((String) res[1]).imageUrl((String) res[2])
+            .quantitySold(((Number) res[3]).longValue())
+            .totalSales(Math.round(((Number) res[4]).doubleValue() * 100.0) / 100.0).build())
+        .collect(Collectors.toList());
+
+    ResultPaginationDTO.Meta meta = ResultPaginationDTO.Meta.builder()
+        .page((long) resultsPage.getNumber()).pageSize((long) resultsPage.getSize())
+        .pages((long) resultsPage.getTotalPages()).total(resultsPage.getTotalElements()).build();
+
+    return ResultPaginationDTO.builder().meta(meta).data(dtoList).build();
   }
 
 }

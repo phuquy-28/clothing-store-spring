@@ -124,6 +124,7 @@ public class UrlConfig {
   public static final String SUMMARY = "/summary";
   public static final String REVENUE_CHART = "/revenue-chart";
   public static final String CATEGORY_SALES = "/category-sales";
+  public static final String TOP_PRODUCTS = "/top-products";
   public static final String REVENUE_BY_MONTH = "/revenue-by-month";
   public static final String IMPORT_TEMPLATE = "/import/template/{templateType}";
   public static final String IMPORT_PRODUCTS = "/import/products";

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -24,6 +26,7 @@ import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.ProductImportResponseDTO;
+import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
 import com.example.clothingstore.dto.response.RevenueChartDTO;
 import com.example.clothingstore.enumeration.ImportMode;
@@ -124,5 +127,12 @@ public class WorkspaceController {
   public ResponseEntity<List<CategorySalesDTO>> getSalesByCategory(
       @RequestParam(defaultValue = "this_month") String period) {
     return ResponseEntity.ok(workspaceService.getSalesByCategory(period));
+  }
+
+  @GetMapping(UrlConfig.WORKSPACE + UrlConfig.DASHBOARD + UrlConfig.TOP_PRODUCTS)
+  public ResponseEntity<ResultPaginationDTO> getTopProducts(
+      @RequestParam(defaultValue = "this_month") String period,
+      @RequestParam(required = false) String search, @PageableDefault Pageable pageable) {
+    return ResponseEntity.ok(workspaceService.getTopProducts(period, search, pageable));
   }
 }
