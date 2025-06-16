@@ -169,4 +169,18 @@ public interface OrderRepository
       GROUP BY MONTH(o.orderDate)
       """)
   List<Object[]> findOrderCountByMonth(@Param("year") Long year);
+
+  @Query("""
+      SELECT c.name as categoryName, 
+      SUM((li.unitPrice * li.quantity) - (li.discountAmount * li.quantity)) as totalSales 
+      FROM Order o JOIN o.lineItems li 
+      JOIN li.productVariant pv JOIN pv.product p 
+      JOIN p.category c 
+      WHERE o.status = com.example.clothingstore.enumeration.OrderStatus.DELIVERED 
+      AND o.orderDate BETWEEN :startDate AND :endDate 
+      GROUP BY c.name 
+      ORDER BY totalSales DESC
+      """)
+  List<Object[]> findSalesByCategoryBetween(@Param("startDate") Instant startDate,
+      @Param("endDate") Instant endDate);
 }

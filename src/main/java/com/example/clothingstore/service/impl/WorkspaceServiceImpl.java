@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.response.CategorySalesDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO.MetricDTO;
@@ -280,6 +281,24 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     return RevenueChartDTO.builder().labels(labels)
         .datasets(Arrays.asList(revenueDataset, ordersDataset)).build();
+  }
+
+  @Override
+  public List<CategorySalesDTO> getSalesByCategory(String period) {
+    log.debug("Request to get sales by category for period: {}", period);
+
+    // Reuse the same logic to calculate the date range
+    DateRanges ranges = calculateComparisonRanges(period);
+
+    // Fetch the aggregated data from the repository
+    List<Object[]> results =
+        orderRepository.findSalesByCategoryBetween(ranges.currentStart(), ranges.currentEnd());
+
+    // Map the raw results to the DTO list
+    return results.stream()
+        .map(result -> new CategorySalesDTO((String) result[0],
+            Math.round(((Number) result[1]).doubleValue() * 100.0) / 100.0))
+        .collect(Collectors.toList());
   }
 
 }

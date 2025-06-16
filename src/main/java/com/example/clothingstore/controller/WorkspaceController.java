@@ -1,6 +1,7 @@
 package com.example.clothingstore.controller;
 
 import java.io.IOException;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.LoginReqDTO;
+import com.example.clothingstore.dto.response.CategorySalesDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
@@ -116,5 +118,11 @@ public class WorkspaceController {
   public ResponseEntity<RevenueChartDTO> getRevenueChart(
       @RequestParam(required = false) Long year) {
     return ResponseEntity.ok(workspaceService.getRevenueChart(year));
+  }
+
+  @GetMapping(UrlConfig.WORKSPACE + UrlConfig.DASHBOARD + UrlConfig.CATEGORY_SALES)
+  public ResponseEntity<List<CategorySalesDTO>> getSalesByCategory(
+      @RequestParam(defaultValue = "this_month") String period) {
+    return ResponseEntity.ok(workspaceService.getSalesByCategory(period));
   }
 }
