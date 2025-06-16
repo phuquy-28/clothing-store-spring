@@ -12,7 +12,8 @@ public class InventoryHistorySpecification {
       if (sku == null || sku.isEmpty()) {
         return cb.conjunction();
       }
-      return cb.equal(root.get("productVariant").get("sku"), sku);
+      return cb.like(cb.lower(root.get("productVariant").get("sku")),
+          "%" + sku.toLowerCase() + "%");
     };
   }
 

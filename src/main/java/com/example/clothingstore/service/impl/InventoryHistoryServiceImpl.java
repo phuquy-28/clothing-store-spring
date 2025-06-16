@@ -7,10 +7,13 @@ import com.example.clothingstore.repository.InventoryHistoryRepository;
 import com.example.clothingstore.service.InventoryHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -60,7 +64,8 @@ public class InventoryHistoryServiceImpl implements InventoryHistoryService {
   }
 
   @Override
-  public Resource exportInventoryHistory(Specification<InventoryHistory> spec) {
+  public Resource exportInventoryHistory(Specification<InventoryHistory> spec, String sku,
+      String productName, LocalDate startDate, LocalDate endDate) {
     // Lấy tất cả dữ liệu và sắp xếp
     List<InventoryHistory> histories = inventoryHistoryRepository.findAll(spec,
         Sort.by("productVariant.sku").ascending().and(Sort.by("timestamp").descending()));
@@ -75,10 +80,48 @@ public class InventoryHistoryServiceImpl implements InventoryHistoryService {
         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       Sheet sheet = workbook.createSheet("Lịch sử tồn kho");
 
-      // Tạo header
-      Row headerRow = sheet.createRow(0);
-      String[] headers = {"SKU", "Tên sản phẩm", "Thay đổi số lượng", "Số lượng sau thay đổi",
-          "Loại thay đổi", "Thời gian", "Ghi chú", "Người cập nhật"};
+      int rowIdx = 0;
+      Row titleRow = sheet.createRow(rowIdx++);
+      StringBuilder title = new StringBuilder("Lịch sử tồn kho");
+
+      if (sku != null && !sku.isEmpty()) {
+        title.append(" của mã sản phẩm ").append(sku);
+      }
+
+      if (startDate != null || endDate != null) {
+        title.append(" (");
+        if (startDate != null) {
+          title.append("từ ngày ")
+              .append(startDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
+        if (endDate != null) {
+          if (startDate != null) {
+            title.append(" ");
+          }
+          title.append("đến ngày ")
+              .append(endDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
+        title.append(")");
+      }
+
+      Cell titleCell = titleRow.createCell(0);
+      titleCell.setCellValue(title.toString());
+
+      // Tạo style cho tiêu đề
+      CellStyle titleStyle = workbook.createCellStyle();
+      titleStyle.setAlignment(HorizontalAlignment.CENTER);
+      titleCell.setCellStyle(titleStyle);
+
+      // Merge các ô của dòng tiêu đề
+      sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+
+      // Thêm dòng trống để phân cách
+      rowIdx++;
+
+      // Tạo header cho dữ liệu
+      Row headerRow = sheet.createRow(rowIdx++);
+      String[] headers = {"Thời gian", "SKU", "Thay đổi số lượng", "Số lượng sau thay đổi",
+          "Ghi chú", "User thực hiện"};
 
       for (int i = 0; i < headers.length; i++) {
         Cell cell = headerRow.createCell(i);
@@ -86,18 +129,15 @@ public class InventoryHistoryServiceImpl implements InventoryHistoryService {
       }
 
       // Điền dữ liệu
-      SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-      int rowIdx = 1;
+      SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
       for (InventoryHistoryDTO history : sortedData) {
         Row row = sheet.createRow(rowIdx++);
-        row.createCell(0).setCellValue(history.getProductSku());
-        row.createCell(1).setCellValue(history.getProductName());
+        row.createCell(0).setCellValue(dateFormat.format(Date.from(history.getTimestamp())));
+        row.createCell(1).setCellValue(history.getProductSku());
         row.createCell(2).setCellValue(history.getChangeInQuantity());
         row.createCell(3).setCellValue(history.getQuantityAfterChange());
-        row.createCell(4).setCellValue(history.getTypeOfChange().toString());
-        row.createCell(5).setCellValue(dateFormat.format(Date.from(history.getTimestamp())));
-        row.createCell(6).setCellValue(history.getNotes() != null ? history.getNotes() : "");
-        row.createCell(7)
+        row.createCell(4).setCellValue(history.getNotes() != null ? history.getNotes() : "");
+        row.createCell(5)
             .setCellValue(history.getUpdatedBy() != null ? history.getUpdatedBy() : "");
       }
 

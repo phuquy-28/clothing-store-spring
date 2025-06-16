@@ -113,7 +113,7 @@ public class InventoryController {
 
     String timestamp = new SimpleDateFormat("dd_MM_yyyy_HH_mm").format(new Date());
     String filename = "inventory_history_export_" + timestamp + ".xlsx";
-    Resource file = inventoryHistoryService.exportInventoryHistory(spec);
+    Resource file = inventoryHistoryService.exportInventoryHistory(spec, sku, productName, startDate, endDate);
 
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
