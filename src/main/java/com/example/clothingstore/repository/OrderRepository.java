@@ -152,4 +152,21 @@ public interface OrderRepository
   Long countByOrderDateBetween(
       @Param("startDate") Instant startDate,
       @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT MONTH(o.orderDate) as month, 
+      COALESCE(SUM(o.total - COALESCE(o.discount, 0.0) - COALESCE(o.pointDiscount, 0.0)), 0.0) as revenue 
+      FROM Order o 
+      WHERE YEAR(o.orderDate) = :year AND o.status = :status 
+      GROUP BY MONTH(o.orderDate)
+      """)
+  List<Object[]> findRevenueByMonthWithoutShippingFee(@Param("year") Long year, @Param("status") OrderStatus status);
+
+  @Query("""
+      SELECT MONTH(o.orderDate) as month, COUNT(o.id) as orderCount 
+      FROM Order o 
+      WHERE YEAR(o.orderDate) = :year 
+      GROUP BY MONTH(o.orderDate)
+      """)
+  List<Object[]> findOrderCountByMonth(@Param("year") Long year);
 }

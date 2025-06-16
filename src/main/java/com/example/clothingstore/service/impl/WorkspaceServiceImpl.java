@@ -14,6 +14,7 @@ import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.DashboardSummaryDTO.MetricDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
+import com.example.clothingstore.dto.response.RevenueChartDTO;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.ReturnRequestStatus;
@@ -34,9 +35,12 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -232,6 +236,50 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     return new DateRanges(currentStart, currentEnd, previousStart, previousEnd);
+  }
+
+  @Override
+  public RevenueChartDTO getRevenueChart(Long year) {
+    log.debug("Request to get revenue and order chart for year: {}", year);
+
+    if (year == null) {
+      year = (long) LocalDateTime.now().getYear();
+    }
+
+    // 1. Fetch raw data from repository
+    List<Object[]> revenueResults =
+        orderRepository.findRevenueByMonthWithoutShippingFee(year, OrderStatus.DELIVERED);
+    List<Object[]> orderCountResults = orderRepository.findOrderCountByMonth(year);
+
+
+    // 2. Process data into maps for easy lookup
+    Map<Integer, Double> revenueMap = revenueResults.stream().collect(Collectors
+        .toMap(res -> ((Number) res[0]).intValue(), res -> Math.round(((Number) res[1]).doubleValue() * 100.0) / 100.0));
+
+    Map<Integer, Long> orderCountMap = orderCountResults.stream().collect(Collectors
+        .toMap(res -> ((Number) res[0]).intValue(), res -> ((Number) res[1]).longValue()));
+
+    // 3. Prepare data lists for all 12 months
+    List<Double> revenueData = new ArrayList<>();
+    List<Long> orderCountData = new ArrayList<>();
+
+    for (int month = 1; month <= 12; month++) {
+      revenueData.add(revenueMap.getOrDefault(month, 0.0));
+      orderCountData.add(orderCountMap.getOrDefault(month, 0L));
+    }
+
+    // 4. Build the DTO for the response
+    List<String> labels =
+        IntStream.rangeClosed(1, 12).mapToObj(m -> "Tháng " + m).collect(Collectors.toList());
+
+    RevenueChartDTO.DatasetDTO revenueDataset =
+        RevenueChartDTO.DatasetDTO.builder().label("Doanh thu").data(revenueData).build();
+
+    RevenueChartDTO.DatasetDTO ordersDataset =
+        RevenueChartDTO.DatasetDTO.builder().label("Đơn hàng").data(orderCountData).build();
+
+    return RevenueChartDTO.builder().labels(labels)
+        .datasets(Arrays.asList(revenueDataset, ordersDataset)).build();
   }
 
 }

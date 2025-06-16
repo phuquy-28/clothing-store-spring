@@ -23,6 +23,7 @@ import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.ProductImportResponseDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
+import com.example.clothingstore.dto.response.RevenueChartDTO;
 import com.example.clothingstore.enumeration.ImportMode;
 import com.example.clothingstore.enumeration.TemplateType;
 import com.example.clothingstore.service.ImportService;
@@ -109,5 +110,11 @@ public class WorkspaceController {
   public ResponseEntity<DashboardSummaryDTO> getDashboardSummary(
       @RequestParam(defaultValue = "this_week") String period) {
     return ResponseEntity.ok(workspaceService.getDashboardSummary(period));
+  }
+
+  @GetMapping(UrlConfig.WORKSPACE + UrlConfig.DASHBOARD + UrlConfig.REVENUE_CHART)
+  public ResponseEntity<RevenueChartDTO> getRevenueChart(
+      @RequestParam(required = false) Long year) {
+    return ResponseEntity.ok(workspaceService.getRevenueChart(year));
   }
 }
