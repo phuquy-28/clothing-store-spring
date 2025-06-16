@@ -24,8 +24,6 @@ import com.example.clothingstore.dto.response.ResultPaginationDTO;
 import com.example.clothingstore.dto.response.UploadImageResDTO;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.User;
-import com.example.clothingstore.exception.ResourceNotFoundException;
-import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.service.ProductService;
 import com.example.clothingstore.service.RecommendationService;
 import com.example.clothingstore.service.UserService;
@@ -157,9 +155,9 @@ public class ProductController {
 
   @PostMapping(UrlConfig.PRODUCT + UrlConfig.ID + UrlConfig.LOG_VIEW)
   public ResponseEntity<Void> logProductView(@PathVariable Long id) {
-    User currentUser = userService.handleGetUserByUsername(SecurityUtil.getCurrentUserLogin()
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_LOGGED_IN)));
-    productService.logUserProductView(currentUser.getId(), id);
+    Long userId = SecurityUtil.getCurrentUserLogin()
+        .map(username -> userService.handleGetUserByUsername(username).getId()).orElse(null);
+    productService.logUserProductView(userId, id);
     return ResponseEntity.ok().build();
   }
 }

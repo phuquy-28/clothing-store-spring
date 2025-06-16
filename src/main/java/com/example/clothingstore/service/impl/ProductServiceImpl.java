@@ -695,13 +695,21 @@ public class ProductServiceImpl implements ProductService {
   @Override
   @Async
   public void logUserProductView(Long userId, Long productId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
     Product product = productRepository.findById(productId)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.PRODUCT_NOT_FOUND));
-    ProductViewHistory viewHistory = new ProductViewHistory(user, product);
+
+    ProductViewHistory viewHistory;
+    if (userId != null) {
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+      viewHistory = new ProductViewHistory(user, product);
+    } else {
+      viewHistory = new ProductViewHistory(product);
+    }
+
     productViewHistoryRepository.save(viewHistory);
-    log.debug("Logged view for user {} on product {}", user.getEmail(), product.getId());
+    log.debug("Logged view for {} on product {}",
+        userId != null ? "user " + userId : "anonymous user", product.getId());
   }
 
 }

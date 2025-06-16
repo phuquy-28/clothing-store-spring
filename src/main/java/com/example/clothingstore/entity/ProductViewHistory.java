@@ -17,7 +17,7 @@ public class ProductViewHistory {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id", nullable = true)
   private User user;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -29,6 +29,11 @@ public class ProductViewHistory {
 
   public ProductViewHistory(User user, Product product) {
     this.user = user;
+    this.product = product;
+    this.viewedAt = Instant.now();
+  }
+
+  public ProductViewHistory(Product product) {
     this.product = product;
     this.viewedAt = Instant.now();
   }

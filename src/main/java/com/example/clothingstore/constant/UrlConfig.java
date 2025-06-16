@@ -173,7 +173,7 @@ public class UrlConfig {
         API_VERSION + AUTH + ACTIVATE_CODE + "/**", API_VERSION + AUTH + VERIFY_RESET_CODE,
         API_VERSION + AUTH + GOOGLE_AUTH, API_VERSION + ORDERS,
         // API_VERSION + ORDERS + CHECK_OUT,
-        API_VERSION + WORKSPACE + LOGIN};
+        API_VERSION + WORKSPACE + LOGIN, API_VERSION + PRODUCT + ID + LOG_VIEW};
   }
 
   // Full paths for public PUT endpoints
