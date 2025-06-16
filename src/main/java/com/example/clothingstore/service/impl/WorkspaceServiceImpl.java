@@ -10,10 +10,13 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.ErrorMessage;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
+import com.example.clothingstore.dto.response.DashboardSummaryDTO;
+import com.example.clothingstore.dto.response.DashboardSummaryDTO.MetricDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.enumeration.OrderStatus;
+import com.example.clothingstore.enumeration.ReturnRequestStatus;
 import com.example.clothingstore.exception.BadCredentialsException;
 import com.example.clothingstore.service.UserService;
 import com.example.clothingstore.service.WorkspaceService;
@@ -21,7 +24,15 @@ import com.example.clothingstore.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import com.example.clothingstore.repository.OrderRepository;
 import com.example.clothingstore.repository.ProductRepository;
+import com.example.clothingstore.repository.ProductViewHistoryRepository;
+import com.example.clothingstore.repository.ReturnRequestRepository;
+import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +53,14 @@ public class WorkspaceServiceImpl implements WorkspaceService {
   private final OrderRepository orderRepository;
 
   private final ProductRepository productRepository;
+
+  private final ProductViewHistoryRepository productViewHistoryRepository;
+
+  private final ReturnRequestRepository returnRequestRepository;
+
+  private record DateRanges(Instant currentStart, Instant currentEnd, Instant previousStart,
+      Instant previousEnd) {
+  }
 
   @Override
   public LoginResDTO login(LoginReqDTO loginReqDto) {
@@ -83,13 +102,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     // Get total users (only activated accounts)
     Long totalUsers = userService.countActivatedUsers();
-    
+
     // Get total orders
     Long totalOrders = orderRepository.count();
-    
+
     // Calculate total revenue from completed orders
     Long totalRevenue = orderRepository.sumFinalTotalByStatus(OrderStatus.DELIVERED);
-    
+
     // Get total products (not deleted)
     Long totalProducts = productRepository.countByIsDeletedFalse();
 
@@ -126,6 +145,93 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     revenueByMonthDTOs.sort((a, b) -> Integer.compare(a.getMonth(), b.getMonth()));
 
     return RevenueByMonth.builder().revenueByMonth(revenueByMonthDTOs).build();
+  }
+
+  @Override
+  public DashboardSummaryDTO getDashboardSummary(String period) {
+    DateRanges ranges = calculateComparisonRanges(period);
+
+    // Fetch Total Sales
+    double currentSales = orderRepository.sumFinalTotalByStatusAndOrderDateBetween(
+        OrderStatus.DELIVERED, ranges.currentStart(), ranges.currentEnd());
+    double previousSales = orderRepository.sumFinalTotalByStatusAndOrderDateBetween(
+        OrderStatus.DELIVERED, ranges.previousStart(), ranges.previousEnd());
+
+    // Fetch Total Orders
+    long currentOrders =
+        orderRepository.countByOrderDateBetween(ranges.currentStart(), ranges.currentEnd());
+    long previousOrders =
+        orderRepository.countByOrderDateBetween(ranges.previousStart(), ranges.previousEnd());
+
+    // Fetch Visitors
+    long currentViews = productViewHistoryRepository
+        .countTotalViewsByViewedAtBetween(ranges.currentStart(), ranges.currentEnd());
+    long previousViews = productViewHistoryRepository
+        .countTotalViewsByViewedAtBetween(ranges.previousStart(), ranges.previousEnd());
+
+    // Fetch Refunded Orders
+    long currentRefunded = returnRequestRepository.countByStatusAndCreatedAtBetween(
+        ReturnRequestStatus.APPROVED, ranges.currentStart(), ranges.currentEnd());
+    long previousRefunded = returnRequestRepository.countByStatusAndCreatedAtBetween(
+        ReturnRequestStatus.APPROVED, ranges.previousStart(), ranges.previousEnd());
+
+
+    return DashboardSummaryDTO.builder()
+        .totalSales(
+            new MetricDTO(currentSales, calculatePercentageChange(currentSales, previousSales)))
+        .totalOrders(new MetricDTO((double) currentOrders,
+            calculatePercentageChange(currentOrders, previousOrders)))
+        .visitors(new MetricDTO((double) currentViews,
+            calculatePercentageChange(currentViews, previousViews)))
+        .refunded(new MetricDTO((double) currentRefunded,
+            calculatePercentageChange(currentRefunded, previousRefunded)))
+        .build();
+  }
+
+  private double calculatePercentageChange(double current, double previous) {
+    if (previous == 0) {
+      return 0.0; // Return 100% if previous is 0 and current is positive
+    }
+    return ((current - previous) / previous) * 100.0;
+  }
+
+  private DateRanges calculateComparisonRanges(String period) {
+    Instant now = Instant.now();
+    ZonedDateTime zdtNow = ZonedDateTime.ofInstant(now, ZoneId.of("UTC"));
+
+    Instant currentStart, currentEnd, previousStart, previousEnd;
+
+    switch (period.toLowerCase()) {
+      case "today":
+        currentStart = zdtNow.truncatedTo(ChronoUnit.DAYS).toInstant();
+        currentEnd = now;
+
+        previousStart = currentStart.minus(1, ChronoUnit.DAYS);
+        previousEnd = now.minus(1, ChronoUnit.DAYS);
+        break;
+
+      case "this_month":
+        currentStart = zdtNow.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).toInstant();
+        currentEnd = now;
+
+        ZonedDateTime previousMonth = zdtNow.minusMonths(1);
+        previousStart = previousMonth.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).toInstant();
+        previousEnd = previousMonth.withDayOfMonth(zdtNow.getDayOfMonth())
+            .with(zdtNow.toLocalTime()).toInstant();
+        break;
+
+      case "this_week":
+      default:
+        currentStart = zdtNow.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            .truncatedTo(ChronoUnit.DAYS).toInstant();
+        currentEnd = now;
+
+        previousStart = currentStart.minus(7, ChronoUnit.DAYS);
+        previousEnd = now.minus(7, ChronoUnit.DAYS);
+        break;
+    }
+
+    return new DateRanges(currentStart, currentEnd, previousStart, previousEnd);
   }
 
 }

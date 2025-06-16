@@ -19,6 +19,7 @@ import com.example.clothingstore.constant.AppConstant;
 import com.example.clothingstore.constant.UrlConfig;
 import com.example.clothingstore.dto.request.LoginReqDTO;
 import com.example.clothingstore.dto.response.DashboardResDTO;
+import com.example.clothingstore.dto.response.DashboardSummaryDTO;
 import com.example.clothingstore.dto.response.LoginResDTO;
 import com.example.clothingstore.dto.response.ProductImportResponseDTO;
 import com.example.clothingstore.dto.response.RevenueByMonth;
@@ -102,5 +103,11 @@ public class WorkspaceController {
       @RequestParam("file") MultipartFile file) {
     ProductImportResponseDTO response = importService.importCategories(file, ImportMode.ADD_ONLY);
     return ResponseEntity.ok(response);
+  }
+
+  @GetMapping(UrlConfig.WORKSPACE + UrlConfig.DASHBOARD + UrlConfig.SUMMARY)
+  public ResponseEntity<DashboardSummaryDTO> getDashboardSummary(
+      @RequestParam(defaultValue = "this_week") String period) {
+    return ResponseEntity.ok(workspaceService.getDashboardSummary(period));
   }
 }

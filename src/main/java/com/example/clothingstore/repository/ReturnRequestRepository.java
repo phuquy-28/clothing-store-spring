@@ -1,10 +1,13 @@
 package com.example.clothingstore.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.clothingstore.entity.Order;
@@ -25,4 +28,13 @@ public interface ReturnRequestRepository
   boolean existsByOrder(Order order);
 
   Optional<ReturnRequest> findByOrderId(Long id);
+
+  @Query("""
+      SELECT COUNT(rr)
+      FROM ReturnRequest rr
+      WHERE rr.status = :status
+      AND rr.createdAt BETWEEN :startDate AND :endDate
+      """)
+  Long countByStatusAndCreatedAtBetween(@Param("status") ReturnRequestStatus status,
+      @Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 }

@@ -132,4 +132,24 @@ public interface OrderRepository
       @Param("userId") Long userId, 
       @Param("startDate") Instant startDate, 
       @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT COALESCE(SUM(o.total - COALESCE(o.discount, 0.0) - COALESCE(o.pointDiscount, 0.0)), 0.0)
+      FROM Order o 
+      WHERE o.status = :status 
+      AND o.orderDate BETWEEN :startDate AND :endDate
+      """)
+  Double sumFinalTotalByStatusAndOrderDateBetween(
+      @Param("status") OrderStatus status,
+      @Param("startDate") Instant startDate, 
+      @Param("endDate") Instant endDate);
+
+  @Query("""
+      SELECT COUNT(o) 
+      FROM Order o 
+      WHERE o.orderDate BETWEEN :startDate AND :endDate
+      """)
+  Long countByOrderDateBetween(
+      @Param("startDate") Instant startDate,
+      @Param("endDate") Instant endDate);
 }

@@ -93,6 +93,7 @@ import com.example.clothingstore.dto.response.MultiMediaUploadResDTO;
 import com.example.clothingstore.dto.response.NotificationResDTO;
 import com.example.clothingstore.service.CloudStorageService;
 import java.util.HashMap;
+import com.example.clothingstore.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -133,6 +134,8 @@ public class OrderServiceImpl implements OrderService {
   private final CloudStorageService cloudStorageService;
 
   private final InventoryHistoryRepository inventoryHistoryRepository;
+
+  private final EmailService emailService;
 
   @Override
   @Transactional
@@ -630,6 +633,11 @@ public class OrderServiceImpl implements OrderService {
         if (orderStatusReqDTO.getReason() != null && !orderStatusReqDTO.getReason().isEmpty()) {
           order.setCancelReason(orderStatusReqDTO.getReason());
         }
+      } else if (newStatus == OrderStatus.PROCESSING) {
+        // Gửi email xác nhận khi đơn hàng COD được chuyển sang Processing
+        Order orderWithDetails = orderRepository.findOrderWithDetailsById(order.getId());
+        List<ProductVariant> productVariants = orderRepository.findProductVariantsWithImagesByOrderId(order.getId());
+        emailService.sendOrderConfirmationEmail(orderWithDetails, productVariants);
       } else {
         order.setPaymentStatus(PaymentStatus.PENDING);
       }
@@ -864,7 +872,7 @@ public class OrderServiceImpl implements OrderService {
         .orderDate(order.getOrderDate())
         .customerName(order.getUser().getProfile().getFirstName() + " "
             + order.getUser().getProfile().getLastName())
-        .total(order.getTotal()).paymentStatus(order.getPaymentStatus())
+        .total(order.getFinalTotal()).paymentStatus(order.getPaymentStatus())
         .orderStatus(order.getStatus())
         .numberOfItems(order.getLineItems().stream().mapToLong(LineItem::getQuantity).sum())
         .paymentMethod(order.getPaymentMethod()).deliveryMethod(order.getDeliveryMethod()).build();
