@@ -70,7 +70,11 @@ public class PineconeServiceImpl implements PineconeService {
       if (existingEmbedding.isPresent() && existingEmbedding.get().getUpdatedAt()
           .isAfter(Instant.now().minus(24, ChronoUnit.HOURS))) {
         log.info("Using cached embedding for product ID: {}", product.getId());
-        embedding = objectMapper.readValue(existingEmbedding.get().getVector(), List.class);
+        List<Double> doubleEmbedding = objectMapper.readValue(existingEmbedding.get().getVector(), 
+            objectMapper.getTypeFactory().constructCollectionType(List.class, Double.class));
+        embedding = doubleEmbedding.stream()
+            .map(Double::floatValue)
+            .collect(Collectors.toList());
       } else {
         log.info("Creating new embedding for product ID: {}", product.getId());
         embedding = embeddingService.createEmbedding(document);

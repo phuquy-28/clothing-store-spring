@@ -480,7 +480,7 @@ public class ProductServiceImpl implements ProductService {
 
       productVariant.setColor(Color.valueOf(variantDTO.getColor().toUpperCase()));
       productVariant.setSize(Size.valueOf(variantDTO.getSize().toUpperCase()));
-      productVariant.setQuantity(variantDTO.getQuantity());
+      // productVariant.setQuantity(variantDTO.getQuantity());
       productVariant.setDifferencePrice(variantDTO.getDifferencePrice());
 
       // Update variant images

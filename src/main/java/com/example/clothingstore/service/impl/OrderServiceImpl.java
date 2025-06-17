@@ -413,7 +413,8 @@ public class OrderServiceImpl implements OrderService {
 
     return order.getLineItems().stream().map(lineItem -> {
       List<String> imageUrls = null;
-      if (lineItem.getReview() != null && lineItem.getReview().getImageUrls() != null) {
+      if (lineItem.getReview() != null && lineItem.getReview().getImageUrls() != null
+          && !lineItem.getReview().getImageUrls().isEmpty()) {
         imageUrls = Arrays.asList(lineItem.getReview().getImageUrls().split(";"));
       }
 
