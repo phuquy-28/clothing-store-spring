@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.enumeration.OrderStatus;
-import com.example.clothingstore.enumeration.PaymentStatus;
 
 @Repository
 public interface ProductRepository
@@ -32,10 +31,10 @@ public interface ProductRepository
           JOIN li.productVariant pv
           JOIN li.order o
           WHERE pv.product.id = :productId
-          AND o.paymentStatus = :paymentStatus
+          AND o.status = :orderStatus
       """)
   Long countSoldQuantityByProductId(@Param("productId") Long productId,
-      @Param("paymentStatus") PaymentStatus paymentStatus);
+      @Param("orderStatus") OrderStatus orderStatus);
 
 
   @Query("""
@@ -61,8 +60,9 @@ public interface ProductRepository
       FROM Product p
       LEFT JOIN p.variants pv
       LEFT JOIN LineItem li ON li.productVariant = pv
-      LEFT JOIN li.order o ON o.status = :orderStatus
+      LEFT JOIN li.order o
       WHERE p.isDeleted = false
+      AND o.status = :orderStatus
       GROUP BY p
       ORDER BY soldQuantity DESC
       """)

@@ -15,11 +15,11 @@ import com.example.clothingstore.entity.Product;
 import com.example.clothingstore.entity.ProductVariant;
 import com.example.clothingstore.entity.Promotion;
 import com.example.clothingstore.entity.Review;
-import com.example.clothingstore.enumeration.PaymentStatus;
+import com.example.clothingstore.enumeration.OrderStatus;
 
 public class ProductSpecification {
 
-  public static Specification<Product> isBestSeller(PaymentStatus paymentStatus,
+  public static Specification<Product> isBestSeller(OrderStatus orderStatus,
       Instant startDate) {
     return (root, query, cb) -> {
       query.distinct(true);
@@ -31,7 +31,7 @@ public class ProductSpecification {
       Join<LineItem, Order> orderJoin = lineItemRoot.join("order");
 
       // Điều kiện WHERE
-      Predicate paymentStatusPred = cb.equal(orderJoin.get("paymentStatus"), paymentStatus);
+      Predicate orderStatusPred = cb.equal(orderJoin.get("status"), orderStatus);
       Predicate datePred = startDate == null ? cb.conjunction()
           : cb.greaterThanOrEqualTo(orderJoin.get("orderDate"), startDate);
       Predicate productPred = cb.equal(productJoin, root);
@@ -42,7 +42,7 @@ public class ProductSpecification {
         query.orderBy(cb.desc(cb.sum(lineItemRoot.get("quantity"))));
       }
 
-      return cb.and(productPred, paymentStatusPred, datePred);
+      return cb.and(productPred, orderStatusPred, datePred);
     };
   }
 

@@ -36,7 +36,7 @@ import com.example.clothingstore.entity.Review;
 import com.example.clothingstore.entity.User;
 import com.example.clothingstore.entity.InventoryHistory;
 import com.example.clothingstore.enumeration.Color;
-import com.example.clothingstore.enumeration.PaymentStatus;
+import com.example.clothingstore.enumeration.OrderStatus;
 import com.example.clothingstore.enumeration.Size;
 import com.example.clothingstore.enumeration.InventoryChangeType;
 import com.example.clothingstore.exception.ResourceAlreadyExistException;
@@ -369,9 +369,9 @@ public class ProductServiceImpl implements ProductService {
       if (days != null) {
         Instant startDate = Instant.now().minus(days, ChronoUnit.DAYS);
         finalSpec =
-            finalSpec.and(ProductSpecification.isBestSeller(PaymentStatus.SUCCESS, startDate));
+            finalSpec.and(ProductSpecification.isBestSeller(OrderStatus.DELIVERED, startDate));
       } else {
-        finalSpec = finalSpec.and(ProductSpecification.isBestSeller(PaymentStatus.SUCCESS, null));
+        finalSpec = finalSpec.and(ProductSpecification.isBestSeller(OrderStatus.DELIVERED, null));
       }
     }
 
@@ -689,7 +689,7 @@ public class ProductServiceImpl implements ProductService {
     if (product == null) {
       return 0L;
     }
-    return productRepository.countSoldQuantityByProductId(product.getId(), PaymentStatus.SUCCESS);
+    return productRepository.countSoldQuantityByProductId(product.getId(), OrderStatus.DELIVERED);
   }
 
   @Override
