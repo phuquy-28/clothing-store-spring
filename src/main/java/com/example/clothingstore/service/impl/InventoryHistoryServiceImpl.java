@@ -80,6 +80,14 @@ public class InventoryHistoryServiceImpl implements InventoryHistoryService {
         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       Sheet sheet = workbook.createSheet("Lịch sử tồn kho");
 
+      // Set fixed column widths (measured in units of 1/256th of a character width)
+      sheet.setColumnWidth(0, 20 * 256); // Thời gian
+      sheet.setColumnWidth(1, 15 * 256); // SKU
+      sheet.setColumnWidth(2, 15 * 256); // Thay đổi số lượng
+      sheet.setColumnWidth(3, 15 * 256); // Số lượng sau thay đổi
+      sheet.setColumnWidth(4, 30 * 256); // Ghi chú
+      sheet.setColumnWidth(5, 20 * 256); // User thực hiện
+
       int rowIdx = 0;
       Row titleRow = sheet.createRow(rowIdx++);
       StringBuilder title = new StringBuilder("Lịch sử tồn kho");
@@ -139,11 +147,6 @@ public class InventoryHistoryServiceImpl implements InventoryHistoryService {
         row.createCell(4).setCellValue(history.getNotes() != null ? history.getNotes() : "");
         row.createCell(5)
             .setCellValue(history.getUpdatedBy() != null ? history.getUpdatedBy() : "");
-      }
-
-      // Tự động điều chỉnh độ rộng cột
-      for (int i = 0; i < headers.length; i++) {
-        sheet.autoSizeColumn(i);
       }
 
       workbook.write(out);
