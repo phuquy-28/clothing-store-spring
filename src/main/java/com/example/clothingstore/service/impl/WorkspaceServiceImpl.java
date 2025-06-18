@@ -201,7 +201,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     if (previous == 0) {
       return 0.0; // Return 100% if previous is 0 and current is positive
     }
-    return ((current - previous) / previous) * 100.0;
+    return Math.round(((current - previous) / previous) * 100.0);
   }
 
   private DateRanges calculateComparisonRanges(String period) {

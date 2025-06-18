@@ -261,22 +261,25 @@ public class NotificationServiceImpl implements NotificationService {
         ? String.join(",", productIds.stream().map(String::valueOf).collect(Collectors.toList()))
         : null;
 
-    List<Notification> userNotifications = userRepository.findAll().stream().map(user -> {
-      Notification userNotification = new Notification();
-      userNotification.setUser(user);
-      userNotification.setTitle(notification.getTitle());
-      userNotification.setContent(notification.getContent());
-      userNotification.setType(notification.getType());
-      userNotification.setReferenceIds(referenceIds);
-      userNotification.setNotificationDate(Instant.now());
-      userNotification.setRead(false);
-      userNotification.setStartPromotionDate(notification.getStartPromotionDate());
-      userNotification.setEndPromotionDate(notification.getEndPromotionDate());
-      return userNotification;
-    }).collect(Collectors.toList());
+    // Only get users with USER role
+    List<Notification> userNotifications = userRepository.findAll().stream()
+        .filter(user -> user.getRole() != null && AppConstant.ROLE_USER.equals(user.getRole().getName()))
+        .map(user -> {
+          Notification userNotification = new Notification();
+          userNotification.setUser(user);
+          userNotification.setTitle(notification.getTitle());
+          userNotification.setContent(notification.getContent());
+          userNotification.setType(notification.getType());
+          userNotification.setReferenceIds(referenceIds);
+          userNotification.setNotificationDate(Instant.now());
+          userNotification.setRead(false);
+          userNotification.setStartPromotionDate(notification.getStartPromotionDate());
+          userNotification.setEndPromotionDate(notification.getEndPromotionDate());
+          return userNotification;
+        }).collect(Collectors.toList());
 
     notificationRepository.saveAll(userNotifications);
-    log.debug("Created notifications for {} users", userNotifications.size());
+    log.debug("Created notifications for {} users with USER role", userNotifications.size());
   }
 
   @Override
