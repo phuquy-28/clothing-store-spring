@@ -4,7 +4,6 @@ import static com.example.clothingstore.util.SecurityUtil.JWT_ALGORITHM;
 import static com.example.clothingstore.constant.UrlConfig.*;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -13,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
@@ -33,12 +34,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
-import org.springframework.security.oauth2.jwt.JwtValidationException;
 import java.util.Collections;
 import com.example.clothingstore.repository.TokenBlacklistRepository;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.Arrays;
 
 @Configuration
@@ -52,9 +49,9 @@ public class SecurityConfiguration {
 
   private final TokenBlacklistRepository tokenBlacklistRepository;
 
-  private SecretKey getSecretKey() {
-    byte[] keyBytes = Base64.from(jwtKey).decode();
-    return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 
   @Bean
@@ -62,22 +59,41 @@ public class SecurityConfiguration {
     return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
   }
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
+  private SecretKey getSecretKey() {
+    byte[] keyBytes = Base64.from(jwtKey).decode();
+    return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
   }
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http,
+  @Order(1)
+  public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
+    String[] allPublicPaths = combineArrays(PUBLIC_ENDPOINTS(), PUBLIC_WS_ENDPOINTS(),
+        PUBLIC_GET_ENDPOINTS(), PUBLIC_POST_ENDPOINTS(), PUBLIC_PUT_ENDPOINTS());
+
+    http.securityMatcher(allPublicPaths).csrf(c -> c.disable()).cors(Customizer.withDefaults())
+        .authorizeHttpRequests(authz -> authz.requestMatchers(PUBLIC_ENDPOINTS()).permitAll()
+            .requestMatchers(PUBLIC_WS_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
+            .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll().anyRequest()
+            .authenticated())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+    return http.build();
+  }
+
+  private String[] combineArrays(String[]... arrays) {
+    return Arrays.stream(arrays).flatMap(Arrays::stream).distinct().toArray(String[]::new);
+  }
+
+  @Bean
+  @Order(2)
+  public SecurityFilterChain privateSecurityFilterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
       CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
-    http.csrf(c -> c.disable()).cors(Customizer.withDefaults()).authorizeHttpRequests(authz -> authz
-        // WebSocket endpoints
-        .requestMatchers(PUBLIC_WS_ENDPOINTS()).permitAll().requestMatchers(PUBLIC_ENDPOINTS())
-        .permitAll().requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS()).permitAll()
-        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS()).permitAll()
-        .requestMatchers(HttpMethod.PUT, PUBLIC_PUT_ENDPOINTS()).permitAll().anyRequest()
-        .authenticated())
+    http.securityMatcher("/**").csrf(c -> c.disable()).cors(Customizer.withDefaults())
+        .authorizeHttpRequests(authz -> authz.anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
             .authenticationEntryPoint(customAuthenticationEntryPoint)
             .accessDeniedHandler(customAccessDeniedHandler))
@@ -92,6 +108,7 @@ public class SecurityConfiguration {
     JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
         new JwtGrantedAuthoritiesConverter();
     grantedAuthoritiesConverter.setAuthorityPrefix("");
+
     JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
     jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
     return jwtAuthenticationConverter;
@@ -103,19 +120,6 @@ public class SecurityConfiguration {
         NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
 
     jwtDecoder.setJwtValidator(token -> {
-      // Get the current request from RequestContextHolder
-      ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-      if (attributes != null) {
-        HttpServletRequest request = attributes.getRequest();
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-
-        // Check if the request is a public endpoint based on HTTP method
-        if (isPublicEndpoint(path, method)) {
-          return OAuth2TokenValidatorResult.success();
-        }
-      }
-
       // Check if token is blacklisted
       if (tokenBlacklistRepository.findByToken(token.getTokenValue()).isPresent()) {
         throw new JwtValidationException(null,
@@ -128,24 +132,6 @@ public class SecurityConfiguration {
     });
 
     return jwtDecoder;
-  }
-
-  private boolean isPublicEndpoint(String path, String method) {
-    // WebSocket endpoints are always considered public
-    if (path.startsWith("/ws")) {
-      return true;
-    }
-
-    switch (method.toUpperCase()) {
-      case "GET":
-        return Arrays.stream(PUBLIC_GET_ENDPOINTS()).anyMatch(path::startsWith);
-      case "POST":
-        return Arrays.stream(PUBLIC_POST_ENDPOINTS()).anyMatch(path::startsWith);
-      case "PUT":
-        return Arrays.stream(PUBLIC_PUT_ENDPOINTS()).anyMatch(path::startsWith);
-      default:
-        return Arrays.stream(PUBLIC_ENDPOINTS()).anyMatch(path::startsWith);
-    }
   }
 
   @Bean

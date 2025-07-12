@@ -152,7 +152,7 @@ public class UrlConfig {
   }
 
   public static String[] PUBLIC_WS_ENDPOINTS() {
-    return new String[] {WS,};
+    return new String[] {WS};
   }
 
   // Full paths for public GET endpoints
