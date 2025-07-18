@@ -29,6 +29,13 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
+      - name: Create credentials files
+        run: |
+          mkdir -p src/main/resources/config
+          
+          echo "${{ secrets.GCP_CREDENTIALS_BASE64 }}" | base64 --decode > src/main/resources/config/able-rune-442018-i9-fee8d2941f95.json
+          echo "${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}" | base64 --decode > src/main/resources/config/ezstore-7dbb2-firebase-adminsdk-fbsvc-594b5e3e35.json
+          
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
