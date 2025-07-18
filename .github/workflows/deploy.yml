@@ -2,7 +2,9 @@ name: CI/CD for Clothing Store to GitHub Packages
 
 on:
   push:
-    branches: ["main"] # Triggers on push to the main branch
+    branches:
+      - main
+      - dev
 
 jobs:
   build-and-push:
