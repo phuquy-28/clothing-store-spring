@@ -1,10 +1,6 @@
 name: CI/CD for Clothing Store to GitHub Packages
 
 on:
-  push:
-    branches:
-      - main
-
   workflow_dispatch:
 
 concurrency:
