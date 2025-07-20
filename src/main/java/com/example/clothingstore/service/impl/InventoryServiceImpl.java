@@ -192,9 +192,9 @@ public class InventoryServiceImpl implements InventoryService {
         } catch (DataValidationException e) {
           String errorMessage = Translator.toLocale(e.getMessageKey(),
               e.getArgs() != null ? e.getArgs() : new Object[] {});
-          log.error("Lỗi xác thực ở dòng {}: {}", currentRowNum, errorMessage);
+          log.info("Lỗi xác thực ở dòng {}: {}", currentRowNum, errorMessage);
         } catch (Exception e) {
-          log.error("Lỗi không xác định khi xử lý dòng {}: {}", currentRowNum, e.getMessage(), e);
+          log.error("Lỗi không xác định khi xử lý dòng: ", e);
         }
       }
 
@@ -207,7 +207,7 @@ public class InventoryServiceImpl implements InventoryService {
       }
 
     } catch (IOException e) {
-      log.error("Lỗi khi đọc file Excel '{}': {}", file.getOriginalFilename(), e.getMessage(), e);
+      log.info("Lỗi khi đọc file Excel '{}': {}", file.getOriginalFilename(), e.getMessage(), e);
       throw new RuntimeException(Translator.toLocale("excel.read.error"), e);
     }
 

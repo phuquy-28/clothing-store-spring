@@ -37,7 +37,7 @@ public class RecommendationServiceImpl implements RecommendationService {
   public List<ProductResDTO> getRecommendationsForUser(User user, int limit) {
     // Kiểm tra user null
     if (user == null) {
-      log.warn("User is null. Returning top selling products.");
+      log.info("User is null. Returning top selling products.");
       return getTopSellingProducts(limit);
     }
 
@@ -126,8 +126,7 @@ public class RecommendationServiceImpl implements RecommendationService {
           totalWeight += entry.getValue();
         }
       } catch (Exception e) {
-        log.warn("Could not create embedding for product ID {} for user profile", entry.getKey(),
-            e);
+        log.error("Could not create embedding for product ID: ", e);
       }
     }
 

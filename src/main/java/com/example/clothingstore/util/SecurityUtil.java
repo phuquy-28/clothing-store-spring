@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,6 +41,8 @@ import org.springframework.stereotype.Service;
 public class SecurityUtil {
 
   public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
+
+  private final Logger log = LoggerFactory.getLogger(SecurityUtil.class);
 
   @Value("${jwt.base64-secret}")
   private String jwtKey;
@@ -106,7 +110,7 @@ public class SecurityUtil {
     try {
       return jwtDecoder.decode(token);
     } catch (Exception e) {
-      System.out.println(">>> JWT error: " + e.getMessage());
+      log.info("JWT error: {}", e.getMessage());
       throw e;
     }
   }

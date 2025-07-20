@@ -208,7 +208,7 @@ public class ImportServiceImpl implements ImportService {
           log.warn("Lỗi xác thực Product ở dòng {}: {}", currentRowNum, errorMessage);
           throw e;
         } catch (Exception e) {
-          log.error("Lỗi không xác định khi xử lý Product ở dòng {}: {}", currentRowNum,
+          log.info("Lỗi không xác định khi xử lý Product ở dòng {}: {}", currentRowNum,
               e.getMessage(), e);
           throw new RuntimeException(Translator.toLocale("import.error.row.unknown",
               String.valueOf(currentRowNum), e.getMessage()), e);
@@ -248,13 +248,13 @@ public class ImportServiceImpl implements ImportService {
           pineconeService.indexSingleProduct(product);
           log.debug("Đã gửi yêu cầu indexing cho sản phẩm ID: {}", product.getId());
         } catch (Exception e) {
-          log.error("Lỗi khi indexing sản phẩm ID {}: {}", product.getId(), e.getMessage());
+          log.error("Lỗi khi indexing sản phẩm: ", e);
           // Don't throw exception here as the products are already saved
         }
       }
 
     } catch (IOException e) {
-      log.error("Lỗi khi đọc file Excel sản phẩm '{}': {}", file.getOriginalFilename(),
+      log.info("Lỗi khi đọc file Excel sản phẩm '{}': {}", file.getOriginalFilename(),
           e.getMessage(), e);
       throw new RuntimeException(Translator.toLocale("excel.read.error"), e);
     }
@@ -341,7 +341,7 @@ public class ImportServiceImpl implements ImportService {
           log.warn("Lỗi xác thực Category ở dòng {}: {}", currentRowNum, errorMessage);
           throw e; // Ném lại để transaction rollback
         } catch (Exception e) {
-          log.error("Lỗi không xác định khi xử lý Category ở dòng {}: {}", currentRowNum,
+          log.info("Lỗi không xác định khi xử lý Category ở dòng {}: {}", currentRowNum,
               e.getMessage(), e);
           throw new RuntimeException(Translator.toLocale("import.error.row.unknown",
               String.valueOf(currentRowNum), e.getMessage()), e);
@@ -361,7 +361,7 @@ public class ImportServiceImpl implements ImportService {
       log.info("Đã lưu thành công {} danh mục.", successfulImports);
 
     } catch (IOException e) {
-      log.error("Lỗi khi đọc file Excel danh mục '{}': {}", file.getOriginalFilename(),
+      log.info("Lỗi khi đọc file Excel danh mục '{}': {}", file.getOriginalFilename(),
           e.getMessage(), e);
       throw new RuntimeException(Translator.toLocale("excel.read.error"), e);
     }

@@ -57,7 +57,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             accessor.setUser(auth);
             log.debug("WebSocket Connection authenticated for user: {}", username);
           } catch (JwtException e) {
-            log.error("Invalid JWT token in WebSocket connection: {}", e.getMessage());
+            log.info("Invalid JWT token in WebSocket connection: {}", e.getMessage());
           }
         }
       } else {

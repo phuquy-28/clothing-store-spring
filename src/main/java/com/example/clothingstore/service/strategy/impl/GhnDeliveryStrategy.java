@@ -70,7 +70,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
       return calculateFeeWithServiceId(serviceId, order);
 
     } catch (Exception e) {
-      log.error("Error calculating GHN shipping fee: {}", e.getMessage());
+      log.info("Error calculating GHN shipping fee: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
     }
   }
@@ -107,7 +107,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
         return String.valueOf(data.getJSONObject(0).getInt("service_id"));
       }
     } catch (Exception e) {
-      log.error("Error getting GHN service ID: {}", e.getMessage());
+      log.info("Error getting GHN service ID: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_SERVICE_UNAVAILABLE);
     }
 
@@ -160,7 +160,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
         return data.getDouble("total");
       }
     } catch (Exception e) {
-      log.error("Error calculating GHN shipping fee: {}", e.getMessage());
+      log.info("Error calculating GHN shipping fee: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_FEE_CALCULATION_FAILED);
     }
 
@@ -206,7 +206,7 @@ public class GhnDeliveryStrategy implements DeliveryStrategy {
         return Instant.ofEpochSecond(leadtime);
       }
     } catch (Exception e) {
-      log.error("Error calculating GHN estimated delivery date: {}", e.getMessage());
+      log.info("Error calculating GHN estimated delivery date: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_CALCULATION_FAILED);
     }
 

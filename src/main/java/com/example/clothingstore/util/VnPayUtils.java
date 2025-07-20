@@ -29,7 +29,7 @@ public class VnPayUtils {
             }
             return sb.toString();
         } catch (Exception ex) {
-            log.error("Error hashing data: {}", ex.getMessage());
+            log.error("Error hashing data: ", ex);
             return "";
         }
     }
@@ -42,7 +42,7 @@ public class VnPayUtils {
                 ipAdress = request.getRemoteAddr();
             }
         } catch (Exception e) {
-            log.error("Error getting IP address: {}", e.getMessage());
+            log.error("Error getting IP address: ", e);
             ipAdress = "Invalid IP:" + e.getMessage();
         }
         return ipAdress;

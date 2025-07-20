@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -17,6 +19,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
   private final ObjectMapper objectMapper;
 
+  private final Logger log = LoggerFactory.getLogger(CustomAccessDeniedHandler.class);
+
   public CustomAccessDeniedHandler(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
@@ -24,6 +28,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
   @Override
   public void handle(HttpServletRequest request, HttpServletResponse response,
       AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    log.info("Access denied: {}", accessDeniedException.getMessage());
     RestResponse<Object> restResponse = new RestResponse<>();
     restResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
     restResponse.setError("Access Denied");

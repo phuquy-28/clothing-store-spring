@@ -77,7 +77,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
           loginReqDto.getEmail(), loginReqDto.getPassword()));
     } catch (AuthenticationException e) {
-      log.error("Authentication failed: {}", e.getMessage());
+      log.info("Authentication failed: {}", e.getMessage());
       throw new BadCredentialsException(ErrorMessage.USERNAME_OR_PASSWORD_INVALID);
     }
 

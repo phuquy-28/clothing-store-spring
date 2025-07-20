@@ -224,8 +224,7 @@ public class UserServiceImpl implements UserService {
     try {
       emailService.sendNewUserAccountEmail(savedUser, rawPassword);
     } catch (Exception e) {
-      log.error("Failed to send account creation email to {}: {}", savedUser.getEmail(),
-          e.getMessage());
+      log.error("Failed to send account creation email to: ", e);
     }
 
     return userMapper.toUserResDTO(savedUser);

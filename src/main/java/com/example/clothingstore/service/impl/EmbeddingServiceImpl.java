@@ -44,7 +44,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
       CreateEmbeddingResponse response = client.embeddings().create(params);
 
       if (response.data() == null || response.data().isEmpty()) {
-        log.error("Failed to create embedding for text: {}", text);
+        log.info("Failed to create embedding for text: {}", text);
         throw new RuntimeException("Failed to create embedding for text: " + text);
       }
 
@@ -55,7 +55,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
       return embeddingFloats;
 
     } catch (Exception e) {
-      log.error("Error while calling OpenAI embedding API: {}", e.getMessage(), e);
+      log.info("Error while calling OpenAI embedding API: {}", e.getMessage(), e);
       throw new RuntimeException("Error while calling OpenAI embedding API", e);
     }
   }

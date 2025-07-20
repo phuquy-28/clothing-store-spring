@@ -48,7 +48,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
       log.debug("Sending token request to Google with params: {}", formParams);
       return googleAuthClient.getTokenFromCode(formParams);
     } catch (UnsupportedEncodingException e) {
-      log.error("Error decoding authorization code: {}", e.getMessage());
+      log.info("Error decoding authorization code: {}", e.getMessage());
       throw new RuntimeException("Error decoding authorization code", e);
     }
   }

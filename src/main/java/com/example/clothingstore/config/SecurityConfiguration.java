@@ -94,9 +94,10 @@ public class SecurityConfiguration {
       CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
     http.securityMatcher("/**").csrf(c -> c.disable()).cors(Customizer.withDefaults())
         .authorizeHttpRequests(authz -> authz.anyRequest().authenticated())
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
-            .authenticationEntryPoint(customAuthenticationEntryPoint)
-            .accessDeniedHandler(customAccessDeniedHandler))
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())))
+        .exceptionHandling(
+            exceptions -> exceptions.authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler(customAccessDeniedHandler))
         .formLogin(f -> f.disable()).sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

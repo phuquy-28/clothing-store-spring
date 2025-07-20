@@ -190,14 +190,14 @@ public class VnPayServiceImp implements VnPayService {
             .findProductVariantsWithImagesByOrderId(order.getId());
         emailService.sendOrderConfirmationEmail(orderWithDetails, productVariants);
       } else {
-        log.error("Payment failed for order {}: Response code {}", vnp_TxnRef, vnp_ResponseCode);
+        log.info("Payment failed for order {}: Response code {}", vnp_TxnRef, vnp_ResponseCode);
         
         try {
           oderCancellationService.cancelOrderAndReturnStock(order.getId());
           order.setPaymentStatus(PaymentStatus.FAILED);
           orderRepository.save(order);
         } catch (Exception e) {
-          log.error("Error while cancelling order and returning stock: {}", e.getMessage());
+          log.error("Error while cancelling order and returning stock: ", e);
         }
         
         throw new PaymentException(ErrorMessage.PAYMENT_FAILED);

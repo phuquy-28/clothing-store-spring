@@ -90,7 +90,7 @@ public class PineconeServiceImpl implements PineconeService {
       upsertVector(String.valueOf(product.getId()), embedding);
       log.info("Successfully indexed product ID: {}", product.getId());
     } catch (Exception e) {
-      log.error("Failed to index single product ID {}: {}", product.getId(), e.getMessage(), e);
+      log.error("Failed to index single product ID: ", e);
     }
   }
 
@@ -128,7 +128,7 @@ public class PineconeServiceImpl implements PineconeService {
 
       return 0;
     } catch (Exception e) {
-      log.error("Failed to get vector count for namespace '{}': {}", namespace, e.getMessage());
+      log.error("Failed to get vector count for namespace: ", e);
       return -1;
     }
   }

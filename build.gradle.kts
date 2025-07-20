@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     java
     id("org.springframework.boot") version "3.2.4"
@@ -47,6 +49,7 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("com.h2database:h2")
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.6.0")
@@ -86,7 +89,15 @@ tasks.jar {
     }
 }
 
+tasks.withType<BootRun> {
+    val profile = project.findProperty("profile")?.toString() ?: "dev"
+    systemProperties["spring.profiles.active"] = profile
+    systemProperties["dotenv.filename"] = ".env"
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
-    systemProperty("env.file", ".env")
+    val profile = project.findProperty("profile")?.toString() ?: "test"
+    systemProperties["spring.profiles.active"] = profile
+    systemProperties["dotenv.filename"] = ".env"
 }

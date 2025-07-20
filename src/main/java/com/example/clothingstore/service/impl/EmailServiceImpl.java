@@ -78,11 +78,11 @@ public class EmailServiceImpl implements EmailService {
 
       Response response = sendGrid.api(request);
       if (response.getStatusCode() >= 400) {
-        log.error("Failed to send email. Status Code: {}. Response: {}", 
+        log.info("Failed to send email. Status Code: {}. Response: {}", 
             response.getStatusCode(), response.getBody());
       }
     } catch (IOException e) {
-      log.error("Email could not be sent to user '{}'", to, e);
+      log.error("Email could not be sent to user: ", e);
     }
   }
 

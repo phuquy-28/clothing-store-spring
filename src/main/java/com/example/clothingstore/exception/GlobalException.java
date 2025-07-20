@@ -4,9 +4,10 @@ import com.example.clothingstore.config.Translator;
 import com.example.clothingstore.dto.response.RestResponse;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,13 +20,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalException {
 
-  // @ExceptionHandler(value = Exception.class)
-  @ExceptionHandler(value = AccessDeniedException.class)
+  private final Logger log = LoggerFactory.getLogger(GlobalException.class);
+
+  @ExceptionHandler(value = Exception.class)
   public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-    if (ex instanceof AccessDeniedException) {
-      throw (AccessDeniedException) ex; // Re-throw AccessDeniedException to be handled by
-                                        // CustomAccessDeniedHandler
-    }
+    log.error("An unexpected error occurred: ", ex);
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
     res.setMessage(ex.getMessage());
@@ -39,6 +38,7 @@ public class GlobalException {
       InvalidFileTypeException.class, BadRequestException.class, BadCredentialsException.class,
       PaymentException.class, DeliveryException.class})
   public ResponseEntity<RestResponse<Object>> handleIdException(Exception idException) {
+    log.info("Invalid request content: {}", idException.getMessage());
     RestResponse<Object> res = new RestResponse<Object>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
     res.setError("Exception occurs...");
@@ -50,6 +50,7 @@ public class GlobalException {
   @ExceptionHandler(value = NoResourceFoundException.class)
   public ResponseEntity<RestResponse<Object>> handleNoResourceFoundException(
       NoResourceFoundException e) {
+    log.info("Resource not found: {}", e.getMessage());
     RestResponse<Object> responseEntity = new RestResponse<Object>();
     responseEntity.setStatusCode(HttpStatus.NOT_FOUND.value());
     responseEntity.setError("Resource not found");
@@ -59,6 +60,7 @@ public class GlobalException {
 
   @ExceptionHandler(value = MethodArgumentNotValidException.class)
   public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException e) {
+    log.info("Validation error: {}", e.getMessage());
     List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
 
     List<String> errors = fieldErrors.stream().map(fieldError -> {
@@ -76,6 +78,7 @@ public class GlobalException {
   @ExceptionHandler(com.example.clothingstore.exception.AccessDeniedException.class)
   public ResponseEntity<RestResponse<Object>> handleAccessDeniedException(
       com.example.clothingstore.exception.AccessDeniedException e) {
+    log.info("Access denied: {}", e.getMessage());
     RestResponse<Object> res = new RestResponse<>();
     res.setStatusCode(HttpStatus.FORBIDDEN.value());
     res.setError("Access denied");
@@ -86,6 +89,7 @@ public class GlobalException {
   @ExceptionHandler(value = DataValidationException.class)
   public ResponseEntity<RestResponse<Object>> handleDataValidationException(
       DataValidationException ex) {
+    log.info("Data validation error: {}", ex.getMessage());
     RestResponse<Object> res = new RestResponse<>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
     res.setError("Data Validation Error");
@@ -97,6 +101,7 @@ public class GlobalException {
   @ExceptionHandler(MaxUploadSizeExceededException.class)
   public ResponseEntity<RestResponse<Object>> handleMaxUploadSizeExceededException(
       MaxUploadSizeExceededException ex) {
+    log.info("File too large: {}", ex.getMessage());
     RestResponse<Object> res = new RestResponse<>();
     res.setStatusCode(HttpStatus.BAD_REQUEST.value());
     res.setError("File Too Large");
@@ -107,6 +112,7 @@ public class GlobalException {
   @ExceptionHandler(value = {UnprocessableException.class, OrderCreationException.class})
   public ResponseEntity<RestResponse<Object>> handleUnprocessableException(
       UnprocessableException ex) {
+    log.info("Unprocessable entity: {}", ex.getMessage());
     RestResponse<Object> res = new RestResponse<>();
     res.setStatusCode(HttpStatus.UNPROCESSABLE_ENTITY.value());
     res.setError("Unprocessable Entity");

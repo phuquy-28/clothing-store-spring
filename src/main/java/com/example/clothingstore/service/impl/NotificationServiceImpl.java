@@ -409,7 +409,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
       }
     } catch (FirebaseMessagingException e) {
-      log.error("Lỗi khi gửi thông báo: {}", e.getMessage());
+      log.error("Lỗi khi gửi thông báo: ", e);
     }
   }
 

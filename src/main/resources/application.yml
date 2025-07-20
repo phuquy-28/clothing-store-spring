@@ -1,62 +1,38 @@
+# Application Configuration
 spring:
   application:
     name: clothingstore
+  # Set default profile to dev
+  profiles:
+    default: dev
 
+  # Database Configuration
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
     defer-datasource-initialization: ${DEFER_DATASOURCE_INITIALIZATION}
+    properties:
+      hibernate:
+        format_sql: false
 
+  # Data Initialization
   sql:
     init:
-      mode: ${SQL_INIT_MODE}
       encoding: UTF-8
 
-  datasource:
-    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
-    username: ${MYSQL_USER}
-    password: ${MYSQL_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
+  # File Upload Configuration
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 20MB
 
-  data:
-    # web:
-    #   pageable:
-    #     one-indexed-parameters: true
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-
-  # mail:
-  #   host: ${MAIL_HOST}
-  #   port: ${MAIL_PORT}
-  #   username: ${MAIL_USERNAME}
-  #   password: ${MAIL_PASSWORD}
-  #   properties:
-  #     mail:
-  #       smtp:
-  #         auth: true
-  #         starttls:
-  #           enable: true
-
+  # Time Zone Configuration
   jackson:
     time-zone: Asia/Ho_Chi_Minh
 
-logging:
-  level:
-    com:
-      example:
-        clothingstore: DEBUG
-    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
-
+# Server Configuration
 server:
-  port: ${SERVER_PORT}
   servlet:
     encoding:
       charset: UTF-8
@@ -65,34 +41,17 @@ server:
   tomcat:
     relaxed-query-chars: "|,(,),{,},[,],^"
 
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    disable-swagger-default-url: true
-    doc-expansion: list
-    default-models-expand-depth: 0
-  default-produces-media-type: application/json
-  default-consumes-media-type: application/json
-  model-and-view-allowed: false
-  show-actuator: false
-  show-login-endpoint: false
-  use-management-port: false
-  paths-to-match: /**
-
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS}
-
+# Security Configuration
 jwt:
   base64-secret: ${JWT_SECRET}
   access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY}
   refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY}
 
+# API Version
 api:
   version: ${API_VERSION}
 
+# External Services Configuration
 google:
   cloud:
     credentials:
@@ -136,8 +95,6 @@ goong:
 sendgrid:
   api-key: ${SENDGRID_API_KEY}
   from-email: ${SENDGRID_FROM_EMAIL}
-
-domain: ${DOMAIN}
 
 openai:
   api-key: ${OPENAI_API_KEY}

@@ -64,7 +64,7 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
   private void validateDeliveryArea(Order.ShippingInformation shippingInfo) {
     if (shippingInfo.getProvince() == null
         || !AppConstant.HCMC_PROVINCE_ID.equals(shippingInfo.getProvinceId())) {
-      log.error("Delivery area not supported: {} {}", shippingInfo.getProvince(),
+      log.info("Delivery area not supported: {} {}", shippingInfo.getProvince(),
           shippingInfo.getProvinceId());
       throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
     }
@@ -112,7 +112,7 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
       return calculateDistance(AppConstant.STORE_LATITUDE, AppConstant.STORE_LONGITUDE,
           customerLocation.getLat(), customerLocation.getLng());
     } catch (Exception e) {
-      log.error("Error calculating distance to customer address: {}", e.getMessage());
+      log.info("Error calculating distance to customer address: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_FEE_CALCULATION_FAILED);
     }
   }
@@ -123,7 +123,7 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
     log.debug("Geocoding response: {}", response);
 
     if (response.getResults() == null || response.getResults().isEmpty()) {
-      log.error("Could not geocode address: {}", address);
+      log.info("Could not geocode address: {}", address);
       throw new DeliveryException(ErrorMessage.DELIVERY_FEE_CALCULATION_FAILED);
     }
 
@@ -144,7 +144,7 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
     if (formattedAddress == null
         || (!formattedAddress.contains("Hồ Chí Minh") && !formattedAddress.contains("TP.HCM")
             && !formattedAddress.contains("Thành phố Hồ Chí Minh"))) {
-      log.error("Address not in HCMC: {} (geocoded as: {})", originalAddress, formattedAddress);
+      log.info("Address not in HCMC: {} (geocoded as: {})", originalAddress, formattedAddress);
       throw new DeliveryException(ErrorMessage.DELIVERY_AREA_NOT_SUPPORTED);
     }
   }
@@ -173,7 +173,7 @@ public class ExpressDeliveryStrategy implements DeliveryStrategy {
       // Convert meters to kilometers
       return element.getDistance().getValue() / 1000.0;
     } catch (Exception e) {
-      log.error("Error calculating distance: {}", e.getMessage());
+      log.info("Error calculating distance: {}", e.getMessage());
       throw new DeliveryException(ErrorMessage.DELIVERY_FEE_CALCULATION_FAILED);
     }
   }

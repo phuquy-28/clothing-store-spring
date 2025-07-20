@@ -39,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
   @Override
   public CategoryResDTO createCategory(CategoryReqDTO categoryReqDTO) {
     if (categoryRepository.findByName(categoryReqDTO.getName()).isPresent()) {
-      log.error("Category already exists: {}", categoryReqDTO.getName());
+      log.info("Category already exists: {}", categoryReqDTO.getName());
       throw new ResourceAlreadyExistException(ErrorMessage.CATEGORY_ALREADY_EXISTS);
     }
     Category newCategory = new Category();
@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
   @Override
   public CategoryResDTO updateCategory(CategoryReqDTO categoryReqDTO) {
     if (categoryReqDTO.getId() == null) {
-      log.error("Category id is null");
+      log.info("Category id is null");
       throw new IdInvalidException(ErrorMessage.ID_CANNOT_BE_NULL);
     }
     Category category = categoryRepository.findById(categoryReqDTO.getId())

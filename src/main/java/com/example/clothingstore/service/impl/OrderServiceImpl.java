@@ -330,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
   @Recover
   public OrderPaymentDTO recoverCreateOrder(ObjectOptimisticLockingFailureException e,
       OrderReqDTO orderReqDTO) {
-    log.error("Failed to create order after 5 attempts with order req dto: {}", orderReqDTO);
+    log.info("Failed to create order after 5 attempts with order req dto: {}", orderReqDTO);
     throw new OrderCreationException(ErrorMessage.SYSTEM_BUSY);
   }
 
@@ -916,7 +916,7 @@ public class OrderServiceImpl implements OrderService {
 
       return paymentStrategy.processPayment(order, request);
     } catch (Exception e) {
-      log.error("Lỗi khi xử lý thanh toán: {}", e.getMessage());
+      log.info("Lỗi khi xử lý thanh toán: {}", e.getMessage());
       throw new BadRequestException(ErrorMessage.TRANSACTION_FAILED);
     }
   }

@@ -46,7 +46,7 @@ public class OrderCleanupScheduler {
         oderCancellationService.cancelOrderAndReturnStock(order.getId());
         log.debug("Successfully cancelled order {} and returned stock", order.getCode());
       } catch (Exception e) {
-        log.error("Error cancelling order {}: {}", order.getCode(), e.getMessage());
+        log.error("Error cancelling order: ", e);
       }
     }
 
